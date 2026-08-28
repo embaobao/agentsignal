@@ -1,0 +1,128 @@
+/* ============================================================================
+ * DESIGN TOKENS — SINGLE SOURCE OF TRUTH
+ * 单色极简（ollama 式）：全站仅黑/白/灰中性色，层级靠排版与灰度，不靠色块。
+ * 任何视觉值改动，先改本文件；其余文件出现硬编码色值/字号/圆角即 lint 失败。
+ * ========================================================================== */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* 主题切换靠 [data-theme]，不用 .class（next-themes attribute="data-theme"） */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- 1) 真源变量（v5 Ollama 近单色，与 docs/design/ui-blueprint-prompt.md §三 同源） ---------- */
+:root,
+[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #fafafa;
+  --surface-2: #f4f4f4;
+  --border: #e5e5e5;
+  --border-hi: #d4d4d4;
+  --text: #0d0d0d;
+  --muted: #6b6b6b;
+  --faint: #a3a3a3;
+  --success: #16a34a;
+  --danger: #dc2626;
+  /* 终端命令块：全站唯一常驻深色组件，不随主题反转 */
+  --term-bg: #0d0d0d;
+  --term-text: #fafafa;
+  --term-faint: #737373;
+}
+
+[data-theme="dark"] {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface-2: #1f1f1f;
+  --border: #262626;
+  --border-hi: #333333;
+  --text: #fafafa;
+  --muted: #a3a3a3;
+  --faint: #525252;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --term-bg: #0d0d0d;
+  --term-text: #fafafa;
+  --term-faint: #737373;
+}
+
+/* ---------- 2) 注册为 Tailwind utility ---------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-hi: var(--border-hi);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-term-bg: var(--term-bg);
+  --color-term-text: var(--term-text);
+  --color-term-faint: var(--term-faint);
+
+  --radius-card: 12px;
+  --radius-ctl: 999px;
+  --radius-chip: 999px;
+
+  --font-sans:
+    Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Noto Sans SC", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- 3) 全局 ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 4) 动效（仅保留中性 shimmer；尊重 reduced-motion） ---------- */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* 加载进度条：中性灰脉冲，无渐变 */
+.loading-bar {
+  background: var(--surface-2);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--surface-2), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

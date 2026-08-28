@@ -1,0 +1,126 @@
+# AgentSignal —— 基线编排（生产形态）
+# 用法：
+#   生产       docker compose --profile prod up -d --build
+#   仅 API+PG  docker compose up -d --build（Postgres 为默认服务，见 standardize-node-postgres 决议）
+# 覆盖文件：
+#   docker-compose.dev.yml   （开发：热重载 + Vite dev server）
+#   docker-compose.test.yml  （测试：临时库 + e2e 一次性容器）
+# 所有取值来自 .env（复制 .env.example 修改），切勿把密钥写进本文件。
+
+name: agentsignal
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-api-env: &api-env
+  NODE_ENV: production
+  PORT: "3000"
+  HOST: 0.0.0.0
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  LOG_PRETTY: "0"
+  # 标准 Postgres（决议 2026-08-28-standardize-node-postgres）；默认指向下方 db 服务
+  DATABASE_URL: ${DATABASE_URL:-postgres://agentsignal:agentsignal@db:5432/agentsignal}
+  # 自注册门禁：生产默认关（M0–M3 管理员签发口径）
+  SELF_REGISTER_ENABLED: ${SELF_REGISTER_ENABLED:-0}
+  RATE_LIMIT_REGISTER_MAX: ${RATE_LIMIT_REGISTER_MAX:-1}
+  RATE_LIMIT_REGISTER_WINDOW: ${RATE_LIMIT_REGISTER_WINDOW:-1m}
+  AGENTSIGNAL_BASE_URL: ${AGENTSIGNAL_BASE_URL:-http://localhost:3000}
+  GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+  GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+  OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:-${AGENTSIGNAL_BASE_URL:-http://localhost:3000}/auth/callback}
+  RATE_LIMIT_WRITE_MAX: ${RATE_LIMIT_WRITE_MAX:-10}
+  RATE_LIMIT_WRITE_WINDOW: ${RATE_LIMIT_WRITE_WINDOW:-1m}
+  RATE_LIMIT_READ_MAX: ${RATE_LIMIT_READ_MAX:-60}
+  RATE_LIMIT_READ_WINDOW: ${RATE_LIMIT_READ_WINDOW:-1m}
+  BODY_LIMIT_BYTES: ${BODY_LIMIT_BYTES:-65536}
+  TOKEN_TTL_DAYS: ${TOKEN_TTL_DAYS:-90}
+  SIGNAL_DEFAULT_TTL_DAYS: ${SIGNAL_DEFAULT_TTL_DAYS:-7}
+
+services:
+  # ── API（含同域静态 UI 托管，@fastify/static）──────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-slim}
+    # 生产禁止用 latest：始终打不可变 tag（git sha 或语义版本）
+    image: ${IMAGE_REGISTRY:-ghcr.io/agentsignal}/agentsignal-api:${IMAGE_TAG:-0.1.0}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment: *api-env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── PostgreSQL（默认启用；标准存储，见 standardize-node-postgres 决议）──
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agentsignal}
+      # 本地默认与 DATABASE_URL 默认值一致；生产必须改强密码并显式设 DATABASE_URL
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentsignal}
+      POSTGRES_DB: ${POSTGRES_DB:-agentsignal}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentsignal} -d ${POSTGRES_DB:-agentsignal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+
+  # ── Caddy（生产：自动 HTTPS + 反向代理，API 不直接暴露宿主端口）────
+  caddy:
+    image: caddy:2-alpine
+    profiles:
+      - prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # 同上：不用 :? ；启用 prod profile 前必须设置 .env 里的 CADDY_DOMAIN
+      CADDY_DOMAIN: ${CADDY_DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging: *default-logging
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pg-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,43 @@
+# 测试环境覆盖：一次性临时数据（tmpfs）+ e2e 容器，跑完即退
+# 用法：docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from e2e
+# 说明：数据全部落在 tmpfs，容器销毁即清空，绝不污染开发/生产卷。
+
+services:
+  api:
+    build:
+      target: deps
+    command: ["node", "apps/api/src/index.ts"]
+    ports: []
+    environment:
+      NODE_ENV: test
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      LOG_PRETTY: "0"
+      DATABASE_URL: ${DATABASE_URL:-postgres://agentsignal:agentsignal@db:5432/agentsignal}
+      SELF_REGISTER_ENABLED: "1"
+      RATE_LIMIT_REGISTER_MAX: 100000
+      AGENTSIGNAL_BASE_URL: http://api:3000
+      GITHUB_CLIENT_ID: test-client-id
+      GITHUB_CLIENT_SECRET: test-client-secret
+      OAUTH_REDIRECT_URI: http://api:3000/auth/callback
+      RATE_LIMIT_WRITE_MAX: 10000
+      RATE_LIMIT_READ_MAX: 100000
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    volumes: []
+    security_opt: []
+    cap_drop: []
+
+  e2e:
+    build:
+      target: deps
+    command: ["pnpm", "run", "test:e2e"]
+    environment:
+      NODE_ENV: test
+      API_BASE_URL: http://api:3000
+      LOG_LEVEL: warn
+    volumes:
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+    depends_on:
+      api:
+        condition: service_healthy

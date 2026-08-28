@@ -1,0 +1,21 @@
+id: design-driven-ui-and-three-chains
+status: proposed
+created_at: 2026-08-28
+owner: project
+tags: [ui, three-chains, phase-1, design-driven]
+summary: |
+  基于 /design/ 54 张设计稿 v4 蓝图，一次性交付：
+  1) 三链路最小闭环（分享 → 检索 → 构建发布）后端端点；
+  2) P3 五屏最小可用前端 + P5 八屏全量；
+  3) 双主题 + 图纸标注层 + 设计稿像素级还原。
+  详细提案见 docs/design/design-driven-proposal.md。
+depends_on: []
+blocked_by: []
+supersedes: [publish-query-build, a2a-share-mvp]
+upstream_docs:
+  - docs/design/ui-blueprint-prompt.md  # 视觉真源 v4
+  - docs/design/web-ia.md               # 信息架构真源
+  - docs/design/frontend-architecture.md
+  - docs/design/backend-architecture.md
+  - docs/protocols/api.md (v0.2)
+  - docs/protocols/message-envelope.md (v0.2)

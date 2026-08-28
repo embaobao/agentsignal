@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgentSignal — 方案库</title>
+<style>
+  :root { --bg:#09090b; --surface:#111113; --line:#26262b; --fg:#e4e4e7; --muted:#a1a1aa; --accent:#22c55e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:16px; }
+  header h1 { font-size:16px; margin:0; font-weight:600; }
+  header .sub { color:var(--muted); font-size:12px; }
+  main { max-width:860px; margin:0 auto; padding:24px; }
+  .toolbar { display:flex; gap:8px; margin-bottom:20px; }
+  input, select { background:var(--surface); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:7px 10px; font-size:13px; }
+  input { flex:1; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:12px; }
+  .card .kind { font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; }
+  .card .digest { font-size:14px; margin:6px 0; }
+  .card .meta { color:var(--muted); font-size:12px; }
+  .card .meta span { margin-right:14px; }
+  .hidden { display:none; }
+  .detail h2 { font-size:18px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+  .detail pre { background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:12px; overflow:auto; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AgentSignal</h1>
+  <span class="sub">方案库 · Give your agent a memory.</span>
+</header>
+<main>
+  <div class="toolbar">
+    <input id="q" placeholder="检索方案：关键词或方案 id（如 sig_...）" />
+    <button id="go">检索</button>
+  </div>
+  <div id="list"></div>
+  <div id="detail" class="detail hidden"></div>
+</main>
+<script>
+  const $ = (s) => document.querySelector(s);
+  async function j(url) { const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }
+
+  async function list(q = "") {
+    $('#detail').classList.add('hidden');
+    const out = await (q
+      ? j(`/topics/ai-research/signals?limit=50&q=${encodeURIComponent(q)}`)
+      : j(`/topics/ai-research/signals?limit=50`));
+    const box = $('#list');
+    box.innerHTML = '';
+    for (const s of out.signals) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<div class="kind">${s.kind}</div>
+        <div class="digest">${escapeHtml(s.digest)}</div>
+        <div class="meta"><span># ${s.id}</span><span>sender ${s.sender}</span></div>`;
+      card.onclick = async () => await detail(s.id);
+      box.appendChild(card);
+    }
+  }
+
+  async function detail(id) {
+    const s = await j(`/signals/${id}?include=experience`);
+    $('#list').innerHTML = '';
+    const d = $('#detail');
+    d.classList.remove('hidden');
+    const body = s.experience?.body ? renderBody(s.experience.body) : '<p class="meta">（无正文）</p>';
+    d.innerHTML = `<div class="kind">${s.kind}</div><h2>${escapeHtml(s.digest)}</h2>
+      <div class="meta"><span># ${s.id}</span><span>sender ${s.sender}</span><span>tokens_est ${s.tokens_est}</span></div>
+      <div>${body}</div>
+      <p class="meta">▶ use：agentsignal use ${s.id}</p>`;
+  }
+
+  function renderBody(md) {
+    // 极简渲染：整段 HTML 转义后放 <pre> 原样呈现（不引入 md 解析器）
+    return `<pre>${md.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>`;
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  $('#go').onclick = () => list($('#q').value.trim());
+  $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') list($('#q').value.trim()); });
+  list();
+</script>
+</body>
+</html>

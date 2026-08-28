@@ -1,0 +1,12 @@
+{
+  "name": "@agentsignal/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "agentsignal-mcp": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "node src/index.ts"
+  }
+}

@@ -4,3 +4,9 @@ data/
 .env
 .agentsignal/
 *.log
+
+# ── 生成物 / 构建输出 ──────────────────────────────
+openapi.json            # 由 `bun run openapi` 生成（前端类型改由 protocol zod 推导，见 apps/ui/src/types/api.ts）
+apps/ui/dist/           # Vite 构建产物
+*.tsbuildinfo
+coverage/

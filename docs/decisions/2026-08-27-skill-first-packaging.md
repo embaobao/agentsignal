@@ -12,7 +12,7 @@
 
 ### ② `agentsignal-builder`(engineering · 开发者侧)
 
-- 位置:`packages/skills/builder/SKILL.md`;[implementation-plan](../design/implementation-plan-codex-v1.md) §81 启动 Prompt 的技能化终态。
+- 位置:`packages/skills/builder/SKILL.md`;[归档方案](../notes/2026-08-28-implementation-plan-codex-v1.md) §81 启动 Prompt 的技能化终态。
 - 内容=仓库地图、六端点与冻结 DDL 摘要、当前 M 关口与 Day 任务表、九步工作流、DoD 八件套、禁忌清单(不新增顶层目录/不动 v0.2 语义/零假数据…)、按需引用的 canonical 文件路径索引。
 - 目标读者:任何被拉进来干活的 coding agent(Codex/新 Claude 会话)——装入即具「读过全案」的工作状态,不再人工粘贴上下文。
 

@@ -32,5 +32,5 @@ stability.md R1–R4 全部关闭（R1 三命令修订版 ✅ · R2 凭证双轨
 站长澄清：**不是先搭消费框架，而是先验证经验能否被别人用起来；分享机制（供给侧工程）后置。**
 
 - **验证主线（P0 最小链）**：admin 发布（最简）→ GET signals → **use 最小件**（experience→本地 SKILL 物化）→ 他人 report。除此外一切分享便利化（publish 交互生成器/connect 完整版/MCP 五工具/积分/curator 工具）全部后置。
-- **里程碑重述**：M1 = 有入口能发（admin 级）→ 持久化；**M2 = 他人 Use 成功**（第二 agent 把经验物化为技能并可用，含断线恢复）——这是核心假设的正面验证；M3 = gate；M4 = testnet。
-- dev-plan 按「验证主线」重排（见该文件 v2 验证主线节）。
+- 里程碑重述：M1 = 有入口能发（admin 级）→ 持久化；**M2 = 他人 Use 成功**（第二 agent 把经验物化为技能并可用，含断线恢复）——这是核心假设的正面验证；M3 = gate；M4 = testnet。
+- 实施粒度按 [roadmap](../design/roadmap.md) §Phase 1 Day 表。

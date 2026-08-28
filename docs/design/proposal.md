@@ -2,11 +2,15 @@
 
 状态：待放行 · 汇总提案书（细则以 canonical 文档为准，本文为单一入口）
 
+> **UI 权威真源（设计完成后同步到所有前端实现）**：[ui-blueprint-prompt.md](ui-blueprint-prompt.md)（v5 · 2026-08-28 起单色极简，v4 工程图纸风已废弃）。
+> 关联 IA：[web-ia.md](web-ia.md)（八屏骨架 + 三栏布局 + 字段冻结）。
+> 产品对外第一眼：见 [product.md](product.md) 头部（给你 Agent 一个解决问题的能力 · 感知·复用·分享）。
+
 ## 一句话提案
 
 用**最少代码**验证一个假设——**一条经验能被另一个宿主的 Agent 物化为技能并成功使用**——并在此过程中落成可复用的经验标准、模板簇与双 Skill 交付物；分享机制的顺滑化工程在验证成功后才建。
 
-## 范围（P0 验证链 · 对应 dev-plan v2）
+## 范围（P0 验证链 · 对应 roadmap §Phase 1）
 
 | 包 | 交付 |
 |---|---|
@@ -21,7 +25,7 @@
 
 ## 技术栈（Bun-first，见决议）
 
-bun install/run/test · Fastify + zod · Kysely + node-pg-migrate · pino · PostgreSQL 16 · Docker（oven/bun 默认，node:22 回退）· TS strict 全仓 · 业务代码禁 bun:* 专有 API。
+bun install/run/test · Fastify + zod · PGlite（WASM PostgreSQL，`Db` 接口直写 PG SQL + 幂等迁移；Phase 2 换生产 PG 只换 driver）· pino · Docker（oven/bun 默认，node:22 回退）· TS strict 全仓 · 业务代码禁 bun:* 专有 API。前端：React 19 / Vite / Tailwind v4 / Base UI（瘦栈决议）。
 
 ## 里程碑与裁决点
 
@@ -67,4 +71,4 @@ tests/{api/,e2e/}  docker-compose.yml  .github/workflows/ci.yml(bun+node 双跑)
 
 1. 生成脚手架 + packages/protocol（D1 上午）
 2. builder SKILL 写入并装入工程 agent 工作流（D1 下午）
-3. 此后按 dev-plan Day 表推进，每 M 关口回本提案对账
+3. 此后按 roadmap §Phase 1 Day 表推进，每 M 关口回本提案对账

@@ -15,5 +15,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["apps/*/src/**/*.ts", "packages/*/src/**/*.ts", "tests/**/*.ts"]
+  // apps/ui 有自己的 tsconfig（含 DOM lib 与 react-jsx），不并入根工程
+  "include": [
+    "apps/api/src/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "apps/api/test/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["apps/ui", "node_modules"]
 }

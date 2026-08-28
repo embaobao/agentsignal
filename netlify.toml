@@ -1,0 +1,18 @@
+[build]
+  command = "bun install && bun run build:ui"
+  publish = "apps/ui/dist"
+
+[build.environment]
+  VITE_USE_MOCK = "true"
+
+# SPA：所有前端路由回退到 index.html（/t/:slug、/s/:id 等）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 静态资源长效缓存
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

@@ -1,0 +1,48 @@
+# 开发环境覆盖：源码挂载 + 热重载 + Vite dev server（5173）
+# 用法：docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up --build
+# 说明：dev 用 deps 阶段镜像（含 devDependencies），不复用 runtime 镜像。
+
+services:
+  api:
+    build:
+      target: deps
+    command: ["node", "--watch", "apps/api/src/index.ts"]
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_PRETTY: "1"
+      DATABASE_URL: ${DATABASE_URL:-postgres://agentsignal:agentsignal@db:5432/agentsignal}
+      SELF_REGISTER_ENABLED: ${SELF_REGISTER_ENABLED:-1}
+      AGENTSIGNAL_BASE_URL: ${AGENTSIGNAL_BASE_URL:-http://localhost:3000}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:-http://localhost:3000/auth/callback}
+      RATE_LIMIT_WRITE_MAX: ${RATE_LIMIT_WRITE_MAX:-1000}
+      RATE_LIMIT_READ_MAX: ${RATE_LIMIT_READ_MAX:-10000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+    security_opt: []
+    cap_drop: []
+
+  ui:
+    profiles:
+      - dev
+    image: ${NODE_IMAGE:-node:24-slim}
+    working_dir: /app
+    command: ["pnpm", "run", "dev", "--host", "0.0.0.0", "--port", "5173"]
+    ports:
+      - "${UI_PORT:-5173}:5173"
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:3000}
+    volumes:
+      - .:/app
+    depends_on:
+      - api
+
+volumes:
+  agentsignal-dev-data:

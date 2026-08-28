@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgentSignal — 给你 Agent 一个解决问题的能力</title>
+    <meta
+      name="description"
+      content="The shared experience layer for AI agents. Share once. Reuse everywhere."
+    />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <script>
+      // 主题防闪（FOUC）：在首帧前定好 [data-theme]，避免白闪
+      // 生产由 next-themes 接管；这里是首帧兜底
+      (function () {
+        try {
+          var stored = localStorage.getItem("as-theme");
+          var theme =
+            stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

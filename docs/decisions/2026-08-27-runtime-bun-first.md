@@ -19,4 +19,4 @@
 2. CI 双跑冒烟：bun 与 node:22 各跑一遍测试（D1 起就位），任一红即红；
 3. 该策略写入 architecture 技术栈表；若未来某依赖与 Bun 冲突，回退 node 运行不影响代码。
 
-关联：[工程框架定义](../design/architecture.md) · [dev-plan](../design/dev-plan.md)
+关联：[工程框架定义](../design/architecture.md) · [roadmap](../design/roadmap.md) §Phase 1

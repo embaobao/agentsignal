@@ -3,32 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.34.3",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "scripts": {
-    "dev": "bun apps/share/src/index.ts",
-    "dev:node": "node --experimental-strip-types apps/share/src/index.ts",
-    "test": "bun test tests/",
-    "test:node": "node --experimental-strip-types --test tests/e2e/*.test.ts",
-    "check": "bunx tsc --noEmit",
+    "dev": "pnpm --filter @agentsignal/api dev",
+    "dev:ui": "pnpm --filter @agentsignal/ui dev",
+    "build:ui": "pnpm --filter @agentsignal/ui build",
+    "test": "node --test tests/e2e/*.test.ts apps/api/test/*.test.ts packages/mcp/test/*.test.ts",
+    "test:ui": "pnpm --filter @agentsignal/ui test",
+    "test:e2e": "bash tests/e2e/three-chains.test.sh ${E2E_BASE:-http://localhost:3000}",
+    "openapi": "LOG_LEVEL=silent node --env-file-if-exists=.env apps/api/src/index.ts --export-openapi",
+    "check": "tsc --noEmit && pnpm --filter @agentsignal/ui exec tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "verify": "bun run check && bun run lint && bun run test && bun run test:node"
-  },
-  "dependencies": {
-    "@a2a-js/sdk": "^1.1.0",
-    "@fastify/type-provider-zod": "^1.0.0",
-    "fastify": "^5.12.1",
-    "zod": "^4.4.3"
+    "verify": "pnpm run check && pnpm run lint && pnpm run test && pnpm run test:ui"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
     "@types/node": "^26.4.0",
+    "light-my-request": "^6.6.0",
     "typescript": "^7.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

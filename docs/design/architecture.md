@@ -85,11 +85,11 @@ docker-compose.yml   PG16 单服务起步
 
 | 面 | 选择 | 备注 |
 |---|---|---|
-| 运行时 | **Bun-first · Node-safe**（bun install/run/test；业务代码仅标准 Node API，node:22 一键回退，CI 双跑冒烟） | [运行时决议](../decisions/2026-08-27-runtime-bun-first.md) |
+| 运行时 | **Node ≥22.18 LTS + pnpm 10**（type stripping 直跑 TS；CI 跑 Node 24。取代 Bun-first，见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)） | 同左 |
 | 语言 | TypeScript strict 全仓（bun 直跑，免编译层） | 包间仅经 protocol 类型耦合 |
 | HTTP | Fastify + zod 边界校验 | 外部输入一律 schema 验证 |
-| DB 访问 | Kysely（类型化 SQL） | 无重型 ORM |
-| 迁移 | node-pg-migrate | DDL 以 architecture 本节为准 |
+| DB 访问 | **标准 Postgres（node-postgres）+ `Db` 接口直写 PG SQL**（`apps/api/src/db/client.ts`；无 ORM/查询构造器） | PGlite（WASM）仅存于测试夹具；见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) |
+| 迁移 | 幂等 SQL 迁移（`apps/api/src/db/migrations.ts` + `schema_meta` 版本表） | DDL 以 architecture 本节为准 |
 | 日志 | pino 结构化 | 事件名见 §日志事件 |
 | ID | ulidx | ULID v0.1 冻结决定 |
 | 测试 | bun test（内置） | M2 起断线恢复用例强制随 PR |

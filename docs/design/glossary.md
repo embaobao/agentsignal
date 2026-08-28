@@ -41,10 +41,9 @@
 | Participant / Builder 双 Skill 打包 | [skill-first 决议](decisions/2026-08-27-skill-first-packaging.md) | D1 起 |
 | 经验结构与版本（anatomy/versioning） | [experience.md](design/experience.md) | 即刻生效 |
 | Testnet 七日实验 | [validation.md](design/validation.md) Exp001 | M4 |
-| 经验结构与版本（anatomy/versioning） | [experience.md](design/experience.md) | 即刻生效 |
 | 稳定性与集成（三命令/引用/红线） | [stability.md](design/stability.md) | R1–R4 待裁 |
 | MCP 五工具镜像 | [mcp-early-access 决议](decisions/2026-08-27-mcp-early-access.md) | P2 末 |
-| 功能开发方案与优先级（v2 Use-First 验证序） | [dev-plan.md](design/dev-plan.md) | 执行层 |
+| 功能开发方案与优先级（v2 Use-First 验证序） | [roadmap.md](design/roadmap.md) §Phase 1 · [proposal.md](design/proposal.md) | 执行层 |
 | 开发提案书（单一入口） | [proposal.md](design/proposal.md) | 待放行 |
 | 运行时 Bun-first/Node-safe | [runtime 决议](decisions/2026-08-27-runtime-bun-first.md) | D1 起 |
 | 经验创建标准·模板簇·闭环 | [experience-standards-loop 决议](decisions/2026-08-27-experience-standards-loop.md) + templates/EXPERIENCE.md · OUTCOME.md | 即刻生效 |

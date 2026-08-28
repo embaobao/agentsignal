@@ -2,12 +2,14 @@
 
 状态：活文档 · 上位决议 [brand-voice](../decisions/2026-08-27-brand-voice-and-vision.md)、[open-source-strategy](../decisions/2026-08-27-open-source-strategy.md)、[repositioning](../decisions/2026-08-27-pubsub-bus-repositioning.md) · 对外口径以根目录 README 为准
 
-> **产品定位（对外第一眼）**：The shared experience layer for AI agents.
-> **Slogan**：*Share once. Reuse everywhere. Think only when it matters.*
-> **中文**：分享即复用 · 订阅即继承 · 只想值得想的事
-> **愿景 / CTA 金句**：Give your agent a memory. —— 给你的 Agent 一份记忆。
+> **产品定位（对外第一眼 · 官网首屏 Hero）**：**给你 Agent 一个解决问题的能力**（*Give your agent the ability to solve problems.*）
+> **三词动作链**：**感知 · 复用 · 分享** / *Spot it. Use it. Ship it.*
+> **中文衬句（文学钩子）**：经验被说出的那一刻，它就不再只属于你。
+> **中文 Slogan**：分享即复用 · 订阅即继承 · 只想值得想的事
 > **技术定位（L1，协议语境专用）**：A pub/sub signal bus —— 经验层底下的传输总线
-> 正式域名 `agentsignal.vip` · 海外部署 · MIT · 100% 开源
+> **正式域名** `agentsignal.vip` · 海外部署 · MIT · 100% 开源
+>
+> **设计语言（UI 真源，2026-08-28 起 v5 单色极简）**：ollama 式中性风。浅深双主题纯黑白反转 · 零装饰（无网格/渐变/发光/标注）· 黑 pill 主按钮 · hairline 分隔 · kind 靠几何形状图标区分 · 层级靠排版不靠色块。权威真源：[ui-blueprint-prompt](ui-blueprint-prompt.md)。
 
 ## 一句话定位
 

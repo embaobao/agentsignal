@@ -1,0 +1,512 @@
+# 容器化部署与运维手册
+
+> 状态：**实施蓝本** · 2026-08-28 v1 · 配套 [瘦栈实施方案](lean-stack-implementation-plan.md) · 决议 [2026-08-28-container-deployment](../decisions/2026-08-28-container-deployment.md)
+> 上位约束：`AGENTS.md`（Node ≥22.18 + pnpm 标准化，见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)）· [architecture.md](architecture.md)（工程框架/冻结 DDL）· [backend-architecture.md](backend-architecture.md)
+> 工程文件（仓根）：`Dockerfile` · `docker-compose.yml` · `docker-compose.dev.yml` · `docker-compose.test.yml` · `Caddyfile` · `.env.example` · `.dockerignore` · `scripts/backup.sh` · `scripts/restore.sh`
+
+---
+
+## 1. 部署拓扑与服务划分
+
+```text
+                        ┌──────────────────────────────────────┐
+   Internet  :80/:443 ─▶│  caddy (profile=prod)                │ 自动 HTTPS · 反代 · 安全头
+                        └───────────────┬──────────────────────┘
+                                        │ api:3000（容器网络内）
+                        ┌───────────────▼──────────────────────┐
+                        │  api  Fastify + Node ≥22.18          │
+                        │   · REST v0.2 + /skills 总入口         │
+                        │   · @fastify/static 同域托管 apps/ui   │
+                        │   · node-postgres → PostgreSQL       │
+                        │   · pino JSON → stdout               │
+                        └───────┬───────────────────┬──────────┘
+                                │                   │
+                    ┌───────────▼────────┐   ┌──────▼──────────┐
+                    │ 卷 agentsignal-data│   │ db (profile=pg) │ Phase 2 才启用
+                    │ —（数据在 PG 卷）   │   │ postgres:16     │ SQL 同方言
+                    └────────────────────┘   └─────────────────┘
+```
+
+| 服务 | 镜像 | Profile | 职责 | 何时启动 |
+|---|---|---|---|---|
+| `api` | 自建 `agentsignal-api:<tag>`（基 `node:24-slim`） | 默认 | REST API + 同域静态 UI + 健康检查 | 总是 |
+| `db` | `postgres:16-alpine` | `pg` | Phase 2 主库 | `DB_DRIVER=pg` 时 |
+| `caddy` | `caddy:2-alpine` | `prod` | 自动 HTTPS + 反代 + 访问日志 | 生产 |
+| `ui`（dev） | `oven/bun:1-slim` | `dev` | Vite dev server（HMR） | 仅开发 |
+| `e2e`（test） | 同 api 构建 | 测试覆盖文件 | 一次性跑完即退 | 仅测试 |
+
+**设计取舍**：
+
+- **单进程单服务**：P3/P5 只有 `api` 一个常驻服务。前端是静态产物，由 `@fastify/static` 同域托管——省掉一个 Nginx/前端服务、省掉跨域与双域名。
+- **标准 Postgres**：node-postgres 驱动 + `Db` 接口直写 PG SQL（见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代 storage-pglite）；compose 的 `db` 服务（postgres:16-alpine）为默认依赖，本地开发 `docker compose up -d db`。
+- **不用 K8s / 微服务 / 消息队列**：与 AGENTS.md 排除项一致。
+
+### 1.1 镜像依赖
+
+| 层 | 内容 | 备注 |
+|---|---|---|
+| 基础运行时 | `node:24-slim`（Debian slim + glibc） | pnpm 经 corepack 启用（packageManager 字段锁版本） |
+| Stage 1 `deps` | + `python3 make g++`（原生模块编译兜底）+ 全量依赖 | 与 dev/test 共享 |
+| Stage 2 `build` | + 源码 + `pnpm run check`（tsc 门禁）+ UI 产物 | 编译失败即构建失败 |
+| Stage 3 `runtime` | + `ca-certificates tar` + **仅生产依赖** + 源码 + UI dist | 最终产物（无原生模块，无需编译工具链） |
+| 非 root | 固定 uid/gid `10001`（`app:app`） | 不依赖基础镜像自带用户 |
+| 体积预估 | ~150 MB（bun slim ~90 MB + node_modules ~50 MB + 源码 ~1 MB） | `docker images` 实测为准 |
+
+**Dockerfile 三条硬约束**（改动前必读，已写在文件头注释）：
+
+1. **运行时不做 bundle**：`apps/api/src/server.ts` 用 `import.meta.url` 读 `packages/skills/participant/SKILL.md` 与 `apps/api/src/ui.html`，打包成单文件会让这两个路径失效。要改打包，先做任务 **C7（静态资源路径可配置化）**。
+2. **`packages/*` 源码必须进镜像**：`@agentsignal/protocol` 是 workspace 依赖，Node type-stripping 直跑时实时解析。
+3. **`COPY --parents` 需 BuildKit ≥1.7 / Docker ≥25**，好处是新增 workspace 包无需改 Dockerfile。
+
+### 1.2 端口映射
+
+| 服务 | 容器端口 | dev（宿主） | test（宿主） | prod（宿主） | 说明 |
+|---|---|---|---|---|---|
+| `api` | 3000 | `${API_PORT:-3000}` | 不映射 | **不映射** | 生产只经 caddy 暴露；调试用 `docker compose exec` |
+| `ui` (dev) | 5173 | `${UI_PORT:-5173}` | — | — | Vite HMR |
+| `db` | 5432 | 可选 `5432` | 不映射 | 不映射 | 仅 profile=pg |
+| `caddy` | 80 / 443 / 443udp | — | — | `80` `443` `443/udp` | udp 为 HTTP/3 |
+
+### 1.3 数据卷挂载
+
+| 卷 | 挂载点 | 类型 | 内容 | 备份 |
+|---|---|---|---|---|
+| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PostgreSQL 数据目录 | 备份走 `pg_dump`/`pg_basebackup`（脚本待随 T3–T5 演练更新） |
+| `agentsignal-dev-data` | `/app/data` | 命名卷（dev） | 开发数据，与生产隔离 | 不需要 |
+| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PG 数据目录 | `pg_dump` |
+| `caddy-data` / `caddy-config` | `/data` `/config` | 命名卷 | ACME 证书与配置 | 证书可重签，建议留 |
+| 源码（dev） | `./apps/api/src` `./packages` | bind mount | 热重载 | — |
+| `/tmp`（test） | tmpfs 256m | tmpfs | 测试库，销毁即清 | — |
+
+> **禁止**：把数据卷放在 NFS/SMB/FUSE 网络盘上——文件系统锁在网盘上不可靠，会静默损坏。
+
+### 1.4 启动顺序与依赖
+
+```text
+1. db（profile=pg，healthcheck: pg_isready）          ← 仅 Phase 2
+2. api（depends_on: db condition=service_healthy, required=false）
+   └─ 启动时：env 校验(zod) → 迁移 up（幂等 SQL）→ 连接就绪 → /readyz 变绿 → 监听 3000
+3. caddy（depends_on: api condition=service_healthy）
+4. e2e（测试覆盖，depends_on: api condition=service_healthy，跑完退出）
+```
+
+`depends_on` 用 `required: false` 是关键：db 在 profile 里未启用时，api 不等待、直接启动。
+
+**应用内启动序列**（`apps/api/src/index.ts`，任务 C1 交付）：
+
+```
+loadEnv(zod) → buildApp() → await migrateToLatest() → store.ready()
+   → registerRoutes → app.listen({ port, host }) → 就绪（/readyz 200）
+```
+
+任一步失败 → 非零退出（**不要吞异常启动**），由 `restart: unless-stopped` + 告警接住。
+
+---
+
+## 2. 三环境操作手册
+
+> 前置：`cp .env.example .env` 并按环境改；Docker ≥25（BuildKit）；`docker compose version` ≥ v2.24。
+
+### 2.1 开发（dev）
+
+```bash
+# 构建 + 启动（API 热重载 + Vite dev server）
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up --build
+
+# 仅起 API（不跑前端）
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build api
+
+# 停（保留数据卷）
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# 重置开发数据（危险：清空 dev 卷）
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+```
+
+- API：`http://localhost:3000` · UI：`http://localhost:5173`
+- `LOG_PRETTY=1` 人类可读；限频放宽到 1000/10000，避免自测误伤
+- 源码改动即热重载（`node --watch`）；新增依赖需 `up --build`
+
+### 2.2 测试（test）
+
+```bash
+# 一次性跑完整 e2e（数据落 tmpfs，跑完全清）
+docker compose -f docker-compose.yml -f docker-compose.test.yml \
+  up --build --abort-on-container-exit --exit-code-from e2e
+
+# 退出码即测试结果：0=通过，非0=失败
+docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
+```
+
+- 单元测试在宿主跑更快：`bun run test`（bun test）+ `bun run test:node`（node:test 双跑）+ `bun run test:ui`（vitest）
+- CI 顺序：`check → lint → test → test:node → test:ui → build 镜像 → test:e2e（compose）`
+
+### 2.3 生产（prod）
+
+```bash
+# 1. 取不可变 tag（禁止 latest）
+export IMAGE_TAG="$(git rev-parse --short HEAD)"     # 或语义版本 v0.1.0
+
+# 2. 构建并推送（CI 中执行；本地等价命令）
+docker compose build api
+docker push "${IMAGE_REGISTRY:-ghcr.io/agentsignal}/agentsignal-api:${IMAGE_TAG}"
+
+# 3. 发布（先把 .env 的 IMAGE_TAG 改成同一值）
+docker compose --profile prod pull          # 若镜像来自 registry
+docker compose --profile prod up -d --build
+
+# 4. 观察
+docker compose ps                            # 关注 STATUS=healthy
+curl -fsS https://${CADDY_DOMAIN}/healthz
+curl -fsS https://${CADDY_DOMAIN}/readyz
+
+# 5. 停（保留卷）
+docker compose --profile prod down
+```
+
+**发布前置检查清单**：
+
+| # | 检查 | 命令 |
+|---|---|---|
+| 1 | `bun run verify` 全绿 | check + lint + test + test:node + test:ui |
+| 2 | 迁移已 review（可前滚、旧代码兼容） | 见 §6.4 |
+| 3 | 备份已执行 | `./scripts/backup.sh` |
+| 4 | 镜像 tag 非 latest | `docker compose config --images` |
+| 5 | 密钥不在镜像内 | `docker run --rm <img> env \| grep -i secret`（应为空） |
+
+### 2.4 日志查看
+
+```bash
+docker compose logs -f --tail=200 api          # 实时跟
+docker compose logs --since 30m api            # 时间窗
+docker compose logs --since 1h api 2>&1 | grep '"level":50'   # 只看 error（pino level 数值）
+docker compose logs -f --tail=100 caddy        # 访问日志/证书签发
+
+# 结构化日志用 jq 解析（LOG_PRETTY=0 时每行一个 JSON）
+docker compose logs --no-log-prefix api | jq -c 'select(.reqId != null) | {t:.time,lvl:.level,msg:.msg,url:.url,status:.status,ms:.durationMs}'
+
+# 宿主日志轮转由 compose logging 驱动控制：json-file max-size=10m × max-file=5（每个服务约 50MB 上限）
+```
+
+### 2.5 版本回滚
+
+```bash
+# ① 确认当前版本
+docker compose config --images | grep api        # 或查 backups/images-<stamp>.txt
+
+# ② 回滚代码（换 tag 重建容器；镜像本地无缓存则从 registry 拉）
+export IMAGE_TAG=<上一个已知良好 tag>
+docker compose --profile prod up -d api
+
+# ③ 等待健康
+docker compose ps api                            # STATUS 必须 healthy
+curl -fsS https://${CADDY_DOMAIN}/readyz
+
+# ④ 跑三链路冒烟（见 backend-architecture §十一）
+bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
+
+# ⑤ 失败则连数据一起回滚（会丢失回滚点之后写入的数据）
+./scripts/restore.sh backups/pglite-<目标时间点>.tar.gz
+
+# ⑥ 记录：原因/影响/修复 写 docs/notes/YYYY-MM-DD-rollback-<tag>.md
+```
+
+**回滚铁律**：
+
+- 代码回滚**不等于**数据回滚。默认只回滚代码；只有出现数据损坏才动数据。
+- 迁移必须遵守 **expand → migrate → contract 三阶段**（§6.4），保证「新 schema 能被旧代码跑」，这样代码随时可独立回滚。
+- 已执行 contract（删列/改名）的发布**不可回滚代码**，只能前滚修复。因此 contract 必须单独一个发布、观察至少一个发布周期。
+
+---
+
+## 3. 环境变量全表
+
+> 权威可复制版本见仓根 `.env.example`。下表补充语义与边界；**默认值即生产建议值**，dev/test 的放宽值在 compose 覆盖文件里。
+
+### 3.1 镜像与构建
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `BUN_IMAGE` | `oven/bun:1-slim` | 基础镜像；换 alpine 可行（无原生模块），切换前实机验证 |
+| `IMAGE_REGISTRY` | `ghcr.io/agentsignal` | 镜像仓库 |
+| `IMAGE_TAG` | `0.1.0` | **生产必须不可变 tag**（git sha 或语义版本），禁 `latest` |
+
+### 3.2 API 运行时
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `NODE_ENV` | `production` | compose 内固定，不从 .env 读 |
+| `PORT` | `3000` | 容器内监听端口 |
+| `HOST` | `0.0.0.0` | 必须为 `0.0.0.0`，容器内网才可访问 |
+| `LOG_LEVEL` | `info` | `trace\|debug\|info\|warn\|error\|fatal`；生产 `info`，排障临时 `debug` |
+| `LOG_PRETTY` | `0` | `1`=pino-pretty（仅 dev）；生产必须 `0`（结构化 JSON 便于采集） |
+| `BODY_LIMIT_BYTES` | `65536` | 请求体上限，Token Firewall Server Filter 层 |
+
+### 3.3 存储
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `DB_DRIVER` | `pglite` | `pglite`=内嵌 WASM PostgreSQL（P3/P5）\| `pg`=Phase 2 真实 PostgreSQL |
+| `DATA_DIR` | `/app/data` | PGlite 数据目录；容器内路径，对应命名卷 |
+| `DATABASE_URL` | 空 | `DB_DRIVER=pg` 时必填：`postgres://user:pass@db:5432/agentsignal` |
+
+### 3.4 站点与身份
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `AGENTSIGNAL_BASE_URL` | `http://localhost:3000` | 对外基址；影响 `/skills` 里分享提示词的 URL |
+| `OAUTH_REDIRECT_URI` | `${BASE}/auth/callback` | 必须与 GitHub OAuth App 配置**逐字符一致** |
+| `CORS_ORIGIN` | `http://localhost:5173` | 生产同域托管，`*` 或留空即可；dev 放开 5173 |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 空 | 留空时 05 身份屏不可用，**其余端点不受影响**（fail-soft） |
+
+### 3.5 限频与生命周期（Token Firewall）
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `RATE_LIMIT_WRITE_MAX` / `_WINDOW` | `10` / `1m` | 写操作 per agent（publish/register） |
+| `RATE_LIMIT_READ_MAX` / `_WINDOW` | `60` / `1m` | 读操作 per IP；超了返回 429 + `Retry-After` |
+| `TOKEN_TTL_DAYS` | `90` | `ags_` token 有效期 |
+| `SIGNAL_DEFAULT_TTL_DAYS` | `7` | 信封默认 TTL（服务端推导 `expires_at`） |
+
+### 3.6 前端构建期（`VITE_` 前缀会内联进产物，非运行时密钥）
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `VITE_API_BASE` | `/api` | 生产同域用相对路径；dev 覆盖为 `http://localhost:3000` |
+| `VITE_SITE_URL` | `https://agentsignal.vip` | 站点绝对地址 |
+
+### 3.7 网关与数据库
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `CADDY_DOMAIN` | `agentsignal.vip` | profile=prod 必填 |
+| `ACME_EMAIL` | 空 | 证书到期通知；为空走 Caddy 默认注册 |
+| `POSTGRES_USER` / `_PASSWORD` / `_DB` | `agentsignal` / 空 / `agentsignal` | profile=pg；密码必填 |
+
+### 3.8 备份与管理（Phase 1B 预留）
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `BACKUP_DIR` | `./backups` | 备份落盘目录（应在宿主持久化盘，最好异地） |
+| `BACKUP_RETENTION_DAYS` | `14` | 按 mtime 清理 |
+| `AS_ADMIN_USER` / `AS_ADMIN_PASS_BCRYPT` / `AS_ADMIN_SINGLE` | 空 / 空 / `n` | audit-restore 管理后台；**当前不启用** |
+
+**环境变量校验**（任务 C2）：`apps/api/src/env.ts` 用 zod 在启动时校验，缺失即 **fail-fast 非零退出**，不允许带着半套配置启动。
+
+---
+
+## 4. 健康检查
+
+### 4.1 端点契约
+
+| 端点 | 语义 | 成功响应 | 失败 |
+|---|---|---|---|
+| `GET /healthz` | **liveness**：进程活着即可，不查依赖 | `200 {"status":"ok","uptimeSec":123,"version":"<tag>"}` | 进程挂 → 连接失败 |
+| `GET /readyz` | **readiness**：可对外服务 | `200 {"status":"ready","store":"up","migration":"001_init","driver":"pglite"}` | `503 {"status":"degraded","store":"down"}` |
+
+规则：
+
+- 两端点**不打业务日志**（`logLevel: 'silent'` 或在 hooks 里跳过），避免刷爆日志。
+- `/readyz` 做一次轻量真实查询（`SELECT 1`），不做重活、不查全表。
+- `/readyz` 失败 → compose 判定 unhealthy → caddy 上游摘除 → `restart: unless-stopped` 重启。
+
+### 4.2 探针配置对照
+
+| 层 | 配置 | 值 |
+|---|---|---|
+| Dockerfile | `HEALTHCHECK` | `--interval=30s --timeout=5s --start-period=15s --retries=3`，用 `bun -e fetch(...)`（不引入 curl） |
+| compose `api` | `healthcheck.test` | 同上（compose 覆盖 Dockerfile 的探针） |
+| compose `db` | `pg_isready -U <user> -d <db>` | `interval=10s retries=5 start_period=20s` |
+| 依赖等待 | `depends_on.<svc>.condition` | `service_healthy` |
+
+### 4.3 命令
+
+```bash
+docker compose ps                              # 看 (healthy) / (unhealthy)
+docker inspect --format '{{json .State.Health}}' $(docker compose ps -q api) | jq
+curl -fsS https://${CADDY_DOMAIN}/healthz || echo "liveness FAIL"
+curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
+```
+
+---
+
+## 5. 日志收集
+
+### 5.1 输出规范
+
+- 全部走 **stdout / stderr**，应用**不写日志文件**（容器 Twelve-Factor）。
+- `LOG_PRETTY=0` 时 pino 输出 JSON，标准字段：
+
+| 字段 | 说明 |
+|---|---|
+| `time` / `level` / `msg` | pino 基础（`level` 为数值：30=info 50=error） |
+| `reqId` | Fastify `genReqId`，贯穿一次请求，排障主索引 |
+| `method` `url` `status` `durationMs` | Fastify 请求日志 |
+| `agentId` | 命中的 agent（`agt_`），用于限频/审计归因 |
+| `event` | 业务事件名，取值见 `architecture.md §日志事件`（`agent.register` / `agent.publish` / `signal.created` / `signal.gated` / `auth.failed` / `rate_limit.hit` …） |
+
+### 5.2 采集与留存
+
+| 层 | 方案 |
+|---|---|
+| 容器 | `json-file` + `max-size=10m` + `max-file=5`（每服务约 50 MB 上限，防打满宿主盘） |
+| 宿主 | `docker compose logs` 直接看；按 `reqId` 聚合 |
+| 集中式（可选，P6） | 加 `logging.driver: loki` + `loki-api-url`（需装 docker loki 插件），或用 Vector/Fluent Bit 读 `/var/lib/docker/containers/*.log` 转发 |
+| 告警（P6） | error 率、5xx 率、`/readyz` 连续失败、磁盘卷水位 |
+
+### 5.3 禁录清单（安全红线）
+
+**绝不落日志**：`ags_` token 明文、`Authorization` 头、`GITHUB_CLIENT_SECRET`、experience 正文全文、完整请求体（只记 digest 前 120 字符与字节数）。
+落地方式：pino `redact: { paths: ['req.headers.authorization', '*.token', '*.password'], censor: '[REDACTED]' }`，并在单测中加一条「日志不含明文 token」断言（瘦栈方案 M1.8 已有）。
+
+---
+
+## 6. 数据持久化
+
+### 6.1 存储形态
+
+| 阶段 | 形态 | 位置 | 并发模型 |
+|---|---|---|---|
+| P3/P5 | PGlite（WASM PostgreSQL） | 卷 `agentsignal-data` → `/app/data/`（目录型） | 单进程内嵌，够用 |
+| Phase 2 | PostgreSQL 16 | 卷 `pg-data` | MVCC |
+
+PGlite 启动参数与注意（应用启动即建连）：
+
+```text
+new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用）
+迁移幂等：所有 DDL 用 create table / create index if not exists
+外键与约束原生可用（真 PG），无需 PRAGMA
+无 SQLITE_BUSY：写入由 PGlite 串行处理，失败即抛错不静默
+```
+
+### 6.2 备份
+
+```bash
+./scripts/backup.sh                    # → backups/pglite-<UTC时间戳>.tar.gz
+./scripts/backup.sh /mnt/backup        # 指定目录（建议指向独立盘/异地）
+```
+
+- PGlite 是目录型数据：**禁止 `cp`/`tar` 活库**（写入中途会拿到不一致快照）。做法是先停 API（停写）→ 打包 → 立刻起 API，停机窗口通常 <2s。
+- 同时记录 `backups/images-<stamp>.txt`（当前镜像 tag ↔ 数据结构版本对应）。
+- 保留 `BACKUP_RETENTION_DAYS=14`；建议宿主 cron 每日一次：
+
+```cron
+0 3 * * * cd /srv/agentsignal && ./scripts/backup.sh >> /var/log/agentsignal-backup.log 2>&1
+```
+
+### 6.3 还原
+
+```bash
+./scripts/backup.sh                       # 先给当前状态留底
+./scripts/restore.sh backups/pglite-20260828T120000Z.tar.gz
+```
+
+脚本行为：停 api → 完整性校验（`PRAGMA integrity_check`）→ 覆盖（并清 `-wal`/`-shm`）→ 起 api → 轮询 `/readyz`。需交互输入 `YES` 确认。
+
+### 6.4 迁移与回滚约束
+
+| 规则 | 说明 |
+|---|---|
+| 迁移工具 | `apps/api/src/db/migrations.ts`，原生 PostgreSQL DDL，`create ... if not exists` 保证幂等；版本记录在 `schema_meta` |
+| 启动时机 | 应用启动时自动 `migrateToLatest()`，**不支持**运行时关闭（避免跑着旧 schema） |
+| 三阶段 | **expand**（加列/加表，可空）→ **migrate**（双写/回填）→ **contract**（删旧列，单独一个 release） |
+| 回滚边界 | expand/migrate 阶段发布的代码**可独立回滚**；contract 发布后**不可回滚代码**，只能前滚 |
+| 破坏性变更 | 必须先 expand 一个完整发布周期，观察无问题再 contract |
+
+### 6.5 容量与监控基线
+
+| 项 | 基线 |
+|---|---|
+| 卷水位告警 | > 70% 提示，> 85% 告警 |
+| 单库体积 | PGlite 数据目录 < 10 GB 内无压力；超了就是切真实 PG 的信号 |
+| 备份校验 | 每月做一次「还原到临时容器 + 冒烟」演练，光有备份不算数 |
+
+---
+
+## 7. 安全基线
+
+| 项 | 措施 |
+|---|---|
+| 非 root | 固定 uid/gid `10001`，`USER app` |
+| 权限 | `cap_drop: [ALL]` + `no-new-privileges:true`（dev 覆盖文件里放开以便调试） |
+| 密钥 | 全部经 .env / CI secrets 注入；**不进镜像、不进 git**（`.env` 已在 .dockerignore 与 .gitignore） |
+| 网络 | 生产 `api` 只 `expose` 不 `ports`，外网仅经 caddy |
+| 传输 | caddy 自动 HTTPS + HSTS；容器内 HTTP |
+| 镜像 | tag 不可变；依赖 `bun install --frozen-lockfile`（lock 变了构建失败，防止偷偷升级） |
+| 日志 | token/secret 走 pino redact |
+| 资源限制（可选，建议加） | 见下 |
+
+可选资源限制（按需在 compose 的 `api` 服务加）：
+
+```yaml
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+        reservations: { memory: 128M }
+```
+
+---
+
+## 8. 故障速查
+
+| 现象 | 排查 | 处理 |
+|---|---|---|
+| 容器 `unhealthy` | `docker inspect` 看 Health 输出；`logs` 看启动异常 | 多半是迁移失败或 `/readyz` 查库失败；修数据或回滚镜像 |
+| 启动即退出 | `docker compose logs api`（常见：env 校验失败、`DATABASE_URL` 缺失、端口被占） | 按 zod 报错补 env |
+| PGlite 写冲突 / 多实例 | PGlite 是单进程 WASM 库，横向扩容会写冲突 | 仅凭单实例跑；扩容前必须切 `DB_DRIVER=pg`（Phase 2） |
+| 备份还原后数据旧 | 用了 `cp` 而非 `.backup` | 一律走 `scripts/backup.sh` |
+| caddy 证书签发失败 | 域名解析/80 端口未通 | `docker compose logs caddy`；确认 DNS 与防火墙 |
+| 磁盘满 | `docker system df`；日志膨胀 | `docker system prune` + 检查 logging 配置 |
+| 发布后 500 激增 | 看 `level:50` 日志 + `reqId` | 回滚代码（§2.5） |
+
+---
+
+## 9. 海外静态部署（Vercel / Netlify）—— 部署即验证
+
+**目标**：让 MVP 在海外平台一键部署、无需自建后端即可看到完整界面，直接验证产品形态。
+**底座**：前端是纯静态 SPA（`apps/ui`，Vite 构建产物 `apps/ui/dist`），与后端解耦，天然适合 Vercel/Netlify。
+
+### 9.1 两种模式
+
+| 模式 | 配置 | 数据来源 | 适用 |
+|---|---|---|---|
+| **Mock 演示**（默认） | `VITE_USE_MOCK=true` | 前端内置 mock（真实感中文 RAG 内容，校验逻辑与服务端同口径） | 零后端、纯看界面与交互验证 |
+| **接真后端** | `VITE_USE_MOCK=false` + `VITE_API_BASE=<后端 URL>` | 你独立部署的 API（见 §1 Docker / Phase 2 PG） | 真实数据闭环 |
+
+> `vercel.json` 与 `netlify.toml` 已默认 `VITE_USE_MOCK=true`——**连仓库即部署，打开就是有数据的界面**。
+> 要接真后端：在平台环境变量里把 `VITE_USE_MOCK` 清空、填 `VITE_API_BASE` 为你的 API 域名，重新部署即可。
+
+### 9.2 Vercel（原生支持 bun，推荐）
+
+- 导入仓库 → Framework 选 **Vite**（或留空，由 `vercel.json` 驱动）。
+- 构建命令 `cd apps/ui && bun run build`，输出 `apps/ui/dist`，已由 `vercel.json` 指定。
+- SPA 回退与静态资源长效缓存在 `vercel.json` 配好。
+- 部署完直接访问预览 URL 即可看到界面（mock 模式）。
+
+```bash
+# 或本地预构建后用 CLI 部署（跳过构建镜像差异）
+bun run build:ui && bunx vercel deploy --prebuilt apps/ui/dist
+```
+
+### 9.3 Netlify
+
+- 导入仓库 → Build command `bun install && bun run build:ui`，Publish directory `apps/ui/dist`（见 `netlify.toml`）。
+- 若构建镜像未预装 bun：二选一——
+  1. 在 Netlify 环境变量装 bun（构建命令前加 `curl -fsSL https://bun.sh/install | bash && export PATH="$HOME/.bun/bin:$PATH"`）；
+  2. 本地 `bun run build:ui` 后，把 `apps/ui/dist` 拖到 [Netlify Drop](https://app.netlify.com/drop) 零构建上线。
+- SPA 回退 `/* → /index.html` 在 `netlify.toml` 配好。
+
+### 9.4 后端 serverless 化（进阶，需凭证）
+
+纯前端 mock 只能验证 UI。要海外托管**真后端**，需把 Fastify 跑在平台函数里 + 无服务器数据库：
+
+- **数据库**：PGlite 是 WASM + 本地文件，serverless 无持久盘、多实例各写各的，**不可用于生产**。Phase 2 的 `DB_DRIVER=pg` 直接切到 **Neon / Supabase / Turso（libSQL）** 等 serverless Postgres，业务 SQL 零改。
+- **函数适配**：把 `apps/api/src/server.ts` 的 Fastify 实例用「`app.ready()` → `app.server.emit('request', req, res)`」方式接入 Vercel `api/index.ts` / Netlify `netlify/functions/api.ts`（Node 运行时）。
+- 该路径需外部 DB 凭证，**本仓库不内置账号**，待盟哥提供 Neon/Turso 凭证后落地（见 `lean-stack-implementation-plan.md` §Phase 2）。
+
+### 9.5 验证清单
+
+- [ ] Vercel/Netlify 导入仓库，构建成功（无 `/api` 前缀报错）
+- [ ] 打开预览 URL，首页 stats、分区、信号列表均有数据（mock 模式）
+- [ ] 进入发布向导 → 点「预览」→ Base UI Dialog 弹层（Esc/点遮罩可关）
+- [ ] 切 `VITE_USE_MOCK=false` + 真后端后，列表/详情/发布走真实接口

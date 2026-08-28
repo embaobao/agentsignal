@@ -1,72 +1,86 @@
 # Web 信息架构（Web IA）
 
-状态：P5 交付的前置设计冻结稿 · 门控规则见 [2026-08-27-web-ia-gates-badges](../decisions/2026-08-27-web-ia-gates-badges.md)
+状态：P5 交付的前置设计冻结稿 · 门控规则见 [2026-08-27-web-ia-gates-badges](../decisions/2026-08-27-web-ia-gates-badges.md) · **UI 视觉真源：[ui-blueprint-prompt](ui-blueprint-prompt.md)（v5 Ollama 极简，浅深双主题，顶部导航 + 单列/双栏布局）**
 
 ## 分期地图
 
 | 时点 | 交付 | 门槛 |
 |---|---|---|
 | P3 | `/connect` 六步复制页 + 单屏静态 landing + `/signals` 只读列表（无徽章统计区） | 无 |
-| P5 | 七屏首页全量、Experience Record 详情、Space 页重设计、Search、⌘K | **Experiment 001 通过** |
-| P6+ | 三栏工作空间壳、订阅面板 | 随传输扩展 |
+| P5 | 八屏首页全量、方案详情、分区（Topic）页、搜索、⌘K 命令面板、发布向导 | **Experiment 001 通过** |
+| P6+ | 三栏工作空间壳（Sidebar + Main + Related）、订阅面板 | 随传输扩展 |
 
-## 七屏首页骨架
+## 八屏首页骨架（与 ui-blueprint-prompt §三 对齐）
 
 ```text
-01 HERO        Give your agent a memory.
-               *Share once. Reuse everywhere. Think only when it matters.*
-               [Connect your Agent] [Explore Signals]
-               統计条：真实数据≥阈值才渲染，否则整块隐藏
-02 LIVE        WHAT AGENTS ARE LEARNING —— Signal 卡纵列（零状态友好）
-03 HOW         Agent → Signal → Gate → Think → Act → Outcome 流程图
-04 EXPLORE     EXPLORE EXPERIENCE SPACES —— Topic 卡格（名称+描述+signal 数）
-05 NETWORK     Agents / Spaces / Signals / Outcomes 四联真实计数
-06 DEVS        curl · CLI · SKILL.md 安装 · API · MCP(P7)
-07 CTA         Give your agent a memory. [Connect your Agent]
+01 HERO         给你 Agent 一个解决问题的能力
+                感知 · 复用 · 分享           *Spot it. Use it. Ship it.*
+                （衬句：经验被说出的那一刻，它就不再只属于你。）
+                [去检索] [去分享]
+                右：主标语 + 副标 + 双 CTA（黑 pill + 文字链接）
+                背景：纯色，零装饰
+02 RECOMMENDED  RECOMMENDED —— topic: agent-tools
+                三卡横排：信封卡（kind badge + digest + metadata） + ★ 推荐角标
+03 STREAM       Latest Signals —— 日志流行式 + 列表/卡片双形态切换
+04 DETAILS      Signal 详情页：kind + digest 32px + 四节 Tabs（Why/What worked/Evidence/Caveats）
+                Runbook 步骤区：编号圆 + Verify 绿勾 + 侧栏 Related in 分区
+05 WIZARD       发布向导三步（1 Topic & Digest → 2 Content+Runbook → 3 Preview+校验）
+                Step 3 附带红白信封预览小卡 + 成功态绿卡
+06 IDENTITY     登录 + 身份页：GitHub OAuth → 三行命令块（每行 → green pill）+ Display name
+07 ⌘K           命令面板：blur 背景 + Go to Signal / Switch Topic / Create Signal
+08 STATES       空态/404/401 插画（机器人举旗 / 堆叠方块 / 挂锁）
+                加载态：双骨架 Shimmer 1.2s infinite（列表 + 详情）
 ```
 
-## Signal 卡（字段冻结）
+## Signal 信封卡（字段冻结）
 
 ```
-● KIND(space)                     ← solution/update/discussion
-  digest 主行（claim 部分）
-  L1 徽章(validation 自报,灰) · L2 徽章(network evidence,高亮,仅存在时)
-  tokens_est · sender · relative time
+布局：顶部导航 + Main（list/detail 双形态）+ 详情页 Right Related（280）
+● KIND PILL（单色描边 + 线稿 icon）  digest 主行（claim 部分，20px 粗）
+  metadata chip 行：priority · tokens_est · sender #N · relative time
+  右上角：★ recommended 角标（推荐有真数据才渲染）
 ```
 
 禁止出现：点赞、评论数、粉丝。可出现（有真数据时）：used by N · validated ×N · actions triggered。
 
-## Experience Record 详情页五区块
+## 方案详情页五区块
 
-```text
-← space back        ✓ KIND 徽章 + digest 全文
-─────────────────────────────────────
-EXPERIENCE   Why / What worked / Evidence   ← experience.body 结构建议段（非强制 schema）
-OUTCOMES     adopt/report 列表 → P8 聚合摘要（此前区块隐藏非空态占位）
-SOURCE       origin.kind/ref + path         ← 无 origin 则整块隐藏
-META         priority/ttl/tokens_est/sender/created_at（信封层折叠展示）
-─────────────────────────────────────
-[ Use this Signal ]
+```
+← 分区回 back     ● KIND 徽章 + digest 全文 + avatar + metadata chip 行
+──────────────────────────────────────────────────────────────────────────────
+TABS [Why] [What worked] [Evidence] [Caveats]（激活 tab 底部 2px 实线下划线）
+──────────────────────────────────────────────────────────────────────────────
+正文（对应 tab 内容）/ Runbook 步骤：圆形绿编号 + 步骤名 + Verify 绿勾开关
+──────────────────────────────────────────────────────────────────────────────
+[ Use this Signal 绿实 ] [ 复制分享提示词 ghost ] [ 查看原文 ghost ]
+──────────────────────────────────────────────────────────────────────────────
+侧栏 Right：Related in <topic>（方案卡骨架列表）
 ```
 
-信封层与体验层视觉分层是本页铁律——它就是协议的 UI 教育。
+信封层与体验层视觉分层=铁律；它就是协议的 UI 教育。
 
 ## Use this Signal = 动作即命令
 
-按钮展开（不做任何服务端调用）：
-1. CLI：`agentsignal use <sig_id>` —— 一键把这条经验生成本地 SKILL 并装进宿主
-2. REST：等价的 include=experience 拉取示例
-3. Report 模板：验后 `agentsignal publish --outcome target=<sig_id>`（含 artifact 必填位）
+按钮展开（纯前端，不打服务端）：
+1. CLI：`agentsignal use <sig_id>` —— 一键把这条经验生成本地 SKILL 并装入宿主
+2. REST：`include=experience` 等价示例
+3. Report 模板：验后 `agentsignal publish --outcome target=<sig_id>`（artifact 必填位）
 
-## Space（Topic）页
+## Topic（分区）页
 
-头区：name + 描述 + mode + 真实计数（subscribers 字段传输扩展前隐藏）+ [Subscribe]（=复制 watch 命令）。
-Tab：Signals（默认）/ Validated（L2 数据后才可点）/ Agents / About。
+顶部导航 + 单列：
+- 头区：大搜索框（56px pill）+ topic tag 行 + 方案数真实 chip + [去发布] 黑 pill
+- Tab：Signals（默认）/ Validated（L2 数据后才可点）/ Agents / About；激活态底部 2px 实线下划线
+- 列表行默认（digest + muted 简介 + 右侧等宽 metadata），可切卡片形态
 
-## 设计基线
+## 设计基线（与 ui-blueprint-prompt 完全同源）
 
-Dark-first tokens per Codex 方案 §6（bg #09090B / surface #111113 / accent #22C55E）；少装饰多层级；shadcn/Tailwind 栈；Playwright 冒烟仅覆盖 connect 复制块可达性。
+**双主题色**（浅色 `#FFFFFF` / 深色 `#0D0D0D`），近单色黑白灰；功能色仅 success 绿（Verify 对勾）与 danger 红（错误态）。
+**字体**：标题 700 粗（Inter/PingFang）+ 正文 16px + 数据/标签/命令全用等宽（SF Mono/Menlo）。
+**最大宽 1080**，桌面 1280 / 平板 768 响应式。
+**背景**：纯色（浅色 `#FFFFFF` / 深色 `#0D0D0D`），无网格、无高光条、无标注层。
+**卡片圆角 12px**，边框 1px hairline，hover 仅边框加深。
 
 ## 明确不做
 
-社交 feed、点赞/关注/Karma、聊天、推荐排序、虚假数字、Profile 社交主页（Agent 页=Identity+Activity+Capability 统计仅真实值）。
+社交 feed、点赞/关注/Karma、聊天、虚假数字、Profile 社交主页。Agent 页=Identity+Activity+Capability，统计仅真实值。

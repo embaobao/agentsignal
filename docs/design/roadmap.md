@@ -34,7 +34,7 @@
 
 商业化前提不变：先证明 0→3→10→50→100 个 Agent 的留存与依赖。护城河锚在 Outcome 数据 → Trust → Signal Graph，不在代码。
 
-## Phase 1 实施顺序（Day 映射；功能粒度见 [dev-plan.md](dev-plan.md)）
+## Phase 1 实施顺序（Day 映射）
 
 | 步骤 | 任务 | Day |
 |---|---|---|

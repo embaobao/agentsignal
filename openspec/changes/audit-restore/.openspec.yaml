@@ -1,0 +1,16 @@
+id: audit-restore
+status: proposed
+created_at: 2026-08-28
+owner: project
+tags: [audit, restore, governance, phase-1b, independent]
+summary: |
+  独立模块：为 Signal/Agent/Token 三类实体建立「不可变审计账本 + 快照还原 + 治理裁决 + Guardrail 准入守卫」。
+  单独开发：不与主 P3/P5 并行；P5 上线后 Phase 1B 再启动。
+  完整提案：docs/design/audit-restore-proposal.md
+depends_on:
+  - design-driven-ui-and-three-chains    # 三链路先跑通，才有内容要审计
+blocked_by: []
+supersedes: []
+upstream_docs:
+  - docs/design/audit-restore-proposal.md  # 主提案
+  - docs/design/backend-architecture.md    # 耦合点 §九
