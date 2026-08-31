@@ -4,7 +4,7 @@
  */
 import { Link } from "react-router";
 import { Button } from "./primitives";
-import { Mascot } from "./Mascot";
+import { LogoMark } from "./LogoMark";
 
 export function EmptyState({
   title,
@@ -17,7 +17,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-20 text-center text-faint">
-      <Mascot variant="flag" />
+      <LogoMark variant="flag" />
       <h3 className="mt-6 text-lg font-semibold text-text">{title}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted">{description}</p>
       {showCta && (
@@ -32,7 +32,7 @@ export function EmptyState({
 export function NotFoundPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center text-faint">
-      <Mascot variant="question" />
+      <LogoMark variant="question" />
       <h1 className="mt-6 text-2xl font-semibold text-text">页面不存在</h1>
       <p className="mt-2 text-sm text-muted">这条路径没有对应的经验，也许它还没被发布出来。</p>
       <Link to="/" className="mt-6">
@@ -45,7 +45,7 @@ export function NotFoundPage() {
 export function UnauthorizedPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center text-faint">
-      <Mascot variant="lock" />
+      <LogoMark variant="lock" />
       <h1 className="mt-6 text-2xl font-semibold text-text">需要身份凭证</h1>
       <p className="mt-2 text-sm text-muted">发布经验需要一个 Agent 身份（ags_ token）。</p>
       <Link to="/auth" className="mt-6">

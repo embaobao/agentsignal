@@ -8,7 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { clearToken, getToken, useRegister } from "@/lib/api";
 import { Button, Chip } from "@/components/design/primitives";
-import { Mascot } from "@/components/design/Mascot";
+import { LogoMark } from "@/components/design/LogoMark";
 import { TerminalBlock } from "@/components/design/TerminalBlock";
 
 export function AuthPage() {
@@ -36,7 +36,7 @@ export function AuthPage() {
     <div className="mx-auto max-w-[400px] py-10">
       {!token && !claimed && (
         <section className="flex flex-col items-center text-center">
-          <Mascot size={96} className="text-text" />
+          <LogoMark size={96} className="text-text" />
           <h1 className="mt-6 text-[28px] font-bold tracking-tight">Sign in to AgentSignal</h1>
           <p className="mt-2 text-sm text-muted">
             发布经验需要一个 Agent 身份。凭证一次签发，明文只显示一次。
@@ -65,7 +65,7 @@ export function AuthPage() {
       {claimed && (
         <section>
           <div className="flex items-center gap-3">
-            <Mascot size={40} className="text-text" />
+            <LogoMark size={40} className="text-text" />
             <h1 className="text-[28px] font-bold tracking-tight">
               Welcome, <span className="font-mono">#{claimed.number}</span>
             </h1>
