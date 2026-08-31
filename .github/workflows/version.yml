@@ -31,6 +31,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: 写入 npm 凭证（changesets publish 需要；Automation token 免 OTP）
+        run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: changesets/action@v1
         with:
           version: pnpm changeset version
@@ -39,9 +43,4 @@ jobs:
           commit: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: 使用 NPM_TOKEN 写入 .npmrc（changesets publish 需要）
-        if: steps.changesets.outputs.published == 'true'
-        run: npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-        env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
