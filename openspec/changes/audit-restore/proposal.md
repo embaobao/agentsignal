@@ -1,3 +1,9 @@
+> **状态（2026-08-31）**：前置（design-driven D5 放行）已解除——三链路落地、e2e 21/21，**ready to start**。
+> 执行口径按 [standardize-node-postgres 决议](../../../docs/decisions/2026-08-28-standardize-node-postgres.md) 修订：
+> ① 账本/verdict/snapshot 落 **Postgres 表**（pg_dump 备份链），弃 JSON Lines 文件方案；
+> ② 工具链 pnpm + Node ≥22.18（node:test 单口径，非 bun test）；③ deps 以 workspace 现有为准，不引 commander/picocolors。
+> 顺手闭环运营后台缺口：admin 端点带 `recommended`/`stats_tag` 写路径（原协议有列无写路径）。
+
 # 提案（独立模块）：审计还原（Audit & Restore）
 
 完整提案：`docs/design/audit-restore-proposal.md`。本文件是 openspec change 的简短入口说明。

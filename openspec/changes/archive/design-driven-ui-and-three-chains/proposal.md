@@ -1,3 +1,7 @@
+> **结案（2026-08-31）**：三链路后端 + P3/P5 UI 七屏已全部落地并入 main（e2e 21/21）；
+> 视觉前提（v4 设计稿 54 张）已被 08-28 `minimal-redesign-ollama`（v5 中性色板）推翻，UI 已按 v5 落地。
+> 剩余事项移交：GitHub OAuth（C9）另立小提案；D1/D5 人工对稿在任务台账跟进。本 change 归档。
+
 # 提案：设计驱动 UI + 三链路最小闭环
 
 > 配套 openspec change 元数据：`.openspec.yaml`

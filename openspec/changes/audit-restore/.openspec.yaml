@@ -1,5 +1,5 @@
 id: audit-restore
-status: proposed
+status: ready-to-start
 created_at: 2026-08-28
 owner: project
 tags: [audit, restore, governance, phase-1b, independent]

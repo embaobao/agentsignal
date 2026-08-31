@@ -1,3 +1,7 @@
+> **口径注记（2026-08-31）**：本文任务清单为提案原稿；执行按 standardize-node-postgres 决议修订——
+> bun test → node:test · JSON Lines 账本 → PG 表（audit_events/verdicts/snapshots）· commander/picocolors 不引。
+> 动工时逐条按新口径换算，勿照抄旧依赖与文件方案。
+
 # 任务拆分清单 — audit-restore（Phase 1B）
 
 > 前置条件：`openspec/changes/design-driven-ui-and-three-chains` 已完成 D5 全量验收并放行。
