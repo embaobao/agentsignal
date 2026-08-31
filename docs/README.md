@@ -24,6 +24,7 @@
 | `design/lean-stack-implementation-plan.md` | ★瘦栈实施方案：三方件选型（Tailwind v4 + shadcn/Base UI + `Db` 接口直写 PG SQL/无 ORM）、依赖清单、token 映射、M0–M4 细化任务、工时对照（14.5→9.8 人日）。**注**：文中 PGlite/bun 话术已被 [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md) 取代，按该决议换算阅读 |
 | `design/payload-cms-evaluation.md` | 调研（**已结案 2026-08-28：全量接入否决**，见决议 D5）：Payload CMS 适配性评估——业务诉求复核、硬约束清单、A/B/C/D 方案空间与判定矩阵、复审触发条件 |
 | `design/deployment.md` | ★容器化部署与运维：服务划分、镜像依赖、端口/卷/环境变量、三环境（dev/test/prod）构建启动日志回滚、健康检查、日志采集、数据持久化与备份 |
+| `design/user-manual.md` | ★用户使用手册：启动/四通道姿势/发布/检索/use/回流/管理员（只写已上线功能） |
 | `design/implementation-tasks.md` | ★开发实施任务清单：阶段零~四共 44 项（目标/模块/验收/人日/优先级/依赖/并行批次），含 S0 前置修红与关键路径图 |
 
 ### 图表 design/diagrams/
