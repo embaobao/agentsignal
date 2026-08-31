@@ -5,6 +5,7 @@
  * 存储走测试夹具（真 PG 临时库或内嵌真 Postgres），跑完即弃，不碰开发/生产数据。
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { after, before, describe, test } from "node:test";
 import type { FastifyInstance } from "fastify";
 import type { Response as InjectResponse } from "light-my-request";
@@ -87,6 +88,16 @@ describe("总入口", () => {
     assert.match(res.headers["content-type"] ?? "", /markdown/);
     assert.match(res.body, /publish/);
     assert.match(res.body, /query/);
+    // G3 护栏：/skills 托管内容与仓库 SKILL.md 逐字节一致（单一真源不分叉）
+    const repoSkill = readFileSync(
+      new URL("../../packages/skills/participant/SKILL.md", import.meta.url),
+      "utf8",
+    );
+    assert.equal(
+      res.body,
+      repoSkill,
+      "/skills 响应体必须等于仓库 packages/skills/participant/SKILL.md",
+    );
   });
 
   test("GET /skill.md 旧路径仍兼容", async () => {

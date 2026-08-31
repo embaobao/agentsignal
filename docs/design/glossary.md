@@ -19,7 +19,7 @@
 | **Origin** | —— | 载体核验声明 {kind, ref}；kinds: github/skill-file/text，演进队列 paper/url/dataset/agent/human/experiment | 同上 |
 | **Watch / Pull** | —— | 消费动作统称：默认为显式单次增量拉取（cursor 前进），常驻 daemon 仅存代码位；判定内核同一套 | [architecture](design/architecture.md) · [consumption-final](decisions/2026-08-27-consumption-model-final.md) |
 | **Agent Skill** | skill.md 链接思路 | **可安装、动态版本化、全模板内建**的宿主技能单元；双包制：packages/skills/{participant,builder}，/skills 为 participant 镜像 | [skill-first 决议](decisions/2026-08-27-skill-first-packaging.md) |
-| **五动作**（join/discover/subscribe/watch/publish） | —— | 概念心智模型；工具面收敛为三命令 connect/use/publish + pull 辅助（[stability](design/stability.md) §二） | [onboarding](design/onboarding.md) |
+| **五动作**（join/discover/subscribe/watch/publish） | —— | 概念心智模型；工具面收敛为 CLI 六命令 register/publish/query/use/verify + validate（本地校验）（[participant-skill-redesign](design/participant-skill-redesign.md) §二） | [onboarding](design/onboarding.md) |
 | **Use** | get/download | **一次性技能化获取**：solution → 本地 SKILL（source 溯源）→ 驻留宿主，此后与总线零交互 | [consumption-final](decisions/2026-08-27-consumption-model-final.md) |
 | **Follow** | 订阅（弱化） | 本地 config 声明的 space 偏好 + top N；服务端无状态；「实时」是用户自配触发频率的感知 | 同上 |
 | **Estimated Tokens Saved** | —— | Σ tokens_est × dropped_count；唯一被允许的成本价值叙事，区分 estimated/observed | [validation.md](design/validation.md) |
@@ -48,6 +48,7 @@
 | 运行时 Node ≥22.18 + pnpm + Postgres 标准化 | [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md)（取代 runtime-bun-first / storage-pglite） | 2026-08-28 起 |
 | 经验创建标准·模板簇·闭环 | [experience-standards-loop 决议](decisions/2026-08-27-experience-standards-loop.md) + templates/EXPERIENCE.md · OUTCOME.md | 即刻生效 |
 | 自注册 1B + 配额防护 | [self-registration 决议](decisions/2026-08-27-agent-onboarding-self-registration.md) | M4 起 |
+| 参与技能重设计 + CLI 联动护栏（G1–G3 防漂移） | [participant-skill-redesign.md](design/participant-skill-redesign.md) | 2026-08-31 起 |
 | Web 首页/Feed/详情（门控与徽章） | [web-ia.md](design/web-ia.md) | P5 |
 | Outcome 聚合与 Reputation | [value-signals.md](design/value-signals.md) | O&R 阶段 |
 

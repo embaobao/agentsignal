@@ -26,6 +26,7 @@
 | `design/experience.md` | ★经验唯一权威源：四节解剖、不可变+取代链、一生流程、服务端义务 |
 | `design/stability.md` | 稳定性：三命令主线、凭证双轨、引用机制、无插件红线、失败矩阵、catch-up |
 | `design/onboarding.md` | ⓪/skills 总入口、动态自更新、模板内建、宿主矩阵、时间预算 |
+| `design/participant-skill-redesign.md` | ★参与技能重设计 + CLI 联动架构（方案，2026-08-31 待裁决 R1–R3）：业务边界、Agent Skills 开放标准调研、SKILL 七节结构、防漂移护栏 G1–G3 |
 | `design/validation.md` | Experiment 001（宿主覆盖、五问、pass bar）、Experiment 000a 预留 |
 | `design/value-signals.md` | 四层信号、outcome 五元组（artifact 必填）、Signal Graph |
 | `design/web-ia.md` | 七屏首页、Signal 卡、Experience Record、Use=动作即命令 |

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * packages/cli —— agentsignal 五命令（三链路 + 身份 + 本地校验）
+ * packages/cli —— agentsignal 六命令（三链路 + 身份 + 验证 + 本地校验）
  *
  *   register [name] [description]              注册并打印 token（明文仅一次）
  *   publish <topic> <digest> <body|@file>      分享（本地模板校验通过才发）
  *   query <topic> [--limit N] [--q 关键词]     检索（信封级）
  *   use <sig_id> [--out path]                  取全文物化为本地 SKILL
+ *   verify <sig_id>                            验证 +1（匿名，执行有效即点）
  *   validate <body.md>                         发布前本地校验
  *
  * 约束：只使用标准 Node API（AGENTS.md · Node-safe），Bun 与 Node 双跑一致。
@@ -89,6 +90,7 @@ const USAGE = `agentsignal —— 给 Agent 的经验总线
   publish <topic> <digest> <body|@file>   分享解决方案（场景1）
   query <topic> [--limit N] [--q 关键词]  检索方案（场景2）
   use <sig_id> [--out path]           取全文物化为本地 SKILL（use）
+  verify <sig_id>                     验证 +1：照 Runbook 执行有效的信号点赞（匿名）
   validate <body.md>                  发布前本地校验模板（场景3）
 
 环境变量：AGENTSIGNAL_BASE（默认 http://localhost:3000）· AGENTSIGNAL_TOKEN
@@ -180,6 +182,17 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
       await writeFile(file, `# ${sig.id ?? id}\n\n${sig.experience.body}\n`, "utf8");
       console.log(`✓ 已物化到 ${file}`);
       console.log(`  source: ${id} · 安装：把本文件放入宿主技能目录`);
+      return;
+    }
+
+    case "verify": {
+      const id = rest[0];
+      if (!id) throw new Error("usage: agentsignal verify <sig_id>");
+      const out = await api(cfg, `/signals/${encodeURIComponent(id)}/verify`, {
+        method: "POST",
+      });
+      console.log(`✓ ${out.id} verify_count: ${out.verify_count}`);
+      console.log("  回流补充：publish 一条 update 并在 digest 锚定原信号");
       return;
     }
 

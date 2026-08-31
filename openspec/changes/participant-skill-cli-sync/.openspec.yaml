@@ -1,0 +1,17 @@
+id: participant-skill-cli-sync
+status: in-progress
+created_at: 2026-08-31
+owner: project
+tags: [skill, cli, participant, sync, guardrail]
+summary: |
+  参与技能重设计 + CLI 联动：skill 定位收敛为「安装引导 + 使用引导」（CLI 为达成整体功能的唯一门面），
+  CLI 补 verify 第六命令闭环命令面，建立 G1–G3 防漂移护栏（版本 lockstep + 命令面双向一致性 + /skills 托管一致性），
+  清偿 onboarding.md 幽灵命令漂移。
+upstream_docs:
+  - docs/design/participant-skill-redesign.md   # 完整方案（含调研与裁决记录）
+  - docs/design/onboarding.md                    # ⓪总入口（本变更高清偿对象）
+  - docs/decisions/2026-08-27-agent-skill-distribution.md
+depends_on:
+  - publish-query-build    # CLI 五命令与 /skills 端点已上线（已归档）
+blocked_by: []
+supersedes: []

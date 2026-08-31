@@ -13,7 +13,7 @@
     "dev": "node src/index.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentssignal/* --external:zod --outfile=dist/index.js"
   },
-  "description": "@agentssignal/cli — agentsignal CLI 五命令：register / publish / query / use / validate",
+  "description": "@agentssignal/cli — agentsignal CLI 六命令：register / publish / query / use / verify / validate",
   "license": "MIT",
   "repository": {
     "type": "git",

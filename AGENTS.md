@@ -45,6 +45,7 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 6. 协议语义变更先落 decisions 再改正文；ADR 与 notes 归档文本不回写（旧词按 glossary 曾用名列映射阅读）。
 7. 内容资产目录：`solutions/ discussions/ templates/` 顶层各居其位。
 8. **测试随行纪律**：任何功能开发/重构必须同步维护测试并跑绿（node:test 单口径，UI 用 vitest），先测后合；无测试的代码视为未完成（DoD 既有条款的执行口径）。
+9. **CLI 命令面 ↔ participant SKILL 同步**：CLI 命令/参数/校验规则变更的 PR 必须同 PR 更新 `packages/skills/participant/SKILL.md`（metadata.version 与 CLI 同版本 lockstep），并跑绿护栏测试（G1 版本/G2 命令面双向一致见 `packages/cli/test/skill-sync.test.ts`，G3 /skills 托管一致见 e2e）；机制见 [participant-skill-redesign.md](docs/design/participant-skill-redesign.md) §5。
 
 ## 工作流纪律
 
@@ -52,10 +53,10 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 当前阶段：**三链路（分享/检索/构建发布）已上线 npm（@agentssignal/* 0.2.0）并跑通三方云库**（Neon PG 18.6 实测：迁移自动、注册/发布/检索全通——deployment §9.1）。运行时已标准化 Node+pnpm+Postgres（2026-08-28 决议）；后端 review 加固完成；MCP 五工具 server 已落地；audit-restore 1B-1（账本+快照+admin 端点）完成。Netlify 在线验证环境待站长配两个环境变量（DATABASE_URL=Neon 串 · SELF_REGISTER_ENABLED=1）后重部署即通。**Payload CMS 已结案否决**（结论落于 standardize-node-postgres 决议 D5）。
 
-剩余（2026-08-31 复核，按优先级）：
+剩余（2026-08-31 复核，同日 19:30 销项更新）：
 
-- **P0 阻塞**：`pnpm verify` 红灯——`tests/` 不在 `pnpm-workspace.yaml`（只含 `apps/*`、`packages/*`），根级测试拿不到 `apps/api/node_modules` 里的 `fastify`（TS2307）。修法：e2e 测试移入 `apps/api/test/`（推荐）或根加 `fastify` devDep。
-- **P1 功能缺口**：运营后台——`signals.recommended` 有列有读、**零写路径**，`apps/api/src` 零 admin 端点；D5 承诺的轻量方案 ADR 未立，audit-restore 仍 `proposed`。M4 Testnet 前需闭环。
+- ~~**P0 阻塞**：`pnpm verify` 红灯~~ **已修**：根 devDependencies 已加 `fastify`，`pnpm check` 绿 + `pnpm test` 54/54 全过（实测销项）。
+- **P1 功能缺口**：运营后台——`signals.recommended` 有列有读、**零写路径**；D5 承诺的轻量方案 ADR 未立。M4 Testnet 前需闭环（audit-restore 1B-1 已带 admin 审计端点，可复用基建）。
 - **P2 人工/环境**：D1/D5 视觉对稿（需盟哥）· T3–T5 容器演练（需 Docker daemon）· C9 GitHub OAuth（设计内延后，降级自注册）。
 
 任务台账 [implementation-tasks.md](docs/design/implementation-tasks.md)，里程碑状态见 roadmap。

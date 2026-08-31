@@ -20,7 +20,7 @@
     "db:reset": "docker compose rm -sf db && rm -rf data/postgres && pnpm run db:up",
     "db:psql": "docker compose exec db psql -U agentsignal -d agentsignal",
     "smoke": "bash scripts/smoke.sh",
-    "test": "node --test tests/e2e/*.test.ts apps/api/test/*.test.ts packages/mcp/test/*.test.ts",
+    "test": "node --test tests/e2e/*.test.ts apps/api/test/*.test.ts packages/mcp/test/*.test.ts packages/cli/test/*.test.ts",
     "test:ui": "pnpm --filter @agentssignal/ui test",
     "test:e2e": "bash tests/e2e/three-chains.test.sh ${E2E_BASE:-http://localhost:3000}",
     "openapi": "LOG_LEVEL=silent node --env-file-if-exists=.env apps/api/src/index.ts --export-openapi",
