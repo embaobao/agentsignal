@@ -1,0 +1,41 @@
+# Version Packages —— changesets 固定（lockstep）版本模式
+#
+# 全仓包版本绑定为一个 fixed 组：任何包发版，全仓统一升到同一版本号（杜绝版本歧义）。
+# 流程：PR 携带 `pnpm changeset` 生成的变更说明 → merge main → 本 workflow 自动开/更新
+# 「Version Packages PR」→ 该 PR 被合并时统一升版本 + 生成各包 CHANGELOG。
+# npm 发布（cli/protocol/mcp）在配置 NPM_TOKEN 后于本 action 的 publish 步启用（见 deployment.md §发布与升级）。
+name: Version Packages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: version-packages
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          # publish: pnpm changeset publish   ← 配置 NPM_TOKEN 后启用（cli/protocol/mcp 上架 npm）
+          title: "chore(release): Version Packages（lockstep 统一版本）"
+          commit: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

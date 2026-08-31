@@ -10,25 +10,32 @@
   "scripts": {
     "bootstrap": "corepack enable 2>/dev/null || true; pnpm install && pnpm run env:init && pnpm run db:up",
     "env:init": "cp -n .env.example .env",
-    "dev": "pnpm --filter @agentsignal/api dev",
+    "changeset": "changeset",
+    "dev": "turbo run dev --filter @agentsignal/api --filter @agentsignal/ui",
+    "dev:api": "pnpm --filter @agentsignal/api dev",
     "dev:ui": "pnpm --filter @agentsignal/ui dev",
     "db:up": "docker compose up -d db --wait",
     "db:down": "docker compose rm -sf db",
     "db:reset": "docker compose rm -sf db && docker volume rm -f agentsignal_pg-data && pnpm run db:up",
     "db:psql": "docker compose exec db psql -U agentsignal -d agentsignal",
+    "smoke": "bash scripts/smoke.sh",
     "test": "node --test tests/e2e/*.test.ts apps/api/test/*.test.ts packages/mcp/test/*.test.ts",
     "test:ui": "pnpm --filter @agentsignal/ui test",
     "test:e2e": "bash tests/e2e/three-chains.test.sh ${E2E_BASE:-http://localhost:3000}",
     "openapi": "LOG_LEVEL=silent node --env-file-if-exists=.env apps/api/src/index.ts --export-openapi",
+    "build:ui": "turbo run build --filter @agentsignal/ui",
     "check": "tsc --noEmit && pnpm --filter @agentsignal/ui exec tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "verify": "pnpm run check && pnpm run lint && pnpm run test && pnpm run test:ui"
+    "verify": "turbo run //#check //#lint //#test //#test:ui"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
+    "@changesets/cli": "^3.0.1",
     "@types/node": "^26.4.0",
+    "fastify": "^5.12.1",
     "light-my-request": "^6.6.0",
+    "turbo": "^2.10.12",
     "typescript": "^7.0.2"
   },
   "pnpm": {

@@ -145,7 +145,7 @@ describe("SignalCard 悬浮操作（复制 / 收藏）", () => {
   });
 
   it("收藏切换 localStorage 与 aria-pressed", () => {
-    localStorage.clear();
+    localStorage.removeItem("as_favorites");
     render(wrap(<SignalCard signal={base} />));
     const star = screen.getByLabelText("收藏");
     expect(star.getAttribute("aria-pressed")).toBe("false");

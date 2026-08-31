@@ -49,7 +49,7 @@ services:
       args:
         NODE_IMAGE: ${NODE_IMAGE:-node:24-slim}
     # 生产禁止用 latest：始终打不可变 tag（git sha 或语义版本）
-    image: ${IMAGE_REGISTRY:-ghcr.io/agentsignal}/agentsignal-api:${IMAGE_TAG:-0.1.0}
+    image: ${IMAGE_REGISTRY:-ghcr.io/embaobao}/agentsignal-api:${IMAGE_TAG:-0.1.0}
     restart: unless-stopped
     expose:
       - "3000"

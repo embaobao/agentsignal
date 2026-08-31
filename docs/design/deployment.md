@@ -152,24 +152,26 @@ docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
 
 ### 2.3 生产（prod）
 
+**发布走流水线（推荐）**：打 tag → CI 构建推送镜像 → 服务器脚本部署并冒烟：
+
 ```bash
-# 1. 取不可变 tag（禁止 latest）
-export IMAGE_TAG="$(git rev-parse --short HEAD)"     # 或语义版本 v0.1.0
+# 本地：发布一个版本（详见 §发布与升级）
+git tag v0.2.0 && git push origin v0.2.0      # 触发 release.yml：verify → ghcr → 镜像冒烟
 
-# 2. 构建并推送（CI 中执行；本地等价命令）
-docker compose build api
-docker push "${IMAGE_REGISTRY:-ghcr.io/agentsignal}/agentsignal-api:${IMAGE_TAG}"
+# 服务器（首次先跑 scripts/deploy.sh init）
+./scripts/deploy.sh 0.2.0                     # pull + up + 等 healthy + smoke；自动记录可回滚版本
+./scripts/deploy.sh rollback                  # 一键回滚到上一版本
+```
 
-# 3. 发布（先把 .env 的 IMAGE_TAG 改成同一值）
-docker compose --profile prod pull          # 若镜像来自 registry
-docker compose --profile prod up -d --build
+**手动运维（调试/兜底）**：
 
-# 4. 观察
-docker compose ps                            # 关注 STATUS=healthy
-curl -fsS https://${CADDY_DOMAIN}/healthz
-curl -fsS https://${CADDY_DOMAIN}/readyz
+```bash
+docker compose --profile prod pull            # 拉最新镜像
+docker compose --profile prod up -d           # 起 db + api + caddy
+docker compose ps                             # 关注 STATUS=healthy
+pnpm smoke https://${CADDY_DOMAIN}            # 启动冒烟（或 bash scripts/smoke.sh，服务器无 node 可用）
 
-# 5. 停（保留卷）
+# 停（保留卷）
 docker compose --profile prod down
 ```
 
@@ -237,7 +239,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `NODE_IMAGE` | `node:24-slim` | 基础镜像；pnpm 由 corepack 按 packageManager 字段启用 |
-| `IMAGE_REGISTRY` | `ghcr.io/agentsignal` | 镜像仓库 |
+| `IMAGE_REGISTRY` | `ghcr.io/embaobao` | 镜像仓库（ghcr 包为 private，服务器需 docker login） |
 | `IMAGE_TAG` | `0.1.0` | **生产必须不可变 tag**（git sha 或语义版本），禁 `latest` |
 
 ### 3.2 API 运行时
@@ -465,51 +467,57 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 | 发布后 500 激增 | 看 `level:50` 日志 + `reqId` | 回滚代码（§2.5） |
 
 ---
+## 9. 多平台托管口径
 
-## 9. 海外静态部署（Vercel / Netlify）—— 部署即验证
+**唯一生产形态 = 单机 Docker Compose（api + db + caddy）**，见 [container-deployment 决议](../decisions/2026-08-28-container-deployment.md)。
 
-**目标**：让 MVP 在海外平台一键部署、无需自建后端即可看到完整界面，直接验证产品形态。
-**底座**：前端是纯静态 SPA（`apps/ui`，Vite 构建产物 `apps/ui/dist`），与后端解耦，天然适合 Vercel/Netlify。
+- Vercel/Netlify 静态分离托管**不采用**：相关配置（vercel.json / netlify.toml）与本章节旧内容已于 2026-08-31 删除。
+- 纯前端预览需求由 apps/ui 本地 mock 模式满足（`VITE_USE_MOCK=1` + `pnpm dev:ui`）。
+- 托管数据库（Neon / Supabase / RDS）作为扩容路径随时可用——`DATABASE_URL` 一换即走，业务 SQL 零改（`Db` 接口为此设计）。
 
-### 9.1 两种模式
+---
 
-| 模式 | 配置 | 数据来源 | 适用 |
-|---|---|---|---|
-| **Mock 演示**（默认） | `VITE_USE_MOCK=true` | 前端内置 mock（真实感中文 RAG 内容，校验逻辑与服务端同口径） | 零后端、纯看界面与交互验证 |
-| **接真后端** | `VITE_USE_MOCK=false` + `VITE_API_BASE=<后端 URL>` | 你独立部署的 API（见 §1 Docker / Phase 2 PG） | 真实数据闭环 |
+## 10. 发布与升级（lockstep 版本 · changelog · 依赖维护）
 
-> `vercel.json` 与 `netlify.toml` 已默认 `VITE_USE_MOCK=true`——**连仓库即部署，打开就是有数据的界面**。
-> 要接真后端：在平台环境变量里把 `VITE_USE_MOCK` 清空、填 `VITE_API_BASE` 为你的 API 域名，重新部署即可。
+### 10.1 版本纪律（全仓 lockstep 单一版本）
 
-### 9.2 Vercel（原生支持 bun，推荐）
+- **全仓包版本绑定为同一个 X.Y.Z**（changesets `fixed` 全组）：api / ui / cli / protocol / mcp（及未来的 skill/theme 包）永远同版本，杜绝「哪个包哪个版本」的歧义。
+- SemVer；1.0 前 minor 可含破坏性变更；破坏性变更必须在 changeset 文字与该包 CHANGELOG 中显式标注。
 
-- 导入仓库 → Framework 选 **Vite**（或留空，由 `vercel.json` 驱动）。
-- 构建命令 `pnpm install --frozen-lockfile && pnpm run build:ui`，输出 `apps/ui/dist`，已由 `vercel.json` 指定。
-- SPA 回退与静态资源长效缓存在 `vercel.json` 配好。
-- 部署完直接访问预览 URL 即可看到界面（mock 模式）。
+### 10.2 发布流程
 
 ```bash
-# 或本地预构建后用 CLI 部署（跳过构建镜像差异）
-pnpm run build:ui && pnpm dlx vercel deploy --prebuilt apps/ui/dist
+# 1) 随功能 PR 携带变更说明（写影响面与是否破坏性）
+pnpm changeset
+
+# 2) merge main 后 CI 自动开/更新「Version Packages PR」——合并它即统一升版本 + 生成各包 CHANGELOG
+
+# 3) 发布：打 tag 触发 release.yml（verify → 构建推送 ghcr：X.Y.Z / X.Y / sha-xxx 三 tag，禁裸 latest → 镜像冒烟）
+git tag v0.2.0 && git push origin v0.2.0
+
+# 4) 服务器部署 + 冒烟（首次先 init）
+./scripts/deploy.sh 0.2.0
 ```
 
-### 9.3 Netlify
+- npm 上架（cli / protocol / mcp）：配置 `NPM_TOKEN` secret 后，在 version.yml 的 changesets action 中启用 `publish: pnpm changeset publish`（两行改动）。
+- GitHub Release：tag 推送后按各包 CHANGELOG 汇总粘贴（后续可脚本化）。
 
-- 导入仓库 → Build command `pnpm install --frozen-lockfile && pnpm run build:ui`，Publish directory `apps/ui/dist`（见 `netlify.toml`；Netlify 镜像自带 Node+corepack 可解析 pnpm）。
-- 或本地 `pnpm run build:ui` 后，把 `apps/ui/dist` 拖到 [Netlify Drop](https://app.netlify.com/drop) 零构建上线。
-- SPA 回退 `/* → /index.html` 在 `netlify.toml` 配好。
+### 10.3 升级与回滚（服务器）
 
-### 9.4 后端 serverless 化（进阶，需凭证）
+```bash
+./scripts/backup.sh            # ① 先备份（pg_dump 在线，不停机）
+./scripts/deploy.sh <tag>      # ② pull + up + 等 healthy + smoke；自动记录 .deploy-previous
+./scripts/deploy.sh rollback   # ③ 有问题一键回退（代码回滚≠数据回滚，见 §2.5 铁律）
+```
 
-纯前端 mock 只能验证 UI。要海外托管**真后端**，需把 Fastify 跑在平台函数里 + 无服务器数据库：
+- **数据库迁移随启动自动执行**（migrateToLatest，schema_meta 版本表）；破坏性 DDL 必须走 expand → migrate → contract 三次发布（§6.4），保证「新 schema 能被旧代码跑」——这是随时可回滚的前提。
+- 升级后验证：`smoke`（匿名四件）必绿；全量三链路断言由 CI e2e 承担（生产 `SELF_REGISTER_ENABLED` 默认关，属设计）。
 
-- **数据库**：标准 Postgres 在 serverless 平台无本地持久盘，生产接 **Neon / Supabase / RDS** 等托管 Postgres——`DATABASE_URL` 一换即走，业务 SQL 零改（`Db` 接口当初为此设计）。
-- **函数适配**：把 `apps/api/src/server.ts` 的 Fastify 实例用「`app.ready()` → `app.server.emit('request', req, res)`」方式接入 Vercel `api/index.ts` / Netlify `netlify/functions/api.ts`（Node 运行时）。
-- 该路径需外部 DB 凭证，**本仓库不内置账号**，待盟哥提供 Neon/Turso 凭证后落地（见 `lean-stack-implementation-plan.md` §Phase 2）。
+### 10.4 依赖维护
 
-### 9.5 验证清单
+- **Dependabot 每周**（npm / docker / github-actions 三生态；minor+patch 合组降 PR 噪音）。
+- 依赖升级 PR 合并门槛：`pnpm verify` + 本地 e2e；基础镜像（node:24-slim / postgres:16-alpine）升级随 docker 生态 PR 走，合并后需跑一次容器冒烟。
 
-- [ ] Vercel/Netlify 导入仓库，构建成功（无 `/api` 前缀报错）
-- [ ] 打开预览 URL，首页 stats、分区、信号列表均有数据（mock 模式）
-- [ ] 进入发布向导 → 点「预览」→ Base UI Dialog 弹层（Esc/点遮罩可关）
-- [ ] 切 `VITE_USE_MOCK=false` + 真后端后，列表/详情/发布走真实接口
+### 10.5 后续多制品发版（预留）
+
+cli / mcp / skill（乃至主题包）独立分发时仍在同一版本号下进行（lockstep 不变）：npm 制品走 changesets publish；skill 制品以 GitHub Release 附件 + `/skills` 端点暴露版本；新制品加入 = 新增 workspace 包（带 package.json 版本字段）即自动进入 fixed 组。

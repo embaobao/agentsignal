@@ -37,7 +37,7 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 ## 文档治理（强制规范）
 
-1. 一切文档与沉淀只进 `docs/`；根级豁免仅 README×2 / LICENSE / CLAUDE.md。
+1. 一切文档与沉淀只进 `docs/`；根级豁免仅 README×2 / LICENSE / CLAUDE.md（CHANGELOG 由 changesets 按包生成，不入根级）。
 2. 目录职责：`design/`(活文档) · `design/diagrams/`(图表资产) · `protocols/`(对外规范) · `notes/`(外部输入归档) · `decisions/`(决议,YYYY-MM-DD-slug.md)。
 3. **[glossary](docs/design/glossary.md) 是术语与功能定义的唯一权威源**：每概念一行定义+canonical 指针；每功能一个 canonical 文档（注册表在内）。其余位置只引用不定义。
 4. **主动传播义务**：任何定义变更，由执行 agent 当场完成「改 canonical → grep 全库同步引用 → 更新 docs/README 索引 → 需要时立决议」全链路；不得等站长发现。变更后验证：grep 旧词在活文档区应零命中。
@@ -58,13 +58,14 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 ## 命令（pnpm workspace 统一口径；全部标准命令，定义在根与各包 package.json）
 
-启动生命周期（首次 `pnpm bootstrap` 一次到位，日常 `pnpm dev`）：
+启动生命周期（首次 `pnpm bootstrap` 一次到位，日常 `pnpm dev` 一条命令全栈并行）：
 
 ```
 pnpm bootstrap       # 首次引导：corepack/pnpm → 装依赖 → 生成 .env → 拉起 Postgres（compose --wait 等 healthy）
-pnpm dev             # 起 apps/api :3000（predev 自动做 DB 连通预检；node --watch + 根 .env）
-pnpm dev:ui          # 起 apps/ui :5173（Vite）   pnpm build:ui 出静态产物（API 同域托管）
+pnpm dev             # 全栈并行起 api :3000 + ui :5173（Turborepo 编排统一日志；api 侧 predev 自动 DB 预检）
+pnpm dev:api         # 只起 api     pnpm dev:ui 只起 ui    pnpm smoke 对 BASE_URL 跑启动冒烟
 pnpm db:up|down|reset|psql   # 本地 Postgres 生命周期（compose db 服务；reset 清卷重建）
+pnpm changeset       # 提交一条版本变更说明（lockstep 发版流程见 deployment.md §发布与升级）
 ```
 
 质量与交付：
@@ -75,7 +76,7 @@ pnpm test:e2e        # 三链路脚本打真实服务（E2E_BASE 可指环境，
 pnpm openapi         # 导出 openapi.json（前端类型生成的单一源头）
 pnpm check           # tsc --noEmit（api + ui 双查，TS strict）
 pnpm lint            # biome check              lint:fix 自动修
-pnpm verify          # check + lint + test + test:ui 全链
+pnpm verify          # check + lint + test + test:ui 全链（Turborepo 缓存加速）
 pnpm --filter @agentsignal/mcp dev   # 本地起 MCP stdio server（调试）
 ```
 

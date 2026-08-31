@@ -279,7 +279,7 @@ flowchart TD
 - **目标**：解开 `import.meta.url` 对打包与挂载的耦合（部署手册 §1.1 硬约束 1）。
 - **模块**：`apps/api/src/server.ts`、`env.ts`
 - **验收**：
-  - [ ] `AS_SKILL_PATH` / `AS_UI_DIST_PATH` / `AS_STATIC_UI` 三个变量生效，缺省回退当前 `import.meta.url` 行为
+  - [x] `AS_SKILL_PATH` / `AS_UI_DIST_PATH` 已生效（server.ts 缺省回退 `import.meta.url`）；`AS_STATIC_UI` **裁决不引入**（2026-08-31：无消费方，静态 UI 形态已由 `AS_UI_DIST_PATH` 覆盖，不添加无主配置）——C7 收口
   - [ ] 容器内可通过挂载替换 SKILL.md 与 UI 目录
 - **0.3d · P1 · 依赖 C1 · 并行 W6**
 

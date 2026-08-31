@@ -10,3 +10,4 @@ openapi.json            # 由 `bun run openapi` 生成（前端类型改由 prot
 apps/ui/dist/           # Vite 构建产物
 *.tsbuildinfo
 coverage/
+.turbo/
