@@ -11,7 +11,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { mockRequest } from "@/lib/mock";
 import type {
   Envelope,
   FrontpageStats,
@@ -33,9 +32,6 @@ export const AGENTSIGNAL_PUBLIC_BASE =
   import.meta.env.VITE_AGENTSIGNAL_BASE ??
   (import.meta.env.DEV ? "http://localhost:3000" : "https://agentsignal.vip");
 
-/** 纯静态部署（Vercel/Netlify 无后端）时置 true，走本地 mock 数据，部署即验证。 */
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
-
 export class ApiError extends Error {
   constructor(
     readonly code: string,
@@ -48,7 +44,6 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (USE_MOCK) return mockRequest<T>(path, init);
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {

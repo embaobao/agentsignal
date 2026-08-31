@@ -491,14 +491,15 @@ pnpm test:e2e http://localhost:3000   # 三链路全量打云端库
 **生产形态 = 单机 Docker Compose（api + db + caddy）**，见 [container-deployment 决议](../decisions/2026-08-28-container-deployment.md)。
 **在线验证环境 = Netlify（UI 静态）**——2026-08-31 恢复 `netlify.toml`，仅用于小步功能验证，**不承载生产数据**。
 
-### 9.1 Netlify UI 验证环境（两层）
+### 9.1 验证环境（只有两条标准路径，无隧道/无 mock）
 
-| 层 | 做法 | 验证什么 |
+| 路径 | 做法 | 验证什么 |
 |---|---|---|
-| 纯 UI（mock） | `netlify.toml` 默认 `VITE_USE_MOCK=true`，push 即部署 | 界面/交互/路由 |
-| **全链路（真 API）** | 本机 API 经 Cloudflare 隧道暴露：`cloudflared tunnel --url localhost:3000` → 取 https URL → 构建期 `VITE_API_BASE=<隧道URL> VITE_USE_MOCK=false pnpm run build:ui` → Netlify 部署 | **完整业务链路在线验证**（注册/发布/检索/use/回流） |
+| **本地验证** | `pnpm db:up` + `pnpm dev` + `pnpm smoke` + `pnpm test:e2e` | 全链路（本机即完成） |
+| **正式产品化验证** | ① VPS `./scripts/deploy.sh init`（API 上线 agentsignal.vip）→ ② Netlify 仪表盘设 `VITE_API_BASE=https://agentsignal.vip` 重新部署 → ③ `pnpm test:e2e https://agentsignal.vip` | 生产形态全链路 |
 
-注意：隧道随本机存活（适合小步验证，非 7×24）；CORS 需 `CORS_ORIGIN=https://<site>.netlify.app`。
+Netlify 仅承载 UI 静态层；**真数据必须走 API 公网部署**（VPS），不提供隧道/mock 等旁路。
+CORS：Netlify 域名需在 API 侧 `CORS_ORIGIN=https://agentsignal.netlify.app` 放行。
 
 ### 9.2 npm CLI 发布（测试）
 
