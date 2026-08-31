@@ -11,3 +11,5 @@ apps/ui/dist/           # Vite 构建产物
 *.tsbuildinfo
 coverage/
 .turbo/
+# CLI use 物化的技能文件
+sig_*
