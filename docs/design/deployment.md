@@ -385,6 +385,24 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 | 迁移 | 幂等 DDL（create ... if not exists），启动时 `migrateToLatest` |
 | 测试 | 真 PG 临时库（`TEST_DATABASE_URL`）或内嵌 Postgres 夹具兜底，见 `apps/api/test/helpers/testdb.ts` |
 
+### 三方数据库接入（最小验证，本地照旧）
+
+代码零改动——换 `DATABASE_URL` 即完成切换（`Db` 接口为此设计）：
+
+```bash
+# 1) 在 Neon / Supabase / RDS 建一个 Postgres（免费层即可），拿到连接串（Neon 记得带 ?sslmode=require）
+# 2) 用它启动 API —— 迁移自动跑到最新版本
+DATABASE_URL="postgresql://...?sslmode=require" SELF_REGISTER_ENABLED=1 pnpm dev
+# 3) 验证
+curl localhost:3000/readyz      # → "status":"ready","migration":"002_audit"
+pnpm test:e2e http://localhost:3000   # 三链路全量打云端库
+
+# 本地继续用 compose 本地库，互不影响（两套只是 URL 不同）
+```
+
+- 测试同理：`TEST_DATABASE_URL=<云端串>` 让单测直接跑云端（会建临时库跑完即删）
+- 回本地：把 `.env` 的 DATABASE_URL 改回 localhost 即可
+
 > 历史（P3 文件存储 → PGlite WASM）已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 取代，归档见决议链。
 
 ### 6.2 备份

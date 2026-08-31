@@ -91,12 +91,14 @@ function agentRateKey(req: { headers: { authorization?: string | string[] }; ip:
 
 export function registerSignalRoutes(app: FastifyInstance, store: IStore, env: Env): void {
   /* ---------- 总入口：一份可安装 SKILL（协议 v0.2：GET /skills） ---------- */
+  // charset 必带：浏览器直开才不乱码（Agent 端读取不受影响）
+  const MD = "text/markdown; charset=utf-8";
   app.get("/skills", async (_req, reply) => {
-    return reply.type("text/markdown").send(skillBody(process.env));
+    return reply.type(MD).send(skillBody(process.env));
   });
   // 兼容旧路径
   app.get("/skill.md", async (_req, reply) => {
-    return reply.type("text/markdown").send(skillBody(process.env));
+    return reply.type(MD).send(skillBody(process.env));
   });
 
   /* ---------- 分区 ---------- */
