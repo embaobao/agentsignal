@@ -167,7 +167,7 @@ signal lifecycle（与账本状态分离；状态机本身有事件记录）：
 
 ```
 packages/audit/                 # 独立子包（workspace 已登记：packages/*）
-├── package.json                # bun test；deps: diff (minimal) / yaml / commander
+├── package.json                # node:test；deps: diff (minimal) / yaml / commander
 ├── src/
 │   ├── index.ts                # 对外导出：hook 函数 + LedgerWriter + GuardrailRunner
 │   ├── ledger/

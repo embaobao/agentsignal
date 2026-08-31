@@ -23,9 +23,9 @@
 | templates/ | EXPERIENCE / OUTCOME / SKILL.generated 三模板（P0–P2） |
 | tests | 集成矩阵 + **use 闭环 e2e（M2 硬验收）** + 断线恢复 + seed |
 
-## 技术栈（Bun-first，见决议）
+## 技术栈（Node + pnpm 标准化，见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)）
 
-bun install/run/test · Fastify + zod · PGlite（WASM PostgreSQL，`Db` 接口直写 PG SQL + 幂等迁移；Phase 2 换生产 PG 只换 driver）· pino · Docker（oven/bun 默认，node:22 回退）· TS strict 全仓 · 业务代码禁 bun:* 专有 API。前端：React 19 / Vite / Tailwind v4 / Base UI（瘦栈决议）。
+Node ≥22.18（type stripping 直跑 TS）· pnpm 10 · Fastify + zod · Postgres（node-postgres，`Db` 接口直写 PG SQL + 幂等迁移）· pino · Docker（oven/bun 默认，node:22 回退）· TS strict 全仓 · 业务代码禁 bun:* 专有 API。前端：React 19 / Vite / Tailwind v4 / Base UI（瘦栈决议）。
 
 ## 里程碑与裁决点
 
@@ -43,7 +43,7 @@ bun install/run/test · Fastify + zod · PGlite（WASM PostgreSQL，`Db` 接口�
 ## 仓库脚手架（D1 一次性生成）
 
 ```
-package.json (workspaces) bun.lock
+package.json + pnpm-workspace.yaml + pnpm-lock.yaml
 apps/api/src/{routes/{skills,topics,signals,agents},plugins/{auth,rate-limit},db/{migrations,seed},lib/{ulid,errors}}
 packages/protocol/src/{envelope.ts,ulid.ts,digest.ts,kinds.ts}
 packages/watch/src/{pull.ts,gate.ts,materialize.ts}
@@ -51,7 +51,7 @@ packages/cli/src/{connect.ts,pull.ts,use.ts,publish.ts}
 packages/skills/{participant/SKILL.md,builder/SKILL.md}
 packages/mcp/src/server.ts        (P2)
 templates/{EXPERIENCE,OUTCOME,SKILL.generated}.md
-tests/{api/,e2e/}  docker-compose.yml  .github/workflows/ci.yml(bun+node 双跑)
+tests/{api/,e2e/}  docker-compose.yml  .github/workflows/ci.yml(pnpm + Node 24)
 ```
 
 ## 工作流与治理
@@ -62,7 +62,7 @@ tests/{api/,e2e/}  docker-compose.yml  .github/workflows/ci.yml(bun+node 双跑)
 
 | 风险 | 回退 |
 |---|---|
-| Bun 兼容性 | node:22 运行切换（代码无感） |
+| 运行时兼容性 | Node ≥22.18 为唯一口径（type stripping），CI 跑 Node 24 |
 | M2 use 闭环失败 | 停止一切滑梯投资；归因 SKILL 模板/Runbook 规范，修订后单点重测 |
 | Testnet 无自发经验 | Stop-hook 试点 + curator 荣誉制（运营手段，非代码） |
 | Gate PASS≈100% | noise-injector 夹具已在计划内 |

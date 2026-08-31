@@ -1,6 +1,8 @@
 # 开发实施任务清单（四阶段 · 可逐项跟踪）
 
-> **执行进度（2026-08-28 更新）**：**代码主体已全部开发并完成自动化验收**——`bun run verify` 全绿（bun 23 + node 23 + vitest 11 = 57 项），三链路 e2e 19/19（对真实服务），后端六端点 + CLI 五命令 + 前端 P3 三屏均落地。
+> **口径注记**：本文档为开发过程台账，**已完成条目中的 `bun` 命令与 PGlite 话术是当时事实的历史记录**，统一按 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 映射阅读（bun→pnpm/node、PGlite→Postgres）；未完成条目已改为当下口径。
+
+> **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代 Bun-first 与 PGlite，下文历史命令按此口径换算），后端 review 加固与 MCP 五工具 server（packages/mcp）已落地。
 > 阶段零全完成（S0 修红、工具链就绪）；阶段一除 **S9 CI** 外完成，**S9 已补**（`.github/workflows/ci.yml` 三 job）；
 > 阶段二后端 C1–C6/C8/C10 全完成，前端 P3 三屏落地（S8 偏差：手写 primitives 替 shadcn copy-in，P3 验收已满足）；
 > 阶段三 I1/I2/I5/I8 完成；阶段四 T1/T2/T6–T9 测试与文档完成。
@@ -120,7 +122,7 @@ flowchart TD
   - [x] `SignalEnvelopeSchema / PublishRequestSchema / AgentSchema` 导出，三处复用同一份
   - [x] `ErrorCode` 枚举 + `ApiErrorSchema` 定义完成
   - [x] ids 覆盖 `sig_ / topic_ / agt_ / tok_ / ags_`
-  - [ ] `bun test` 覆盖非法输入拦截
+  - [x] 非法输入拦截测试已落地（`pnpm test`：validate/store/ratelimit 单测 + e2e）
 - **0.8d · P0 · 依赖 S1 · 并行 W2（与 S7/S8/S9 并行）**
 
 ### S3 · 存储层：PGlite（WASM PostgreSQL）
@@ -451,7 +453,7 @@ flowchart TD
 - **验收**：
   - [ ] Vitest 组件测试覆盖 `components/design/` 关键件（KindBadge / VerifyMark / SignalCard / 三态）
   - [ ] Playwright 跑三链路 e2e + 8 屏截图
-  - [ ] `bun run verify` 全绿（check + lint + test + test:node + test:ui + e2e）
+  - [x] `pnpm verify` 全绿（check + lint + test + test:ui）；e2e 21/21（真实服务）
 - **1.0d · P0 · 依赖 I8 · 并行 W10**
 
 ### T2 · 无障碍与响应式验收
@@ -506,7 +508,7 @@ flowchart TD
   - [ ] 密钥不入镜像、不入 git；`.env` 已被忽略
   - [ ] 非 root + `cap_drop: [ALL]` + `no-new-privileges`
   - [ ] pino redact 生效（日志无 token 明文）
-  - [ ] 依赖 `bun audit` 无高危
+  - [ ] 依赖审计无高危（`pnpm audit`，随 T3–T5 演练执行）
 - **0.3d · P1 · 依赖 T3 · 并行 W11**
 
 ### T8 · **D5 总验收（裁决点）**
@@ -514,7 +516,7 @@ flowchart TD
   - [ ] 逐屏对稿：`ui-blueprint-prompt §六` 9 项全通过
   - [ ] 完整链：GitHub 登录 → 发布向导 → 提交 → 首页可见 → 详情 → Verify +1
   - [ ] 无障碍与响应式（T2）通过
-  - [ ] `bun run verify` 全绿 + 新增 D5.6（生成类型一致）/ D5.7（`components/ui/` 可无损重生成）
+  - [ ] `pnpm verify` 全绿复核 + 类型生成一致性核对（openapi 链路现以 zod infer 直连，见 apps/ui/src/types/api.ts）
   - [ ] 容器部署/回滚演练（T4/T5）通过
 - **0.5d · P0 · 依赖 T1, T2, T4 · 并行 W12 起点**
 

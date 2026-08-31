@@ -1,5 +1,5 @@
 [build]
-  command = "bun install && bun run build:ui"
+  command = "pnpm install --frozen-lockfile && pnpm run build:ui"
   publish = "apps/ui/dist"
 
 [build.environment]

@@ -21,7 +21,7 @@
 ```
 apps/ui/
 ├── index.html                       # 仅挂 <div id="app"></div>；主题初始化 <script> inline（防闪）
-├── package.json                     # vite + react + typescript；bun dev / vite build
+├── package.json                     # vite + react + typescript；pnpm dev / vite build
 ├── tsconfig.json                    # strict: true；paths: "@/*" → src/*
 └── src/
     ├── main.tsx                     # ReactDOM.createRoot + 主题初始化 + ⌘K 全局监听
@@ -253,4 +253,4 @@ Type 层镜像 `packages/protocol/src/types.ts`（为了避免跨包循环可以
 - [ ] `prefers-reduced-motion` 开启后：骨架 shimmer 等全部静止
 - [ ] ⌘K：键盘 ↑↓ Enter Esc 可用
 - [ ] 首页 → 详情 → 回首页：无重复请求
-- [ ] `bun run tsc --noEmit` 无 any；`biome lint` 通过
+- [ ] `pnpm check`（tsc --noEmit）无 any；`pnpm lint` 通过

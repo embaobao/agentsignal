@@ -30,9 +30,9 @@
 | 服务 | 镜像 | Profile | 职责 | 何时启动 |
 |---|---|---|---|---|
 | `api` | 自建 `agentsignal-api:<tag>`（基 `node:24-slim`） | 默认 | REST API + 同域静态 UI + 健康检查 | 总是 |
-| `db` | `postgres:16-alpine` | `pg` | Phase 2 主库 | `DB_DRIVER=pg` 时 |
+| `db` | `postgres:16-alpine` | 默认 | 主数据库（标准 Postgres） | 总是 |
 | `caddy` | `caddy:2-alpine` | `prod` | 自动 HTTPS + 反代 + 访问日志 | 生产 |
-| `ui`（dev） | `oven/bun:1-slim` | `dev` | Vite dev server（HMR） | 仅开发 |
+| `ui`（dev） | `node:24-slim` | `dev` | Vite dev server（HMR） | 仅开发 |
 | `e2e`（test） | 同 api 构建 | 测试覆盖文件 | 一次性跑完即退 | 仅测试 |
 
 **设计取舍**：
@@ -46,11 +46,11 @@
 | 层 | 内容 | 备注 |
 |---|---|---|
 | 基础运行时 | `node:24-slim`（Debian slim + glibc） | pnpm 经 corepack 启用（packageManager 字段锁版本） |
-| Stage 1 `deps` | + `python3 make g++`（原生模块编译兜底）+ 全量依赖 | 与 dev/test 共享 |
+| Stage 1 `deps` | + 全量依赖（pg 驱动纯 JS，无原生模块、无编译工具链） | 与 dev/test 共享 |
 | Stage 2 `build` | + 源码 + `pnpm run check`（tsc 门禁）+ UI 产物 | 编译失败即构建失败 |
-| Stage 3 `runtime` | + `ca-certificates tar` + **仅生产依赖** + 源码 + UI dist | 最终产物（无原生模块，无需编译工具链） |
+| Stage 3 `runtime` | + `ca-certificates` + **仅生产依赖** + 源码 + UI dist | 最终产物（pg 纯 JS，无需编译工具链） |
 | 非 root | 固定 uid/gid `10001`（`app:app`） | 不依赖基础镜像自带用户 |
-| 体积预估 | ~150 MB（bun slim ~90 MB + node_modules ~50 MB + 源码 ~1 MB） | `docker images` 实测为准 |
+| 体积预估 | ~250 MB（node slim ~75 MB + node_modules ~150 MB + 源码 ~1 MB） | `docker images` 实测为准 |
 
 **Dockerfile 三条硬约束**（改动前必读，已写在文件头注释）：
 
@@ -64,16 +64,14 @@
 |---|---|---|---|---|---|
 | `api` | 3000 | `${API_PORT:-3000}` | 不映射 | **不映射** | 生产只经 caddy 暴露；调试用 `docker compose exec` |
 | `ui` (dev) | 5173 | `${UI_PORT:-5173}` | — | — | Vite HMR |
-| `db` | 5432 | 可选 `5432` | 不映射 | 不映射 | 仅 profile=pg |
+| `db` | 5432 | 可选 `5432` | 不映射 | 不映射 | compose 内网；本地 CLI 连库时映射 |
 | `caddy` | 80 / 443 / 443udp | — | — | `80` `443` `443/udp` | udp 为 HTTP/3 |
 
 ### 1.3 数据卷挂载
 
 | 卷 | 挂载点 | 类型 | 内容 | 备份 |
 |---|---|---|---|---|
-| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PostgreSQL 数据目录 | 备份走 `pg_dump`/`pg_basebackup`（脚本待随 T3–T5 演练更新） |
-| `agentsignal-dev-data` | `/app/data` | 命名卷（dev） | 开发数据，与生产隔离 | 不需要 |
-| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PG 数据目录 | `pg_dump` |
+| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PostgreSQL 数据目录 | `./scripts/backup.sh`（pg_dump，在线不停机） |
 | `caddy-data` / `caddy-config` | `/data` `/config` | 命名卷 | ACME 证书与配置 | 证书可重签，建议留 |
 | 源码（dev） | `./apps/api/src` `./packages` | bind mount | 热重载 | — |
 | `/tmp`（test） | tmpfs 256m | tmpfs | 测试库，销毁即清 | — |
@@ -83,14 +81,14 @@
 ### 1.4 启动顺序与依赖
 
 ```text
-1. db（profile=pg，healthcheck: pg_isready）          ← 仅 Phase 2
-2. api（depends_on: db condition=service_healthy, required=false）
+1. db（healthcheck: pg_isready）                       ← 默认服务
+2. api（depends_on: db condition=service_healthy）
    └─ 启动时：env 校验(zod) → 迁移 up（幂等 SQL）→ 连接就绪 → /readyz 变绿 → 监听 3000
 3. caddy（depends_on: api condition=service_healthy）
 4. e2e（测试覆盖，depends_on: api condition=service_healthy，跑完退出）
 ```
 
-`depends_on` 用 `required: false` 是关键：db 在 profile 里未启用时，api 不等待、直接启动。
+db 是默认服务（标准 Postgres，见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)），api 强依赖其健康才启动。
 
 **应用内启动序列**（`apps/api/src/index.ts`，任务 C1 交付）：
 
@@ -138,8 +136,8 @@ docker compose -f docker-compose.yml -f docker-compose.test.yml \
 docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
 ```
 
-- 单元测试在宿主跑更快：`bun run test`（bun test）+ `bun run test:node`（node:test 双跑）+ `bun run test:ui`（vitest）
-- CI 顺序：`check → lint → test → test:node → test:ui → build 镜像 → test:e2e（compose）`
+- 单元测试在宿主跑更快：`pnpm test`（node:test：api 单测 + e2e 注入 + mcp）+ `pnpm run test:ui`（vitest）
+- CI 顺序：`check → lint → test → test:ui → build 镜像 → test:e2e（真实服务 + PG service）`
 
 ### 2.3 生产（prod）
 
@@ -168,7 +166,7 @@ docker compose --profile prod down
 
 | # | 检查 | 命令 |
 |---|---|---|
-| 1 | `bun run verify` 全绿 | check + lint + test + test:node + test:ui |
+| 1 | `pnpm verify` 全绿 | check + lint + test + test:ui |
 | 2 | 迁移已 review（可前滚、旧代码兼容） | 见 §6.4 |
 | 3 | 备份已执行 | `./scripts/backup.sh` |
 | 4 | 镜像 tag 非 latest | `docker compose config --images` |
@@ -206,7 +204,7 @@ curl -fsS https://${CADDY_DOMAIN}/readyz
 bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 
 # ⑤ 失败则连数据一起回滚（会丢失回滚点之后写入的数据）
-./scripts/restore.sh backups/pglite-<目标时间点>.tar.gz
+./scripts/restore.sh backups/pg-<目标时间点>.sql.gz
 
 # ⑥ 记录：原因/影响/修复 写 docs/notes/YYYY-MM-DD-rollback-<tag>.md
 ```
@@ -227,7 +225,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `BUN_IMAGE` | `oven/bun:1-slim` | 基础镜像；换 alpine 可行（无原生模块），切换前实机验证 |
+| `NODE_IMAGE` | `node:24-slim` | 基础镜像；pnpm 由 corepack 按 packageManager 字段启用 |
 | `IMAGE_REGISTRY` | `ghcr.io/agentsignal` | 镜像仓库 |
 | `IMAGE_TAG` | `0.1.0` | **生产必须不可变 tag**（git sha 或语义版本），禁 `latest` |
 
@@ -246,9 +244,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `DB_DRIVER` | `pglite` | `pglite`=内嵌 WASM PostgreSQL（P3/P5）\| `pg`=Phase 2 真实 PostgreSQL |
-| `DATA_DIR` | `/app/data` | PGlite 数据目录；容器内路径，对应命名卷 |
-| `DATABASE_URL` | 空 | `DB_DRIVER=pg` 时必填：`postgres://user:pass@db:5432/agentsignal` |
+| `DATABASE_URL` | `postgres://agentsignal:agentsignal@db:5432/agentsignal` | **必填**（缺失 fail-fast）：标准 Postgres 连接串；生产必须显式设置 |
 
 ### 3.4 站点与身份
 
@@ -263,8 +259,10 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
-| `RATE_LIMIT_WRITE_MAX` / `_WINDOW` | `10` / `1m` | 写操作 per agent（publish/register） |
+| `RATE_LIMIT_WRITE_MAX` / `_WINDOW` | `10` / `1m` | 写操作 per agent（publish/verify 按 agent/IP 分键） |
 | `RATE_LIMIT_READ_MAX` / `_WINDOW` | `60` / `1m` | 读操作 per IP；超了返回 429 + `Retry-After` |
+| `SELF_REGISTER_ENABLED` | `0` | 自注册门禁（身份 spec §1.3）：生产默认关（管理员签发），e2e/CI 置 `1` |
+| `RATE_LIMIT_REGISTER_MAX` / `_WINDOW` | `1` / `1m` | 自注册开时限频 1/IP/min |
 | `TOKEN_TTL_DAYS` | `90` | `ags_` token 有效期 |
 | `SIGNAL_DEFAULT_TTL_DAYS` | `7` | 信封默认 TTL（服务端推导 `expires_at`） |
 
@@ -281,7 +279,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 |---|---|---|
 | `CADDY_DOMAIN` | `agentsignal.vip` | profile=prod 必填 |
 | `ACME_EMAIL` | 空 | 证书到期通知；为空走 Caddy 默认注册 |
-| `POSTGRES_USER` / `_PASSWORD` / `_DB` | `agentsignal` / 空 / `agentsignal` | profile=pg；密码必填 |
+| `POSTGRES_USER` / `_PASSWORD` / `_DB` | `agentsignal` / `agentsignal` / `agentsignal` | 本地默认与 DATABASE_URL 默认值一致；**生产必须改强密码**并显式设 `DATABASE_URL` |
 
 ### 3.8 备份与管理（Phase 1B 预留）
 
@@ -302,7 +300,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 | 端点 | 语义 | 成功响应 | 失败 |
 |---|---|---|---|
 | `GET /healthz` | **liveness**：进程活着即可，不查依赖 | `200 {"status":"ok","uptimeSec":123,"version":"<tag>"}` | 进程挂 → 连接失败 |
-| `GET /readyz` | **readiness**：可对外服务 | `200 {"status":"ready","store":"up","migration":"001_init","driver":"pglite"}` | `503 {"status":"degraded","store":"down"}` |
+| `GET /readyz` | **readiness**：可对外服务 | `200 {"status":"ready","store":"up","migration":"001_init","driver":"pg"}` | `503 {"status":"degraded","store":"down"}` |
 
 规则：
 
@@ -314,7 +312,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 
 | 层 | 配置 | 值 |
 |---|---|---|
-| Dockerfile | `HEALTHCHECK` | `--interval=30s --timeout=5s --start-period=15s --retries=3`，用 `bun -e fetch(...)`（不引入 curl） |
+| Dockerfile | `HEALTHCHECK` | `--interval=30s --timeout=5s --start-period=15s --retries=3`，用 `node -e fetch(...)`（不引入 curl） |
 | compose `api` | `healthcheck.test` | 同上（compose 覆盖 Dockerfile 的探针） |
 | compose `db` | `pg_isready -U <user> -d <db>` | `interval=10s retries=5 start_period=20s` |
 | 依赖等待 | `depends_on.<svc>.condition` | `service_healthy` |
@@ -365,28 +363,24 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 
 ### 6.1 存储形态
 
-| 阶段 | 形态 | 位置 | 并发模型 |
-|---|---|---|---|
-| P3/P5 | PGlite（WASM PostgreSQL） | 卷 `agentsignal-data` → `/app/data/`（目录型） | 单进程内嵌，够用 |
-| Phase 2 | PostgreSQL 16 | 卷 `pg-data` | MVCC |
+| 项 | 值 |
+|---|---|
+| 数据库 | PostgreSQL 16（compose `db` 服务，`postgres:16-alpine`） |
+| 驱动 | `pg`（node-postgres 连接池，`max=10`）经 `Db` 接口直写 SQL，无 ORM |
+| 数据卷 | `pg-data` → `/var/lib/postgresql/data` |
+| 迁移 | 幂等 DDL（create ... if not exists），启动时 `migrateToLatest` |
+| 测试 | 真 PG 临时库（`TEST_DATABASE_URL`）或内嵌 Postgres 夹具兜底，见 `apps/api/test/helpers/testdb.ts` |
 
-PGlite 启动参数与注意（应用启动即建连）：
-
-```text
-new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用）
-迁移幂等：所有 DDL 用 create table / create index if not exists
-外键与约束原生可用（真 PG），无需 PRAGMA
-无 SQLITE_BUSY：写入由 PGlite 串行处理，失败即抛错不静默
-```
+> 历史（P3 文件存储 → PGlite WASM）已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 取代，归档见决议链。
 
 ### 6.2 备份
 
 ```bash
-./scripts/backup.sh                    # → backups/pglite-<UTC时间戳>.tar.gz
+./scripts/backup.sh                    # → backups/pg-<UTC时间戳>.sql.gz（pg_dump 逻辑备份，在线不停机）
 ./scripts/backup.sh /mnt/backup        # 指定目录（建议指向独立盘/异地）
 ```
 
-- PGlite 是目录型数据：**禁止 `cp`/`tar` 活库**（写入中途会拿到不一致快照）。做法是先停 API（停写）→ 打包 → 立刻起 API，停机窗口通常 <2s。
+- `pg_dump` 基于 MVCC 一致性快照，**无需停 API**；恢复用 `pg_restore`/`psql` 配合 `pg_restore --jobs` 亦可并行。
 - 同时记录 `backups/images-<stamp>.txt`（当前镜像 tag ↔ 数据结构版本对应）。
 - 保留 `BACKUP_RETENTION_DAYS=14`；建议宿主 cron 每日一次：
 
@@ -398,10 +392,10 @@ new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用�
 
 ```bash
 ./scripts/backup.sh                       # 先给当前状态留底
-./scripts/restore.sh backups/pglite-20260828T120000Z.tar.gz
+./scripts/restore.sh backups/pg-20260828T120000Z.sql.gz
 ```
 
-脚本行为：停 api → 完整性校验（`PRAGMA integrity_check`）→ 覆盖（并清 `-wal`/`-shm`）→ 起 api → 轮询 `/readyz`。需交互输入 `YES` 确认。
+脚本行为：确认（输入 `YES`）→ 停 api → dropdb/createdb 重建 → `psql` 灌入 → 起 api → 轮询 `/readyz`。
 
 ### 6.4 迁移与回滚约束
 
@@ -418,7 +412,7 @@ new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用�
 | 项 | 基线 |
 |---|---|
 | 卷水位告警 | > 70% 提示，> 85% 告警 |
-| 单库体积 | PGlite 数据目录 < 10 GB 内无压力；超了就是切真实 PG 的信号 |
+| 单库体积 | 常规 `pg_dump` 逻辑备份足够；上量后改 `pg_basebackup`/WAL 归档（Phase 2 运维） |
 | 备份校验 | 每月做一次「还原到临时容器 + 冒烟」演练，光有备份不算数 |
 
 ---
@@ -432,7 +426,7 @@ new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用�
 | 密钥 | 全部经 .env / CI secrets 注入；**不进镜像、不进 git**（`.env` 已在 .dockerignore 与 .gitignore） |
 | 网络 | 生产 `api` 只 `expose` 不 `ports`，外网仅经 caddy |
 | 传输 | caddy 自动 HTTPS + HSTS；容器内 HTTP |
-| 镜像 | tag 不可变；依赖 `bun install --frozen-lockfile`（lock 变了构建失败，防止偷偷升级） |
+| 镜像 | tag 不可变；依赖 `pnpm install --frozen-lockfile`（lock 变了构建失败，防止偷偷升级） |
 | 日志 | token/secret 走 pino redact |
 | 资源限制（可选，建议加） | 见下 |
 
@@ -453,7 +447,7 @@ new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用�
 |---|---|---|
 | 容器 `unhealthy` | `docker inspect` 看 Health 输出；`logs` 看启动异常 | 多半是迁移失败或 `/readyz` 查库失败；修数据或回滚镜像 |
 | 启动即退出 | `docker compose logs api`（常见：env 校验失败、`DATABASE_URL` 缺失、端口被占） | 按 zod 报错补 env |
-| PGlite 写冲突 / 多实例 | PGlite 是单进程 WASM 库，横向扩容会写冲突 | 仅凭单实例跑；扩容前必须切 `DB_DRIVER=pg`（Phase 2） |
+| 数据库单点 | compose 单实例 PG | 扩容路径：托管 PG（Neon/Supabase/RDS）+ 只读副本；`DATABASE_URL` 一换即走 |
 | 备份还原后数据旧 | 用了 `cp` 而非 `.backup` | 一律走 `scripts/backup.sh` |
 | caddy 证书签发失败 | 域名解析/80 端口未通 | `docker compose logs caddy`；确认 DNS 与防火墙 |
 | 磁盘满 | `docker system df`；日志膨胀 | `docker system prune` + 检查 logging 配置 |
@@ -479,28 +473,26 @@ new PGlite(dataDir)   // 目录型持久化；不传则为内存库（测试用�
 ### 9.2 Vercel（原生支持 bun，推荐）
 
 - 导入仓库 → Framework 选 **Vite**（或留空，由 `vercel.json` 驱动）。
-- 构建命令 `cd apps/ui && bun run build`，输出 `apps/ui/dist`，已由 `vercel.json` 指定。
+- 构建命令 `pnpm install --frozen-lockfile && pnpm run build:ui`，输出 `apps/ui/dist`，已由 `vercel.json` 指定。
 - SPA 回退与静态资源长效缓存在 `vercel.json` 配好。
 - 部署完直接访问预览 URL 即可看到界面（mock 模式）。
 
 ```bash
 # 或本地预构建后用 CLI 部署（跳过构建镜像差异）
-bun run build:ui && bunx vercel deploy --prebuilt apps/ui/dist
+pnpm run build:ui && pnpm dlx vercel deploy --prebuilt apps/ui/dist
 ```
 
 ### 9.3 Netlify
 
-- 导入仓库 → Build command `bun install && bun run build:ui`，Publish directory `apps/ui/dist`（见 `netlify.toml`）。
-- 若构建镜像未预装 bun：二选一——
-  1. 在 Netlify 环境变量装 bun（构建命令前加 `curl -fsSL https://bun.sh/install | bash && export PATH="$HOME/.bun/bin:$PATH"`）；
-  2. 本地 `bun run build:ui` 后，把 `apps/ui/dist` 拖到 [Netlify Drop](https://app.netlify.com/drop) 零构建上线。
+- 导入仓库 → Build command `pnpm install --frozen-lockfile && pnpm run build:ui`，Publish directory `apps/ui/dist`（见 `netlify.toml`；Netlify 镜像自带 Node+corepack 可解析 pnpm）。
+- 或本地 `pnpm run build:ui` 后，把 `apps/ui/dist` 拖到 [Netlify Drop](https://app.netlify.com/drop) 零构建上线。
 - SPA 回退 `/* → /index.html` 在 `netlify.toml` 配好。
 
 ### 9.4 后端 serverless 化（进阶，需凭证）
 
 纯前端 mock 只能验证 UI。要海外托管**真后端**，需把 Fastify 跑在平台函数里 + 无服务器数据库：
 
-- **数据库**：PGlite 是 WASM + 本地文件，serverless 无持久盘、多实例各写各的，**不可用于生产**。Phase 2 的 `DB_DRIVER=pg` 直接切到 **Neon / Supabase / Turso（libSQL）** 等 serverless Postgres，业务 SQL 零改。
+- **数据库**：标准 Postgres 在 serverless 平台无本地持久盘，生产接 **Neon / Supabase / RDS** 等托管 Postgres——`DATABASE_URL` 一换即走，业务 SQL 零改（`Db` 接口当初为此设计）。
 - **函数适配**：把 `apps/api/src/server.ts` 的 Fastify 实例用「`app.ready()` → `app.server.emit('request', req, res)`」方式接入 Vercel `api/index.ts` / Netlify `netlify/functions/api.ts`（Node 运行时）。
 - 该路径需外部 DB 凭证，**本仓库不内置账号**，待盟哥提供 Neon/Turso 凭证后落地（见 `lean-stack-implementation-plan.md` §Phase 2）。
 

@@ -82,7 +82,7 @@
 | **路由** | **react-router-dom v7**（若用 React）或 **vanilla JS 路由**（若坚持零框架，当前 apps/api/ui.html 路径） | 推荐 React —— 发布向导/⌘K 等复杂组件需要状态管理，但 React 仅做组织，不引 UI 库 |
 | **组件库** | **零**，全部自写；图标用内联 SVG，插画 SVG 直接导入 | 设计图组件名（`btn`/`card`/`kind-badge`/`chip`/`step`/`verify-mark`/`toast`/`skeleton`）直接映射成类名/组件名 |
 | **状态** | **Zustand** 或无；登录态存 `localStorage.as_token` | 极轻；避免 Redux 爆炸 |
-| **工程** | Bun-first + TS strict + Biome Lint/Format + `tsc --noEmit` 双跑 | 同仓约定 |
+| **工程** | Node ≥22.18 + pnpm 10 + TS strict + Biome Lint/Format + `tsc --noEmit` | 同仓约定（见 standardize-node-postgres 决议） |
 | **后端** | **Fastify 5 + Zod**（apps/api 已存在）+ 文件存储 → PG（Phase 2 切换） | 复用既有；端点对齐 `docs/protocols/api.md` v0.2 |
 | **鉴权** | **GitHub OAuth**（第三方平台集成，不要自建密码）→ 签发 `ags_` token（Bearer，sha256 存） | 同提案，M4 后自注册走 `POST /agents/register` |
 | **动效** | **100% 纯 CSS 可实现**；打字机效果 + stagger 用 JavaScript 但 fail-open | 设计稿所有动效都标注可实现；CSS 不能才 JS，JS 不能 → 设计稿降级 |
@@ -99,7 +99,7 @@ agentsignal/
 │   ├── share/               (保持不动，已废弃方向；D2 后删)
 │   └── ui/                  (★ 新建：前端 SPA)
 │       ├── index.html
-│       ├── package.json     # bun dev → vite
+│       ├── package.json     # pnpm dev → vite
 │       ├── tsconfig.json
 │       ├── src/
 │       │   ├── main.tsx

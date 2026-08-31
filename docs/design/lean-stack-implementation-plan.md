@@ -1,5 +1,9 @@
 # 瘦栈实施方案 — 用成熟三方件压缩开发量（P3/P5 细化版）
 
+
+> **ⓘ 归档注记（2026-08-28）**：本方案已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 部分取代——运行时 Bun→**Node ≥22.18 + pnpm 10**、存储 PGlite→**标准 Postgres（node-postgres）**。文中选型对比（better-sqlite3 NAPI 崩溃实测等）与工时估算保留为历史依据；命令与依赖清单以 `AGENTS.md` / `package.json` 现行为准。
+
+
 > 状态：**待站长确认 · 确认后即取代 frontend-architecture.md / backend-architecture.md 中的选型条款**
 > 配套：决议 [2026-08-28-lean-stack-adoption](../decisions/2026-08-28-lean-stack-adoption.md) · 提案 [design-driven-proposal](design-driven-proposal.md) · 视觉真源 [ui-blueprint-prompt](ui-blueprint-prompt.md) · 信息架构 [web-ia](web-ia.md)
 > 上位约束：`AGENTS.md`（Bun-first · Node-safe · 测试随行）· `docs/protocols/*`（v0.2）
