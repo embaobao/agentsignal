@@ -19,6 +19,8 @@
   # SELF_REGISTER_ENABLED = "1"
   # ── 首页 SKILL 接入命令对外广播的 base（同源部署=站点自身域名）──
   VITE_AGENTSIGNAL_BASE = "https://agentsignal.netlify.app"
+  # Function 运行 cwd=/var/task（included_files 已按仓库相对路径放置），直接相对读
+  AS_SKILL_PATH = "packages/skills/participant/SKILL.md"
 
 # API 前缀 → Function（须在 SPA catch-all 之前；status 200 = rewrite 不改地址，天然免 CORS）
 [[redirects]]
