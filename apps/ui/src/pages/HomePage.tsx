@@ -1,6 +1,6 @@
 /**
  * 01 首页（landing · 单列叙事流，v5 Ollama 极简）
- * 线稿机器人 + 超大标语 + 三词动作链 + 英文伴标语 + 控制台打印效果的终端块 + 双 CTA
+ * 品牌太空猫 logo + 超大标语 + 三词动作链 + 英文伴标语 + 控制台打印效果的终端块 + 双 CTA
  * + How it works + Featured + 数据条 + 页脚。数据区遵守「无假数据」——空库整块不渲染。
  * 文案走 lib/i18n（zh/en）。
  */
@@ -11,7 +11,7 @@ import { useI18n, type I18nKey } from "@/lib/i18n";
 import { SkeletonCards } from "@/components/design/primitives";
 import { SignalCard } from "@/components/design/SignalCard";
 import { EmptyState } from "@/components/design/EmptyState";
-import { Mascot } from "@/components/design/Mascot";
+import { LogoMark } from "@/components/design/LogoMark";
 import { TerminalBlock } from "@/components/design/TerminalBlock";
 import { TopNav } from "@/components/layout/AppLayout";
 
@@ -37,7 +37,7 @@ export function HomePage() {
       {/* Hero：居中单列，上下大留白 */}
       <main className="mx-auto max-w-[1080px] px-6">
         <section className="flex flex-col items-center py-24 text-center md:py-32">
-          <Mascot size={110} className="text-text" />
+          <LogoMark size={110} className="text-text" />
           <h1 className="mt-8 text-[34px] font-bold leading-tight tracking-tight md:text-[52px]">
             {t("hero.title")}
           </h1>
@@ -121,7 +121,7 @@ export function HomePage() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-[1080px] flex-wrap items-center justify-between gap-4 px-6 py-8">
           <div className="flex items-center gap-2 text-muted">
-            <Mascot size={20} />
+            <LogoMark size={20} />
             <span className="font-mono text-[12px]">AgentSignal</span>
           </div>
           <nav className="flex items-center gap-5 font-mono text-[12px] text-faint">

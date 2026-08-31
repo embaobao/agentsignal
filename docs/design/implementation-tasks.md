@@ -4,13 +4,29 @@
 
 > **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代 Bun-first 与 PGlite，下文历史命令按此口径换算），后端 review 加固与 MCP 五工具 server（packages/mcp）已落地。
 > 阶段零全完成（S0 修红、工具链就绪）；阶段一除 **S9 CI** 外完成，**S9 已补**（`.github/workflows/ci.yml` 三 job）；
-> 阶段二后端 C1–C6/C8/C10 全完成，前端 P3 三屏落地（S8 偏差：手写 primitives 替 shadcn copy-in，P3 验收已满足）；
+> 阶段二后端 C1–C6/C8/C10 全完成，前端 P3 三屏落地（**S8 按原方案落地 shadcn/Base UI**：`components/ui/dialog.tsx` 以 `@base-ui-components/react` 为底层原语，发布向导「预览」弹层在用；先前「手写 primitives 替 shadcn copy-in」的偏差已于 2026-08-28 撤销）；
 > 阶段三 I1/I2/I5/I8 完成；阶段四 T1/T2/T6–T9 测试与文档完成。
-> **剩余未完项分三类**：
-> ① **设计内延后（非阻塞）**：C9 GitHub OAuth（降级自注册）；C14 图纸标注层已随视觉推翻废弃；
-> ② **需人工裁决（盟哥）**：D1/D5 视觉对稿与总验收——需盟哥在浏览器看真机效果后勾选；
-> ③ **需基础设施（Docker daemon）**：T3–T5 容器构建/部署/回滚演练——compose 六组合已静态校验，实机需在 OrbStack/有 daemon 环境跑 `docker compose build api`。
-> 代码与契约层面已具备「规划好后完成全部提案的开发和验收」的交付条件；余下为人工/环境动作。
+>
+> ### 2026-08-31 复核（重要）
+>
+> **① P0 · 校验链当前是红的**（与上文「全绿」记录不符，需先修）：`pnpm verify` 在 `check` 步失败，
+> 唯一错误 `tests/e2e/api.test.ts(9,38): TS2307 Cannot find module 'fastify'`。
+> 根因：`pnpm-workspace.yaml` 的 packages 只含 `apps/*`、`packages/*`，**`tests/` 不在 workspace 内**；
+> 而 `fastify` 只装在 `apps/api/node_modules`，pnpm 严格隔离不提升至根 `node_modules`。
+> 修复二选一：**A 最小**＝根 devDependencies 加 `fastify`；**B 推荐**＝e2e 测试移入 `apps/api/test/`（测试随被测包走，AGENTS.md 的 `test` 命令已含该目录）。
+>
+> **② P1 · 运营后台缺口未闭环**（standardize-node-postgres 决议 D5 承诺的遗留动作）：
+> D5 原文「运营后台缺口后续以轻量方案另立 ADR」，截至 2026-08-31 **该 ADR 未立、缺口仍开**——
+> `signals.recommended` 有列（`migrations.ts:57`）、有读（`routes/signals.ts:56`）、**零写路径**；
+> `apps/api/src` 零 admin 端点；audit-restore 提案仍 `proposed`。
+> 解法评估见 [payload-cms-evaluation §六](../design/payload-cms-evaluation.md)（方案 D 轻量后台，0.5–1 人日，自研以守「无 ORM」与「禁成品 UI 库」两条约束）。
+>
+> **剩余未完项分四类**：
+> ① **阻塞（P0）**：校验链红灯（上 ①），修完才谈交付；
+> ② **功能缺口（P1）**：运营后台（上 ②）——M4 Testnet 前需闭环，否则运营无打标/审计入口；
+> ③ **设计内延后（非阻塞）**：C9 GitHub OAuth（降级自注册）；C14 图纸标注层已随视觉推翻废弃；
+> ④ **需人工/环境**：D1/D5 视觉对稿（盟哥）；T3–T5 容器演练（需 Docker daemon，compose 六组合已静态校验）。
+> 代码与契约层面已具备交付条件；**余下动作依次为：修 P0 → 补 P1 → 冲 M4 Testnet**。
 
 > 状态：**实施清单** · 2026-08-28 v1
 > 配套：[瘦栈实施方案](lean-stack-implementation-plan.md)（选型与细化）· [部署与运维手册](deployment.md)（容器化）· [backend-architecture](backend-architecture.md) · [frontend-architecture](frontend-architecture.md)

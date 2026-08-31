@@ -21,8 +21,8 @@
 | `design/roadmap.md` | v2.1 双轨 M×P、Day1–7、DoD、卫生纪律 |
 | `design/ui-blueprint-prompt.md` | ★视觉真源 v5：单色极简 token/组件口径（ollama 式） |
 | `design/frontend-architecture.md` · `design/backend-architecture.md` | 前后端架构（P3/P5）；选型条款待按瘦栈决议修订 |
-| `design/lean-stack-implementation-plan.md` | ★瘦栈实施方案：三方件选型（Tailwind v4 + shadcn/Base UI + PGlite 直写 PG SQL）、依赖清单、token 映射、M0–M4 细化任务、工时对照（14.5→9.8 人日） |
-| `design/payload-cms-evaluation.md` | 调研（已结案：全量接入否决，见决议）：Payload CMS 适配性评估——硬约束一票否决清单、S1–S5 时间盒实验、A/B/C/D 方案空间与判定矩阵，产出 ADR |
+| `design/lean-stack-implementation-plan.md` | ★瘦栈实施方案：三方件选型（Tailwind v4 + shadcn/Base UI + `Db` 接口直写 PG SQL/无 ORM）、依赖清单、token 映射、M0–M4 细化任务、工时对照（14.5→9.8 人日）。**注**：文中 PGlite/bun 话术已被 [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md) 取代，按该决议换算阅读 |
+| `design/payload-cms-evaluation.md` | 调研（**已结案 2026-08-28：全量接入否决**，见决议 D5）：Payload CMS 适配性评估——业务诉求复核、硬约束清单、A/B/C/D 方案空间与判定矩阵、复审触发条件 |
 | `design/deployment.md` | ★容器化部署与运维：服务划分、镜像依赖、端口/卷/环境变量、三环境（dev/test/prod）构建启动日志回滚、健康检查、日志采集、数据持久化与备份 |
 | `design/implementation-tasks.md` | ★开发实施任务清单：阶段零~四共 44 项（目标/模块/验收/人日/优先级/依赖/并行批次），含 S0 前置修红与关键路径图 |
 
@@ -41,7 +41,7 @@
 | 范围与模型 | mvp-scope · data-model-o3-final · think-gate-firewall-layers-milestones · value-prior-outcome |
 | 接入与消费 | agent-access-host-agnostic · agent-onboarding-self-registration · agent-skill-distribution · skill-first-packaging · pull-based-consumption · **consumption-model-final（Use/Query/Follow 终稿）** · mcp-early-access · experience-anatomy-versioning |
 | 形态与商业 | overseas-deployment · web-ia-gates-badges · commercial-model-minimal（反馈积分/企业调用/私有部署） |
-| 工程与选型 | runtime-bun-first · skill-first-packaging · **2026-08-28-lean-stack-adoption（瘦栈：禁成品库·许 headless+copy-in；Tailwind v4 + shadcn/Base UI）** · **2026-08-28-storage-pglite（存储改用 WASM PostgreSQL；better-sqlite3 在 Bun 下 NAPI 崩溃实测）** · **2026-08-28-container-deployment（单服务起步·多阶段构建·三环境一套 compose·expand/migrate/contract 迁移）** |
+| 工程与选型 | **2026-08-28-standardize-node-postgres（★现行运行时基线：Node ≥22.18 LTS + pnpm 10 + Postgres/node-postgres·无 ORM·`Db` 接口直写 SQL；**已取代** runtime-bun-first 与 storage-pglite，二者仅作历史存档）** · **2026-08-28-lean-stack-adoption（瘦栈：禁成品库·许 headless+copy-in；Tailwind v4 + shadcn/Base UI）** · **2026-08-28-container-deployment（单服务起步·多阶段构建·三环境一套 compose·生产形态=单机 Docker Compose）** · <sub>历史存档：runtime-bun-first · storage-pglite</sub> |
 
 ## 笔记与归档
 `notes/red-team-v0.2.md`（五案结案）· `notes/2026-08-28-pi-research.md`（pi 调研：盟友判定+借鉴清单）· `notes/2026-08-27-minimal-validation-path.md`（72 节输入源）· `notes/2026-08-28-implementation-plan-codex-v1.md`（历史 Codex 方案归档）

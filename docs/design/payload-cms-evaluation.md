@@ -1,92 +1,135 @@
-# 调研方案：Payload CMS（Headless）适配性评估 —— 自研维持 vs 全量采用 vs 混合
+# Payload CMS 适配性评估 —— 业务诉求复核与结案
 
-> 状态：**已结案（2026-08-28）——全量接入否决，结论并入 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) D4/D5；运营后台缺口另立轻量方案** · 立项日期：2026-08-28 · 时间盒：**3 人日，超支即止**
+> 状态：**已结案（2026-08-28）——全量接入否决**；结论落于 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) **D5**。
+> **2026-08-31 复核**：业务诉求视角重新论证，结论**维持否决且更强**（新增「无 ORM」硬约束）；本文正文按当下事实重写，移除已失效的 Bun/PGlite 探针章节（[文档卫生纪律](../design/roadmap.md)）。
 > 触发问句（站长）：「我们是否很合适直接用 [Payload headless CMS](https://payloadcms.com/use-cases/headless-cms)，不用自己开发还得管理？」
-> 上位约束：[runtime-bun-first](../decisions/2026-08-27-runtime-bun-first.md) · [storage-pglite](../decisions/2026-08-28-storage-pglite.md) · [lean-stack-adoption](../decisions/2026-08-28-lean-stack-adoption.md) · [container-deployment](../decisions/2026-08-28-container-deployment.md)
-> 产出物：一份 ADR（`docs/decisions/YYYY-MM-DD-payload-cms-adopt-or-reject.md`），**负结果同样入档**。
+> 上位约束：[standardize-node-postgres](../decisions/2026-08-28-standardize-node-postgres.md) · [lean-stack-adoption](../decisions/2026-08-28-lean-stack-adoption.md) · [container-deployment](../decisions/2026-08-28-container-deployment.md) · AGENTS.md
 
-## 一、背景与动机
+---
 
-- **现状**：`apps/api` 自研（Fastify + zod + PGlite 直写 SQL，无 ORM），三链路（分享/检索/构建发布）代码主体已落地、e2e 覆盖。自研的持续成本是真实存在的：协议端点、存储迁移、限频、安全全要自己养。
-- **真实缺口**：运营后台缺位——`signals.recommended / stats_tag` 有列无写路径（站长推荐/打标无入口），audit-restore（Phase 1B）预留 `AS_ADMIN_*` 未启用。
-- **诱因**：Payload 提供「代码化建模 + Admin UI + REST 自动 API + 鉴权 + 版本/审计」，直觉上可省掉自研与自管。
-- **本方案立场**：这不是偏好问题，是「总成本 × 硬约束」问题。 Payload 降低的是**开发**成本，不降低**运维**成本（仍需自托管、升级、备份、安全响应），并新增**框架演进跟随**成本（Next.js 大版本节奏）——三个成本项都要入账。
+## 一、先问业务诉求：我们到底要什么
 
-## 二、核心调研问句
+技术约束能否决一个方案，但**只有业务诉求能解释「为什么根本不该走这条路」**。先把诉求摆出来（来源：D5 缺口、roadmap Phase 8/9、产品现状）。
 
-> **用 Payload 承载 AgentSignal 后端，能否在满足全部硬约束的前提下，让「交付北极星验证所需能力」的总成本（开发+运维+演进）低于维持自研？**
+### 1.1 运营侧诉求（站长，人）
 
-子问题：
-
-| # | 子问题 | 对应实验 |
-|---|---|---|
-| Q1 | 契约：信封 v0.2（默认剥正文、`digest_valid`∈`_ui_ext`、include 语义）、六端点、`GET /skills` 总入口、zod 单一真源全栈同构，能否 1:1 承载？ | S3 |
-| Q2 | 运行时与存储：Bun-first 双跑下 Payload（Next.js-native，官方未声明 Bun 支持）能否运行？PGlite 能否作存储（官方 adapter 仅 MongoDB/Postgres/SQLite）？ | S1、S2 |
-| Q3 | 身份与防火墙：`ags_<ULID>` token（sha256(tolower) 口径）、per-agent 写限频 10/min、Token Firewall 三层，映射成本多大？ | S4 |
-| Q4 | 需求错位：我们缺的到底是「内容管理框架」还是只缺一个「运营后台」？后者能否用更小方案满足？ | S3–S5 + 判定 |
-
-## 三、硬约束清单（任一不过 → 一票否决）
-
-| # | 约束 | 来源 | Payload 风险初判 |
-|---|---|---|---|
-| C1 | Bun-first（Node-safe 双跑），better-sqlite3 的 NAPI 崩溃教训在前 | AGENTS.md · storage-pglite 决议 | Payload 3 = Next.js-native，官方文档未见 Bun 声明 → **S1 验证** |
-| C2 | PGlite 零基础设施、`Db` 接口直写 PG SQL、Phase 2 只换 driver | storage-pglite 决议 | 官方 adapter 无 PGlite（Postgres adapter 走 Drizzle + node-postgres）→ **S2 验证** |
-| C3 | 协议单一真源：`packages/protocol` zod schema 被 api/cli/ui 三方共用，禁止复制字段定义 | AGENTS.md · lean-stack 决议 | Payload 的 collection 配置自成 schema 真源 → 双真源漂移风险 |
-| C4 | 信封语义：默认剥正文、扩展字段 include 才下发、错误体形状稳定 | protocols/message-envelope.md · api.md | CMS 默认返回全字段，语义相反；需 custom endpoints 全量覆盖 → Q1 |
-| C5 | 禁成品 UI 库（允许 headless + copy-in）；前端 React 19/Vite/Tailwind v4/Base UI | lean-stack 决议 | Admin UI 是成品 React 应用；若走「Payload 当后台」路线，需按 lean-stack 条款专项裁决其合规性 |
-| C6 | 单服务 + Docker Compose 海外部署；现有 Dockerfile/Caddyfile/compose 已定 | container-deployment 决议 | Next.js 单体可容器化，但镜像形态/构建链与现部署件不同 → S5 |
-| C7 | 北极星：真实 Agent 长期订阅并依赖收到的信号做事 | AGENTS.md | watch/cursor 游标、at-least-once 去重、零 LLM watch 是总线语义，CMS 无此概念 → 定性评估 |
-
-## 四、方案空间（不做二选一）
-
-| 方案 | 内容 | 先验判断（预登记，待证伪） |
-|---|---|---|
-| **A 维持自研** | 现有栈不动，补最小运营后台（如 D） | 保守基线 |
-| **B Payload 全量替换** | API + 存储 + Admin 全上 Payload | 大概率被 C1/C2/C4 否决 |
-| **C Payload 仅作运营后台** | Agent 契约面（六端点/CLI/Skill）不经 Payload；Payload 只服务站长编辑动作（推荐/打标/审计），读同一 PG 库 | **真实用例候选**，但 C2 仍在 |
-| **D 轻量后台** | AdminJS / react-admin 挂现有 Fastify + 现有 zod schema；或受控 SQL 工具 | 成本最小，先验倾向最高 |
-
-## 五、时间盒实验（S1–S5，实施时在 validation.md 预登记，Result 必答五问）
-
-| # | 实验 | 步骤 | 通过线 / 一票否决点 | 预算 |
+| # | 诉求 | 来源 | 现状（2026-08-31 核实） | 规模 |
 |---|---|---|---|---|
-| S1 | 运行时探针 | Bun 1.x 起 create-payload-app 最小应用；`bun dev` / `bun run build` / REST smoke | Admin 与 REST 在 Bun 下可用且无原生模块崩溃 → 通过；需回退 Node-only → 触发 C1 一票否决（B/C 同灭） | 0.5d |
-| S2 | 存储探针 | `@payloadcms/db-postgres` 指向 PGlite（pg 兼容层）；不行则评估 sqlite/postgres 容器替代 | PGlite 直连可用 → 通过；需引入 postgres 容器或换 sqlite → 记「违反 C2」缺陷，进入判定矩阵 | 0.5d |
-| S3 | 契约映射 | collections 建模 signals/topics/agents（含 digest/origin/experience jsonb）+ custom endpoints 实现 publish/query/use + include 语义 | 现有 `tests/e2e/api.test.ts` 用例 **原样通过率 ≥90%** 且 openapi→前端类型链路不断裂 → 通过；custom endpoints 覆盖 >60% 端点 → 记 H2 成立 | 1d |
-| S4 | 防火墙映射 | agent token 签发/校验（ags_+ULID、sha256(tolower)）、per-agent 10/min 写限频、bearerOf 大小写口径 | 在 Payload auth 之外不再养第二套用户即通过；两套身份并存 → 缺陷 | 0.5d |
-| S5 | 部署与运维对比 | 镜像构建/体积/内存/冷启动对照现有 Dockerfile；Payload minor 升级节奏与 breaking 概率抽查 | 出具量化对照表（无 pass/fail） | 0.5d |
+| **B1** | 给 Signal **打标/推荐**（`recommended` → `stats_tag`「编辑推荐」） | D5、产品已展示该标签 | **缺口**：`migrations.ts:57` 有列、`routes/signals.ts:56` 有读、**零写路径** | 1 人 · 低频 |
+| **B2** | **审计与追溯**（谁发布 / 谁消费 / outcome） | audit-restore（Phase 1B） | 预留 `AS_ADMIN_*` 未启用；`apps/api/src` 零 admin 端点 | 1 人 · 低频 |
+| **B3** | 违规/低质 Signal **处置**（下架、降权） | 运营常识 + Phase 8 signal quality | 无入口 | 1 人 · 极低频 |
+| **B4** | 组织 / RBAC / 私有空间 | roadmap Phase 9 | 未启动 | 未来 |
 
-## 六、判定矩阵
+### 1.2 Agent 侧诉求（核心业务，机器）
 
-- **任一票否决触发**（S1 或 S2 失败）→ B/C 出局，转 A/D，出 reject ADR。
-- **B 采纳线**（全替换）：S3 通过率 100%（协议零妥协）∧ C3 双真源有工程解 ∧ S5 对照总成本 < 自研基线的 50%。三者是合取，缺一即否。
-- **C 采纳线**（仅后台）：S2 通过 ∧ 站长编辑动作（推荐/打标/审计）经 Payload 落到同一 PG 库不引入双向同步 ∧ lean-stack 条款裁决 Admin UI 合规。否则落到 D。
-- **D 采纳线**：AdminJS/react-admin 能以现有 zod schema 生成后台且增量依赖 < 3 个运行时包。
-- 每条结论必须引用 S1–S5 的 Result 五问答案，禁止「感觉合适」式表述。
+六端点契约 · `GET /skills` 总入口 · 四通道同权（skill/CLI/SDK/REST）· 信封语义（**默认剥正文**、`include=experience` 才下发）· 游标/watch/`at-least-once`+幂等去重 · 零 LLM watch · Token Firewall 三层。
 
-## 七、成本对比框架（ADR 必填账本）
+**这才是产品的主体。** 运营侧（B1–B4）是支撑面，不是主体。
 
-| 成本项 | 自研（A/D） | Payload（B/C） |
+### 1.3 诉求规模结论
+
+> **我们要的运营能力 = 1 个站长、2–3 个低频编辑动作（打标 / 审计 / 处置）。**
+
+---
+
+## 二、范式错配：这是抽象不对，不是成本高
+
+**AgentSignal 是 append-only 的事件总线，不是可编辑的内容仓库。** 这是否决的根本原因。
+
+| 维度 | CMS 抽象（Payload） | AgentSignal 现实 |
 |---|---|---|
-| 开发 | 端点/后台工时（基线：implementation-tasks.md） | 建模 + custom endpoints + 迁移工时 |
-| 运维 | 现有 compose/备份/探针（已建） | 同左 ** plus **框架升级跟随（Next.js 大版本）** |
-| 演进 | 协议变更只改 protocol 包 | 双真源（zod ↔ collection config）同步成本 |
-| 退出 | — | 数据迁出 + 契约面重写（锁死评估） |
+| 内容性质 | **可编辑文档**（草稿 → 版本 → 发布） | **不可变事件**（`sig_<ULID>`，append-only） |
+| 生命周期 | 人驱动：创建/编辑/发布/归档 | 机器驱动：发布 → TTL 过期（`expires_at`） |
+| 消费者 | **人**（Admin UI 编辑、前端浏览） | **机器**（Agent 经四通道消费） |
+| 读取语义 | 默认返回全字段 | **默认剥正文**，`include` 才下发（Token Firewall 核心） |
+| 顺序/游标 | 无此概念 | 游标持久化（`cursor=sig id`）+ 幂等去重 |
+| 编辑者 | 多人协作、审批流 | **1 个站长的低频动作** |
 
-## 八、预登记假设（可证伪）
+逐条对照业务诉求：
 
-- **H1** Bun 运行 Payload 存在原生兼容问题 → 触发一票否决。（依据：better-sqlite3 NAPI 前科）
-- **H2** 信封语义迫使 custom endpoints 覆盖多数端点 → Payload「自动 API」增益趋零。
-- **H3** 真实缺口是运营后台（recommended/stats_tag 无写路径、audit-restore 预留），不是内容管理框架。
-- **H4** 全替换破坏 CLI/Skill/UI 四通道同权契约（AGENTS.md 接入纪律）。
-- **H5** 「不用自己开发还得管理」的账本：开发成本 ↓，运维成本 ≈ 不变，演进成本 ↑。
+| 诉求 | Payload 能否满足 | 判断 |
+|---|---|---|
+| B1 打标 | 能 | 杀鸡用牛刀 |
+| B2 审计 | 部分 | **语义不同**：Payload 的 versions/drafts 是「文档改了几次」；我们要的是「谁发布 / 谁消费 / outcome」 |
+| B3 处置 | 部分 | **语义不同**：draft/publish 是文档状态机；我们是事件流，处置 = **标记**而非删除 |
+| B4 RBAC | 能（多租户） | Phase 9 未启动；且我们要的是「**Agent 发布权**」，不是「人编辑权」 |
+| Agent 侧契约 | 需 custom endpoints **全覆盖** | 自动 API 增益趋零（原假设 **H2 成立**） |
 
-## 九、时间线
+---
 
-D+1 上午 S1 → D+1 下午 S2 →（任一否决即刻终止、出 reject ADR）→ D+2 S3 → D+3 S4+S5+ADR。
+## 三、结论：为什么不接入（四条，业务视角在前）
 
-## 十、参考资料（2026-08-28 抓取）
+1. **范式错配**（根本）：append-only 事件流 vs 可编辑文档。Signal 的不可变性、TTL、游标语义、机器消费——CMS 抽象里一个都没有。
+2. **需求错位**（原假设 **H3 已被证实**）：缺的不是「内容管理框架」，是「**一个站长运营面板**」。2026-08-31 核实：缺口就是 B1 打标 + B2 审计两个动作。
+3. **投入产出失衡**：为 1 个用户的 2–3 个低频动作，引入 Next.js 运行时 + Drizzle ORM + Admin bundle + 框架升级跟随成本。
+4. **时机与锁定成本**：M4 Testnet（北极星）之前换后端 = 自杀；Payload 的退出成本是「数据迁出 + 契约面重写」（见 §五账本）。
 
-- [Payload — Headless CMS use-case](https://payloadcms.com/use-cases/headless-cms)：代码化 buildConfig、鉴权+SSO、custom REST endpoints、Admin UI 可注入自研 React 组件、版本/审计/多租户。
-- [Payload — Database Overview](https://payloadcms.com/docs/database/overview)：官方 adapter 仅 MongoDB（Mongoose）/ Postgres（Drizzle）/ SQLite（Drizzle）；adapter 为外部依赖；SQLite 仅 Point 字段未支持。
-- 运行时要求（Node 版本 / Bun 兼容）官方页未声明 → 由 S1 实测定案，不做书面推断。
+---
+
+## 四、硬约束清单（2026-08-31 当下事实）
+
+> 原清单 C1（Bun-first）、C2（PGlite）两根「一票否决」支柱已随 08-28 运行时决议**消失**——这正是需要复核的原因。以下为**当前仍成立**的约束。
+
+| # | 约束 | 来源 | Payload 冲突 |
+|---|---|---|---|
+| **C3** | 协议单一真源：`packages/protocol` zod schema 被 api/cli/ui/mcp 共用，**禁止复制字段定义** | AGENTS.md · lean-stack | collection 配置自成 schema 真源 → **双真源漂移** |
+| **C4** | 信封语义：默认剥正文、扩展字段 `include` 才下发、错误体形状稳定 | protocols/message-envelope.md · api.md | CMS 默认返回全字段，语义相反 → custom endpoints 全覆盖 |
+| **C5** | 禁成品 UI 库（许 headless + copy-in）；前端 React 19/Vite/Tailwind v4/Base UI | lean-stack 决议 | Admin UI 是成品 React 应用，需专项裁决合规性 |
+| **C6** | 单服务 + 单机 Docker Compose 海外部署 | container-deployment 决议 | Payload 3 = Next.js-native，运行时与构建链不同 |
+| **C7** | 北极星：真实 Agent 长期订阅并依赖信号做事 | AGENTS.md | watch/游标/去重/零 LLM 是总线语义，**CMS 无此概念** |
+| **C8** | **无 ORM，`Db` 接口直写 PG SQL**（08-28 新立） | standardize-node-postgres 决议 | Postgres adapter 走 **Drizzle（ORM）** → 直接冲突 |
+
+> **C8 是本次复核新增的否决项**，比已失效的 C1/C2 更强：它约束的是数据访问方式本身，与运行时/存储选型无关。
+
+---
+
+## 五、成本账本
+
+| 成本项 | 自研（方案 A/D） | Payload（B/C） |
+|---|---|---|
+| 开发 | 运营面板：受 `AS_ADMIN` 门禁的路由组 + 极简页面，**几十行** | 建模 + custom endpoints（覆盖 Agent 契约）+ 迁移 |
+| 运维 | 现有 compose/备份/探针（已建） | 同左 **plus** Next.js 大版本升级跟随 |
+| 演进 | 协议变更只改 `packages/protocol` | 双真源（zod ↔ collection config）同步 |
+| **退出** | — | **数据迁出 + 契约面重写**（锁定风险） |
+
+---
+
+## 六、真实缺口的解法（D5 遗留动作）
+
+D5 已判「运营后台缺口后续以轻量方案另立 ADR」，截至 2026-08-31 **该 ADR 尚未立项**，缺口仍开着。
+
+**推荐方案 D（轻量后台）**，与 lean-stack 决议相容：
+
+- **形态**：`apps/api` 内一组受 token 门禁的 admin 路由 + 一个极简页面（或复用现有 UI 的 admin 路由）。
+- **数据访问**：复用 `Db` 接口直写 SQL，**不引 ORM**（守 C8）。
+- **合规**：AdminJS / react-admin 均属**成品后台库**，触 C5，**不采用**；自研或 headless + copy-in。
+- **范围**：先落 B1（打标）+ B2（审计只读），B3/B4 待 Phase 8/9 展开再评估。
+- **预估**：0.5–1 人日。
+
+---
+
+## 七、复审触发条件（何时重开此决策）
+
+结论不是一锤子打死。满足**任一**即重新评估：
+
+1. Phase 9（Private Agent Bus）展开后，运营/编辑动作 **> 10 个**，或需多人协作 / 审批流 / 真正的人 RBAC；
+2. Signal 的语义从 **append-only 事件**变为**可编辑内容**；
+3. M4 Testnet 证明**人工内容运营是核心环节**而非辅助（当前判断：辅助）。
+
+在此之前，本决策**关闭**。
+
+---
+
+## 八、方案空间（存档）
+
+| 方案 | 内容 | 结论 |
+|---|---|---|
+| **A 维持自研** | 现有栈不动 | ✅ **采纳**（基线） |
+| **B Payload 全量替换** | API + 存储 + Admin 全上 | ❌ 否决（C3/C4/C7/C8） |
+| **C Payload 仅作运营后台** | Agent 契约面不经 Payload | ❌ 否决（C8 + C5 + 投入产出失衡） |
+| **D 轻量后台** | 自研 admin 路由 + 现有 zod schema | ✅ **采纳为缺口解法**（见 §六） |
+
+## 九、参考
+
+- [Payload — Headless CMS use-case](https://payloadcms.com/use-cases/headless-cms)：代码化 buildConfig、鉴权+SSO、custom REST endpoints、Admin UI、版本/审计/多租户。
+- [Payload — Database Overview](https://payloadcms.com/docs/database/overview)：官方 adapter 仅 MongoDB（Mongoose）/ Postgres（**Drizzle**）/ SQLite（Drizzle）→ 触 C8。

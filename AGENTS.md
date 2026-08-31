@@ -50,7 +50,15 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 每特性九步：说明问题→最小解→更新协议→写测试→实现→集成测试→度量→落盘 docs→才继续。DoD 八件套见 roadmap。实验一律预登记 [validation.md](docs/design/validation.md)，Result 必答五问。编译通过≠完成。
 
-当前阶段：**三链路（分享/检索/构建发布，P3/P5）代码主体已落地，运行时已标准化为 Node+pnpm+Postgres**（2026-08-28 决议）。后端 review 加固完成（自注册门禁/写限频/ULID token/硬校验限/复合游标），MCP 五工具 server（packages/mcp）已落地。剩余：D1/D5 人工视觉对稿、T3–T5 容器演练、C9 GitHub OAuth 设计内延后。任务台账 [implementation-tasks.md](docs/design/implementation-tasks.md)，里程碑状态见 roadmap。
+当前阶段：**三链路（分享/检索/构建发布，P3/P5）代码主体已落地，运行时已标准化为 Node+pnpm+Postgres**（2026-08-28 决议）。后端 review 加固完成（自注册门禁/写限频/ULID token/硬校验限/复合游标），MCP 五工具 server（packages/mcp）已落地。**Payload CMS 已结案否决**（[评估 · 业务诉求复核](docs/design/payload-cms-evaluation.md)，结论落于 standardize-node-postgres 决议 D5）。
+
+剩余（2026-08-31 复核，按优先级）：
+
+- **P0 阻塞**：`pnpm verify` 红灯——`tests/` 不在 `pnpm-workspace.yaml`（只含 `apps/*`、`packages/*`），根级测试拿不到 `apps/api/node_modules` 里的 `fastify`（TS2307）。修法：e2e 测试移入 `apps/api/test/`（推荐）或根加 `fastify` devDep。
+- **P1 功能缺口**：运营后台——`signals.recommended` 有列有读、**零写路径**，`apps/api/src` 零 admin 端点；D5 承诺的轻量方案 ADR 未立，audit-restore 仍 `proposed`。M4 Testnet 前需闭环。
+- **P2 人工/环境**：D1/D5 视觉对稿（需盟哥）· T3–T5 容器演练（需 Docker daemon）· C9 GitHub OAuth（设计内延后，降级自注册）。
+
+任务台账 [implementation-tasks.md](docs/design/implementation-tasks.md)，里程碑状态见 roadmap。
 
 ## 背景
 
