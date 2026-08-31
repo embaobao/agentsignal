@@ -107,6 +107,17 @@ loadEnv(zod) → buildApp() → await migrateToLatest() → store.ready()
 
 ### 2.1 开发（dev）
 
+**宿主原生开发（日常推荐，最快路径）**：
+
+```bash
+pnpm bootstrap   # 首次一次到位：装依赖 + 生成 .env + 拉起 compose Postgres（--wait 等 healthy）
+pnpm dev         # API :3000（predev 先做 DB 连通预检，失败给可执行提示）
+pnpm dev:ui      # UI :5173
+pnpm db:reset    # 重置本地库（清卷重建）
+```
+
+**容器化开发（调试部署形态时用）**：
+
 ```bash
 # 构建 + 启动（API 热重载 + Vite dev server）
 docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up --build

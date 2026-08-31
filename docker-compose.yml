@@ -79,8 +79,10 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    expose:
-      - "5432"
+    # 宿主映射：pnpm dev（宿主直跑）经 localhost:${POSTGRES_HOST_PORT:-5432} 连库；
+    # 容器形态的 api 走内网名 db:5432，不经此映射。生产可收紧 POSTGRES_HOST_PORT=127.0.0.1:5432
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-agentsignal}
       # 本地默认与 DATABASE_URL 默认值一致；生产必须改强密码并显式设 DATABASE_URL

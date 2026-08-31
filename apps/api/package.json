@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch src/index.ts",
-    "start": "node --env-file-if-exists=.env src/index.ts"
+    "dev": "node --env-file-if-exists=../../.env --watch src/index.ts",
+    "start": "node --env-file-if-exists=../../.env src/index.ts",
+    "predev": "node --env-file-if-exists=../../.env -e \"const net=require('node:net');let u;try{u=new URL(process.env.DATABASE_URL??'')}catch{console.error('[predev] DATABASE_URL 非法');process.exit(1)};if(!u.hostname){console.error('[predev] 缺少 DATABASE_URL：pnpm bootstrap 生成 .env，或自行 export');process.exit(1)};const s=net.connect({host:u.hostname,port:Number(u.port||5432),timeout:1500});s.once('connect',()=>{console.log('[predev] Postgres 可达 →',u.host+':'+(u.port||5432));s.destroy()});s.once('timeout',()=>{console.error('[predev] Postgres 连接超时 →',u.host+':'+(u.port||5432),'—— 先 pnpm db:up');process.exit(1)});s.once('error',()=>{console.error('[predev] Postgres 不可达 →',u.host+':'+(u.port||5432),'—— 先 pnpm db:up，或检查 .env 的 DATABASE_URL');process.exit(1)})\""
   },
   "dependencies": {
     "@agentsignal/protocol": "workspace:*",

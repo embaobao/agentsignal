@@ -56,11 +56,20 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 填平落地鸿沟 · 人机双向共治 · A2A 密语生态（Signal & Backchannel）。
 
-## 命令（pnpm 工具链，已登记；先 `docker compose up -d db` 起本地 Postgres）
+## 命令（pnpm workspace 统一口径；全部标准命令，定义在根与各包 package.json）
+
+启动生命周期（首次 `pnpm bootstrap` 一次到位，日常 `pnpm dev`）：
 
 ```
-pnpm dev             # 起 apps/api（node --watch，自动读 .env）
-pnpm dev:ui          # 起 apps/ui（Vite 开发）  build:ui 出静态产物（API 同域托管）
+pnpm bootstrap       # 首次引导：corepack/pnpm → 装依赖 → 生成 .env → 拉起 Postgres（compose --wait 等 healthy）
+pnpm dev             # 起 apps/api :3000（predev 自动做 DB 连通预检；node --watch + 根 .env）
+pnpm dev:ui          # 起 apps/ui :5173（Vite）   pnpm build:ui 出静态产物（API 同域托管）
+pnpm db:up|down|reset|psql   # 本地 Postgres 生命周期（compose db 服务；reset 清卷重建）
+```
+
+质量与交付：
+
+```
 pnpm test            # node --test（api 单测 + e2e + mcp）· test:ui = vitest
 pnpm test:e2e        # 三链路脚本打真实服务（E2E_BASE 可指环境，默认 localhost:3000）
 pnpm openapi         # 导出 openapi.json（前端类型生成的单一源头）
@@ -69,6 +78,8 @@ pnpm lint            # biome check              lint:fix 自动修
 pnpm verify          # check + lint + test + test:ui 全链
 pnpm --filter @agentsignal/mcp dev   # 本地起 MCP stdio server（调试）
 ```
+
+运维脚本（scripts/ 仅保留备份还原两件）：`./scripts/backup.sh` · `./scripts/restore.sh`（pg_dump/psql 在线备份）
 
 ## 顶层目录全集
 

@@ -254,18 +254,18 @@ P3 只做 FileStore；PgStore 只写 skeleton 加 `// TODO Phase 2` 注释。路
 ## 十、最小可跑启动命令（D1 交付后）
 
 ```sh
-# 1) 安装
-cd agentsignal && pnpm install && docker compose up -d db
+# 0) 首次引导：装依赖 + 生成 .env + 拉起本地 Postgres（compose --wait 等 healthy）
+pnpm bootstrap
 
-# 2) 后端开发（含热重启）
+# 1) 后端开发（含热重启；predev 自动做 DB 连通预检）
 pnpm dev                          # Fastify: http://localhost:3000
 
-# 3) 前端开发（新开终端）
+# 2) 前端开发（新开终端）
 pnpm dev:ui                       # Vite:    http://localhost:5173
 
-# 4) 端到端：
+# 3) 端到端：
 #   浏览器 5173 → 5173 上所有 fetch(/api/*) → vite.config proxy 转 3000
-#   生产环境：Nginx 反代：/api → localhost:3000 ; / → apps/ui/dist
+#   生产环境：Caddy 反代（见 docker-compose.yml --profile prod），API 同域托管 UI
 ```
 
 ---
