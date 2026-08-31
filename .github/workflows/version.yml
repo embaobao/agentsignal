@@ -34,8 +34,14 @@ jobs:
       - uses: changesets/action@v1
         with:
           version: pnpm changeset version
-          # publish: pnpm changeset publish   ← 配置 NPM_TOKEN 后启用（cli/protocol/mcp 上架 npm）
+          publish: pnpm changeset publish
           title: "chore(release): Version Packages（lockstep 统一版本）"
           commit: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: 使用 NPM_TOKEN 写入 .npmrc（changesets publish 需要）
+        if: steps.changesets.outputs.published == 'true'
+        run: npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

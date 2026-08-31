@@ -10,6 +10,8 @@
   NODE_VERSION = "24"
   # 纯 UI 验证（无后端）置 true；接真实 API 改 false 并设 VITE_API_BASE
   VITE_USE_MOCK = "true"
+  # 首页 SKILL 接入命令对外广播的 API base（API 上线即自动生效）
+  VITE_AGENTSIGNAL_BASE = "https://agentsignal.vip"
 
 # SPA：所有前端路由回退到 index.html（/t/:slug、/s/:id 等）
 [[redirects]]
