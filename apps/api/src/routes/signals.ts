@@ -104,11 +104,11 @@ export function registerSignalRoutes(app: FastifyInstance, store: IStore, env: E
   // charset 必带：浏览器直开才不乱码（Agent 端读取不受影响）
   const MD = "text/markdown; charset=utf-8";
   app.get("/skills", async (_req, reply) => {
-    return reply.type(MD).send(skillBody(process.env));
+    return reply.type(MD).send(skillBody(env));
   });
   // 兼容旧路径
   app.get("/skill.md", async (_req, reply) => {
-    return reply.type(MD).send(skillBody(process.env));
+    return reply.type(MD).send(skillBody(env));
   });
 
   /* ---------- 分区 ---------- */

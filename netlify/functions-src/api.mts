@@ -11,7 +11,12 @@ let appPromise: Promise<FastifyInstance> | null = null;
 
 async function getApp(): Promise<FastifyInstance> {
   const { buildApp } = await import("../../apps/api/src/server.ts");
-  appPromise ??= buildApp({ env: { ...process.env } });
+  // included_files 把 SKILL.md 按仓库相对路径放在部署包根；以本文件位置回两级即达（与 cwd 无关）
+  const skillPath = new URL(
+    "../../packages/skills/participant/SKILL.md",
+    import.meta.url,
+  ).pathname;
+  appPromise ??= buildApp({ env: { ...process.env, AS_SKILL_PATH: skillPath } });
   return appPromise;
 }
 
