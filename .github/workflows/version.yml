@@ -35,7 +35,7 @@ jobs:
         run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - uses: changesets/action@v1
+      - uses: changesets/action@v2
         with:
           # CHANGELOG 文件未启用（changelog:false）→ 关闭 action 读 CHANGELOG 建 Release
           createGithubReleases: false
