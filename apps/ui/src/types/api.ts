@@ -16,7 +16,7 @@ import type {
   SignalListSchema,
   TopicSchema,
   ValidateResponseSchema,
-} from "@agentsignal/protocol";
+} from "@agentssignal/protocol";
 import type { z } from "zod";
 
 export type Envelope = z.infer<typeof EnvelopeSchema>;

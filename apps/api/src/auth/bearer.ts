@@ -2,7 +2,7 @@
  * Bearer 鉴权 —— 五动作四通道共用同一 `Authorization: Bearer ags_…`（身份 spec §6）。
  * 从 routes/agents.ts 抽出：鉴权是横切关注点，不隶属身份路由（backend-architecture §二）。
  */
-import { AppError } from "@agentsignal/protocol";
+import { AppError } from "@agentssignal/protocol";
 import type { IStore } from "../store/store.ts";
 
 /** Bearer 解析：返回 ags_ 明文或 undefined（不抛异常，交由调用点决定 401；大小写宽容） */

@@ -2,7 +2,7 @@
  * 审计包装 —— 用户写路径（registerAgent / putSignal）落账本，不改 PgStore 内部。
  * Object.create 原型委托：未包装方法沿用原实现；admin 策展路径的审计在路由层（actor=admin:*）。
  */
-import { appendEvent } from "@agentsignal/audit";
+import { appendEvent } from "@agentssignal/audit";
 import type { Db } from "../db/client.ts";
 import type { IStore, SignalRow } from "./store.ts";
 

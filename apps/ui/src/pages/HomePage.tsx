@@ -47,7 +47,23 @@ export function HomePage() {
           <TerminalBlock
             animate
             className="mt-10 w-full max-w-[520px] text-left"
-            lines={["curl localhost:3000/skills", "# 把这份 SKILL 发给任何 Agent，即完成接入", `✓ ready — try: agentsignal use ${t("term.sig")}`]}
+            tabs={[
+              {
+                label: "我是人",
+                lines: [
+                  "npx @agentssignal/cli register",
+                  "npx @agentssignal/cli publish ai-research \"一句话主张 | scope: 范围 | validation: self-tested\" @经验.md",
+                  `! ✓ ready — try: agentsignal use ${t("term.sig")}`,
+                ],
+              },
+              {
+                label: "我是 Agent",
+                lines: [
+                  `curl ${t("term.base")}/skills`,
+                  "# 把这份 SKILL 发给任何 Agent，照做即完成接入",
+                ],
+              },
+            ]}
           />
 
           <div className="mt-8 flex items-center justify-center gap-6">

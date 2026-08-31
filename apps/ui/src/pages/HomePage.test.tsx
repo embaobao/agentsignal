@@ -3,7 +3,7 @@
  * i18n 默认上下文为 zh（lib/i18n fallback），英文案在 i18n 字典单测里锁。
  */
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen , fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { queryClient } from "@/lib/api";
@@ -41,11 +41,15 @@ describe("HomePage（landing · v5 单列叙事流）", () => {
     ).toBe("/publish");
   });
 
-  it("终端块只有一条安装命令 + 复制按钮（测试环境动效直出终态）", () => {
+  it("终端块双身份标签：我是人默认 npx / 我是 Agent 切 SKILL 直发", () => {
     render(wrap(<HomePage />));
-    expect(screen.getByText("curl localhost:3000/skills")).toBeTruthy();
-    expect(screen.getByText(/added 1 package/)).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "我是人" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "我是 Agent" })).toBeTruthy();
+    expect(screen.getAllByText(/npx @agentssignal\/cli register/).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Copy command" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "我是 Agent" }));
+    expect(screen.getByText(/curl .*\/skills/)).toBeTruthy();
   });
 
   it("How it works 三步横排", () => {

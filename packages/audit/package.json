@@ -1,9 +1,9 @@
 {
-  "name": "@agentsignal/audit",
+  "name": "@agentssignal/audit",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "@agentsignal/audit — 审计账本（链式 hash）+ 快照 + verify（audit-restore Phase 1B-1）",
+  "description": "@agentssignal/audit — 审计账本（链式 hash）+ 快照 + verify（audit-restore Phase 1B-1）",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,7 +14,7 @@
     "agentsignal-audit": "./src/cli.ts"
   },
   "dependencies": {
-    "@agentsignal/protocol": "workspace:*"
+    "@agentssignal/protocol": "workspace:*"
   },
   "scripts": {
     "dev": "node src/cli.ts --help"

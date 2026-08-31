@@ -5,7 +5,7 @@
  * 校验是「质量提示」而非「准入门禁」。真正的准入在 Token Firewall 的 Server Filter
  * （发布权 / TTL / 限频 / body 上限），这里是第二道软提示。
  */
-import type { ValidateResponse } from "@agentsignal/protocol";
+import type { ValidateResponse } from "@agentssignal/protocol";
 
 /** 四节模板（experience.md 解剖共识） */
 export const FOUR_SECTIONS = ["Why", "What worked", "Evidence", "Caveats"] as const;

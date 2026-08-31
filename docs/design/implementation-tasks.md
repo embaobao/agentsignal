@@ -102,7 +102,7 @@ flowchart TD
 
 | # | 错误 | 状态 | 修法 |
 |---|---|---|---|
-| 1 | workspace 依赖写成语义版本 `"0.1.0"`，bun 去 registry 拉一个 `private` 包 → 链接没建立 → `TS2307 Cannot find module '@agentsignal/protocol'`（apps/api、packages/cli） | **已修** | 两处 package.json 改为 `"workspace:*"`，`bun install` 后链接落在 `apps/api/node_modules/@agentsignal`（bun 不提升到根，属正常） |
+| 1 | workspace 依赖写成语义版本 `"0.1.0"`，bun 去 registry 拉一个 `private` 包 → 链接没建立 → `TS2307 Cannot find module '@agentssignal/protocol'`（apps/api、packages/cli） | **已修** | 两处 package.json 改为 `"workspace:*"`，`bun install` 后链接落在 `apps/api/node_modules/@agentsignal`（bun 不提升到根，属正常） |
 | 2 | `TS2868 Cannot find name 'Bun'` ×3（`packages/cli/src/index.ts` 76/124/132） | 待修 | `bun add -d @types/bun`，`tsconfig.json` 的 `types` 改为 `["node", "bun"]` |
 | 3 | `TS2307 Cannot find module 'light-my-request'` ×2（`tests/e2e/api.test.ts`、`roundtrip.test.ts`） | 待修 | 测试用 `app.inject()` 需显式声明：`bun add -d light-my-request` |
 | 4 | `TS2345`（`apps/api/src/server.ts:159`）：`Signal` 缺索引签名，无法传给 `Array.map` 的宽泛回调 | 待修 | 给 map 回调显式标注 `(s: Signal)`，或在 protocol 类型上加 `& Record<string, unknown>`；改前先确认是否真要剥字段 |

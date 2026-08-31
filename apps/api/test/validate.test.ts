@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { PublishRequestSchema } from "@agentsignal/protocol";
+import { PublishRequestSchema } from "@agentssignal/protocol";
 import { checkDigest, checkSections, validateEnvelope } from "../src/validate/envelope.ts";
 
 const GOOD_DIGEST = "语义分块 beats fixed-size | scope: 中文 RAG | validation: self-tested";

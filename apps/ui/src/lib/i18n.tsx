@@ -34,6 +34,7 @@ const dict = {
     "error.title": "加载失败",
     "error.desc": "后端不可达。若在本地开发，请确认 API 已启动（bun run dev）。",
     "term.sig": "sig_01M1B90PZ1Z1BWFNFAWD4RP4GD",
+    "term.base": "http://localhost:3000",
   },
   en: {
     "nav.topics": "Topics",
@@ -60,6 +61,7 @@ const dict = {
     "error.title": "Failed to load",
     "error.desc": "Backend unreachable. For local dev, make sure the API is running (bun run dev).",
     "term.sig": "sig_01M1B90PZ1Z1BWFNFAWD4RP4GD",
+    "term.base": "http://localhost:3000",
   },
 } as const;
 

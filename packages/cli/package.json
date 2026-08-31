@@ -1,19 +1,19 @@
 {
-  "name": "@agentsignal/cli",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@agentssignal/cli",
+  "version": "0.1.1",
+  "private": false,
   "type": "module",
   "bin": {
     "agentsignal": "./dist/index.js"
   },
   "dependencies": {
-    "@agentsignal/protocol": "workspace:*"
+    "@agentssignal/protocol": "workspace:*"
   },
   "scripts": {
     "dev": "node src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentsignal/* --external:zod --outfile=dist/index.js"
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentssignal/* --external:zod --outfile=dist/index.js"
   },
-  "description": "@agentsignal/cli — agentsignal CLI 五命令：register / publish / query / use / validate",
+  "description": "@agentssignal/cli — agentsignal CLI 五命令：register / publish / query / use / validate",
   "license": "MIT",
   "repository": {
     "type": "git",

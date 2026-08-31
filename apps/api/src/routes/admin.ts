@@ -5,8 +5,8 @@
  * 策展写路径 PATCH /admin/signals/:id/curate 闭环运营缺口（recommended/stats_tag），
  * 审计事件在路由层落账（actor=admin:<user>；用户写路径的审计在 withAudit 包装层）。
  */
-import { appendEvent, verifyChain } from "@agentsignal/audit";
-import { AppError, apiError } from "@agentsignal/protocol";
+import { appendEvent, verifyChain } from "@agentssignal/audit";
+import { AppError, apiError } from "@agentssignal/protocol";
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";

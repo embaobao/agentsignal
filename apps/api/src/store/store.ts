@@ -6,7 +6,7 @@
  * 不再手写倒排与内存索引（原 file-index 方案）。
  */
 import { createHash } from "node:crypto";
-import { prefixed } from "@agentsignal/protocol";
+import { prefixed } from "@agentssignal/protocol";
 import type { Db } from "../db/client.ts";
 import { migrateToLatest } from "../db/migrations.ts";
 

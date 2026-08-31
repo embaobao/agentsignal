@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 打包发布验证 —— 模拟"真实环境使用 CLI"：
-#   1. pnpm pack @agentsignal/protocol + @agentsignal/cli（workspace:* 自动替换为实版本）
+#   1. pnpm pack @agentssignal/protocol + @agentssignal/cli（workspace:* 自动替换为实版本）
 #   2. 临时沙箱 npm install 两个 tgz（= 未来用户 npm install -g 的等价物）
 #   3. 沙箱 CLI 打**正在运行的真实 API** 走完整链路：register → publish → query → use
 #

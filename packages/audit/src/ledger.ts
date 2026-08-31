@@ -8,7 +8,7 @@
  * 快照（snapshots 表）：写前留影 before-image；每实体保留最近 50 份，写入后裁剪。
  */
 import { createHash } from "node:crypto";
-import { prefixed } from "@agentsignal/protocol";
+import { prefixed } from "@agentssignal/protocol";
 
 /** 结构化最小接口：apps/api 的 Db（pg）与测试夹具均天然满足 */
 export interface SqlDb {

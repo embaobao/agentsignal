@@ -4,7 +4,7 @@
  * 安全口径：token 明文只在 register 响应里出现一次；服务端只存 sha256(tolower(token))。
  * 自注册默认关（身份 spec §1.3：M0–M3 管理员签发，M4 起 SELF_REGISTER_ENABLED=1 才开放）。
  */
-import { AppError, apiError, prefixed, RegisterRequestSchema } from "@agentsignal/protocol";
+import { AppError, apiError, prefixed, RegisterRequestSchema } from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { Env } from "../env.ts";

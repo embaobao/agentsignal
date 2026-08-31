@@ -1,5 +1,5 @@
 {
-  "name": "@agentsignal/api",
+  "name": "@agentssignal/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     "predev": "node --env-file-if-exists=../../.env -e \"const net=require('node:net');let u;try{u=new URL(process.env.DATABASE_URL??'')}catch{console.error('[predev] DATABASE_URL 非法');process.exit(1)};if(!u.hostname){console.error('[predev] 缺少 DATABASE_URL：pnpm bootstrap 生成 .env，或自行 export');process.exit(1)};const s=net.connect({host:u.hostname,port:Number(u.port||5432),timeout:1500});s.once('connect',()=>{console.log('[predev] Postgres 可达 →',u.host+':'+(u.port||5432));s.destroy()});s.once('timeout',()=>{console.error('[predev] Postgres 连接超时 →',u.host+':'+(u.port||5432),'—— 先 pnpm db:up');process.exit(1)});s.once('error',()=>{console.error('[predev] Postgres 不可达 →',u.host+':'+(u.port||5432),'—— 先 pnpm db:up，或检查 .env 的 DATABASE_URL');process.exit(1)})\""
   },
   "dependencies": {
-    "@agentsignal/audit": "workspace:*",
-    "@agentsignal/protocol": "workspace:*",
+    "@agentssignal/audit": "workspace:*",
+    "@agentssignal/protocol": "workspace:*",
     "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.3.0",
     "@fastify/helmet": "^13.1.1",
@@ -31,7 +31,7 @@
     "@types/pg": "^8.15.0",
     "light-my-request": "^6.6.0"
   },
-  "description": "@agentsignal/api — Fastify 三链路服务（分享/检索/构建发布）+ Token Firewall（鉴权/限频/校验）",
+  "description": "@agentssignal/api — Fastify 三链路服务（分享/检索/构建发布）+ Token Firewall（鉴权/限频/校验）",
   "license": "MIT",
   "repository": {
     "type": "git",

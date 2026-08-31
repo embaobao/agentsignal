@@ -55,7 +55,7 @@
 **Dockerfile 三条硬约束**（改动前必读，已写在文件头注释）：
 
 1. **运行时不做 bundle**：`apps/api/src/server.ts` 用 `import.meta.url` 读 `packages/skills/participant/SKILL.md` 与 `apps/api/src/ui.html`，打包成单文件会让这两个路径失效。要改打包，先做任务 **C7（静态资源路径可配置化）**。
-2. **`packages/*` 源码必须进镜像**：`@agentsignal/protocol` 是 workspace 依赖，Node type-stripping 直跑时实时解析。
+2. **`packages/*` 源码必须进镜像**：`@agentssignal/protocol` 是 workspace 依赖，Node type-stripping 直跑时实时解析。
 3. **`COPY --parents` 需 BuildKit ≥1.7 / Docker ≥25**，好处是新增 workspace 包无需改 Dockerfile。
 
 ### 1.2 端口映射
@@ -484,7 +484,7 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 
 ### 9.2 npm CLI 发布（测试）
 
-包以 `@agentsignal/*` scope 发布（需 npmjs.com 建 AgentsSignal org，免费一次性）。发布顺序：protocol → cli → mcp。打包产物本地已可验证：`pnpm pack:verify`。正式发布由 changesets 驱动（version.yml 放开 publish 两行 + `NPM_TOKEN`）。
+包以 `@agentssignal/*` scope 发布（需 npmjs.com 建 AgentsSignal org，免费一次性）。发布顺序：protocol → cli → mcp。打包产物本地已可验证：`pnpm pack:verify`。正式发布由 changesets 驱动（version.yml 放开 publish 两行 + `NPM_TOKEN`）。
 
 ---
 

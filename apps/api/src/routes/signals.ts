@@ -13,7 +13,7 @@ import {
   ListQuerySchema,
   PublishRequestSchema,
   type SignalFull,
-} from "@agentsignal/protocol";
+} from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAgent } from "../auth/bearer.ts";

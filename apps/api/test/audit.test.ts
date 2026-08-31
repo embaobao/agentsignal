@@ -12,7 +12,7 @@ process.env.DATABASE_URL ??= "postgres://test:test@localhost:5432/test";
 
 const { buildApp } = await import("../src/server.ts");
 const { resetEnv } = await import("../src/env.ts");
-const { verifyChain } = await import("@agentsignal/audit");
+const { verifyChain } = await import("@agentssignal/audit");
 const { createTestDb } = await import("./helpers/testdb.ts");
 
 import type { Db } from "../src/db/client.ts";

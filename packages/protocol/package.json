@@ -1,7 +1,7 @@
 {
-  "name": "@agentsignal/protocol",
+  "name": "@agentssignal/protocol",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "exports": {
     ".": {
@@ -12,7 +12,7 @@
   "dependencies": {
     "zod": "^4.4.3"
   },
-  "description": "@agentsignal/protocol — 协议单一真源：zod schema + ULID + 统一错误码（全栈同构）",
+  "description": "@agentssignal/protocol — 协议单一真源：zod schema + ULID + 统一错误码（全栈同构）",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,6 +25,6 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentsignal/* --external:zod --outfile=dist/index.js"
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentssignal/* --external:zod --outfile=dist/index.js"
   }
 }
