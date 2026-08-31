@@ -2,7 +2,15 @@
   "$schema": "https://unpkg.com/@changesets/config/schema.json",
   "changelog": false,
   "commit": false,
-  "fixed": [["*"]],
+  "fixed": [
+    [
+      "@agentssignal/api",
+      "@agentssignal/cli",
+      "@agentssignal/mcp",
+      "@agentssignal/protocol",
+      "@agentssignal/ui"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
