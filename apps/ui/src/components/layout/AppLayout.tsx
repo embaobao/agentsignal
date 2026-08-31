@@ -10,12 +10,12 @@ import { Moon, Search, Sun } from "lucide-react";
 import { isAuthed } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { CommandPalette } from "@/components/design/CommandPalette";
-import { Mascot } from "@/components/design/Mascot";
+import { LogoMark as BrandMark } from "@/components/design/LogoMark";
 import { cn } from "@/lib/utils";
 
-/** 线稿机器人 logo（v5：单线 SVG，随文字色反白） */
+/** 品牌 logo（太空猫，mask 染色，随文字色反白） */
 export function LogoMark({ size = 26 }: { size?: number }) {
-  return <Mascot size={size} />;
+  return <BrandMark size={size} />;
 }
 
 /** 身份入口：未认证 → Sign in ghost；已认证 → 实心 mono A 头像 */
