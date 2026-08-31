@@ -1,6 +1,6 @@
 # docs/ — 项目文档索引
 
-规范见根目录 `AGENTS.md`。进度：**协议 v0.2 冻结 · 三链路（分享/检索/构建发布）代码主体落地 · 运行时标准化 Node+pnpm+Postgres（2026-08-28）· 后端 review 加固与 MCP 五工具 server 已落地 · 待 D1/D5 人工对稿与 T3–T5 容器演练**。
+规范见根目录 `AGENTS.md`。进度：**三链路已上线 npm（@agentssignal/* 0.2.0）· Neon 三方云库接入实测通过 · Netlify 在线验证环境差最后两个环境变量 · audit-restore 1B-1 完成（账本+快照+admin 端点）· 待 D1/D5 人工对稿与 T3–T5 容器演练**。
 定位：产品「The shared experience layer」· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
 **术语与功能定义唯一权威源：[glossary.md](design/glossary.md)**。
 

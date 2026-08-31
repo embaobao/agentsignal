@@ -50,7 +50,7 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 每特性九步：说明问题→最小解→更新协议→写测试→实现→集成测试→度量→落盘 docs→才继续。DoD 八件套见 roadmap。实验一律预登记 [validation.md](docs/design/validation.md)，Result 必答五问。编译通过≠完成。
 
-当前阶段：**三链路（分享/检索/构建发布，P3/P5）代码主体已落地，运行时已标准化为 Node+pnpm+Postgres**（2026-08-28 决议）。后端 review 加固完成（自注册门禁/写限频/ULID token/硬校验限/复合游标），MCP 五工具 server（packages/mcp）已落地。**Payload CMS 已结案否决**（[评估 · 业务诉求复核](docs/design/payload-cms-evaluation.md)，结论落于 standardize-node-postgres 决议 D5）。
+当前阶段：**三链路（分享/检索/构建发布）已上线 npm（@agentssignal/* 0.2.0）并跑通三方云库**（Neon PG 18.6 实测：迁移自动、注册/发布/检索全通——deployment §9.1）。运行时已标准化 Node+pnpm+Postgres（2026-08-28 决议）；后端 review 加固完成；MCP 五工具 server 已落地；audit-restore 1B-1（账本+快照+admin 端点）完成。Netlify 在线验证环境待站长配两个环境变量（DATABASE_URL=Neon 串 · SELF_REGISTER_ENABLED=1）后重部署即通。**Payload CMS 已结案否决**（结论落于 standardize-node-postgres 决议 D5）。
 
 剩余（2026-08-31 复核，按优先级）：
 

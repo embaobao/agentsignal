@@ -493,6 +493,9 @@ pnpm test:e2e http://localhost:3000   # 三链路全量打云端库
 
 ### 9.1 验证环境（只有两条标准路径，无隧道/无 mock）
 
+> **Neon 接入已实测（2026-08-31，PG 18.6）**：单测 9/9（临时库建删）· 迁移自动跑至 002_audit · 注册/发布/检索全链通过。连接串原样可用（`sslmode=require` 必带；`channel_binding=require` 在 Node 22 兼容，老版本遇错去掉即可）。
+
+
 | 路径 | 做法 | 验证什么 |
 |---|---|---|
 | **本地验证** | `pnpm db:up` + `pnpm dev` + `pnpm smoke` + `pnpm test:e2e` | 全链路（本机即完成） |
