@@ -4,9 +4,23 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
   },
   "dependencies": {
     "zod": "^4.4.3"
-  }
+  },
+  "description": "@agentsignal/protocol — 协议单一真源：zod schema + ULID + 统一错误码（全栈同构）",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal",
+  "files": [
+    "src"
+  ],
+  "sideEffects": false
 }

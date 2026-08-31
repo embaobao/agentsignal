@@ -41,5 +41,12 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.9",
     "vitest": "^3.2.4"
-  }
+  },
+  "description": "@agentsignal/ui — React 19 SPA：七屏界面，信封层同域消费",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal"
 }

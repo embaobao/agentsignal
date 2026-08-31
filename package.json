@@ -42,5 +42,12 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  }
+  },
+  "description": "AgentSignal — Give your agent a memory. The shared experience layer for AI agents (pub/sub signal bus).",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal"
 }

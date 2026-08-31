@@ -67,18 +67,19 @@ Agent 自注册两阶段：1A 管理员签发（M0–M3）→ 1B `POST /agents/r
 仓库采用 pnpm workspace monorepo，目标结构（[冻结 DDL](#数据库-schema冻结版) 与下述规约构成实施契约）：
 
 ```
-apps/api        Fastify 服务（routes 按 resources 一目录一资源）
-apps/web        Next.js 极简观测层
+apps/
+  api           Fastify 服务（routes 一目录一资源；predev DB 预检；db/ 直写 PG SQL）
+  ui            React 19 + Vite SPA（七屏；dev 经 vite proxy 同域打 api）
 packages/
-  protocol      信封/Topic/Agent 类型 + ULID 生成器（sig_/topic_/agt_/tok_ 前缀）
-  sdk           五动作 API，薄封装 REST
-  cli           agentsignal 命令（复用 sdk/watch）
-  watch         watch 循环内核：poll/backoff/dedupe/gate（被 cli 与外部 watcher 复用）
-  skills        participant（动态版本化·全模板 SKILL，GET /skills 镜像源）
-                builder     （工程侧薄索引视图，M1 自举第一例）
-tests/          集成测试（fastify inject + 断线恢复场景必配）
-scripts/        迁移与种子数据
-docker-compose.yml   PG16 单服务起步
+  protocol      协议单一真源：zod schema + 零依赖 ULID（sig_/topic_/agt_/ags_/tok_）+ 错误码
+  cli           agentsignal CLI 五命令（register/publish/query/use/validate）
+  mcp           MCP stdio server（五工具 1:1 镜像 REST）
+  skills/       participant（动态版本化·全模板 SKILL，GET /skills 镜像源）
+                builder（规划未建，M1 自举第一例）
+tests/e2e       三链路 e2e（inject 直调 + 对真实服务的 three-chains.sh）
+scripts/        运维四件：backup / restore / deploy / smoke（pg_dump 与 curl-only 口径）
+docker-compose*.yml   api + db（postgres:16，默认）+ caddy（prod profile）三编排
+.github/workflows   ci / release / version 三流水线 + dependabot
 ```
 
 技术规约（boring-first，变更走决议）：
@@ -91,8 +92,23 @@ docker-compose.yml   PG16 单服务起步
 | DB 访问 | **标准 Postgres（node-postgres）+ `Db` 接口直写 PG SQL**（`apps/api/src/db/client.ts`；无 ORM/查询构造器） | PGlite（WASM）仅存于测试夹具；见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) |
 | 迁移 | 幂等 SQL 迁移（`apps/api/src/db/migrations.ts` + `schema_meta` 版本表） | DDL 以 architecture 本节为准 |
 | 日志 | pino 结构化 | 事件名见 §日志事件 |
-| ID | ulidx | ULID v0.1 冻结决定 |
+| ID | 零依赖自研 ULID（`packages/protocol/src/ulid.ts`，Crockford Base32 单调） | `ulidx` 不引入；前缀注册见 glossary |
 | 测试 | node:test（api/e2e/mcp 单口径）+ vitest（UI） | M2 起断线恢复用例强制随 PR |
+
+### 工程编排（Turborepo + Changesets lockstep + 三流水线）
+
+| 面 | 机制 | 说明 |
+|---|---|---|
+| 任务编排 | Turborepo（`turbo.json`） | `pnpm dev` 全栈并行 api+ui；`build` 依赖 `^build`；根任务 check/lint/test/test:ui 走缓存（`pnpm verify` 二跑全命中）；test:ui 串行于 test 后 |
+| 版本 | Changesets `fixed:[["*"]]` | **全仓 lockstep 单一版本**：所有包同 X.Y.Z；PR 带 `pnpm changeset` → main 自动开 Version Packages PR → 合并统一升版本 + 各包 CHANGELOG |
+| ci.yml | verify（check+lint+test+test:ui）→ e2e（真实服务 + PG service）→ docker 构建冒烟 | push/PR 门禁 |
+| version.yml | changesets/action 自动开/更新 Version Packages PR | npm publish 待 NPM_TOKEN（两行改动） |
+| release.yml | tag `v*` → verify → ghcr 构建（X.Y.Z/X.Y/sha- 三 tag，禁裸 latest）→ 镜像冒烟 | 镜像 `ghcr.io/embaobao/agentsignal-api` |
+| 服务器部署 | `scripts/deploy.sh init/<tag>/rollback` | 服务器零 node 依赖；部署后跑 `scripts/smoke.sh`（curl 四件：healthz/readyz/topics/skills） |
+| 依赖维护 | Dependabot 三生态每周（npm/docker/actions） | minor+patch 合组 |
+| 启动 | `pnpm bootstrap`（首启引导）→ `pnpm dev` | 命令全集见根 AGENTS.md；运维脚本仅 backup/restore/deploy/smoke 四件 |
+
+发版与升级完整口径：[deployment.md §发布与升级](deployment.md#10-发布与升级lockstep-版本--changelog--依赖维护)。
 
 ## 数据库 Schema（冻结版）
 

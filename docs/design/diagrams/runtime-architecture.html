@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentSignal 运行时架构</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:  #09090b;
+      --color-ink:    #e4e4e7;
+      --color-muted:  #a1a1aa;
+      --color-soft:   #71717a;
+      --color-accent: #22c55e;
+      --color-link:   #60a5fa;
+      --font-sans:  'Geist', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', serif;
+      --font-mono:  'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink);
+           min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .brandrow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500;
+               letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); }
+    .logo { width: 40px; height: 40px; border-radius: 8px; mix-blend-mode: screen; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400;
+         letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="brandrow">
+      <p class="eyebrow">Architecture · AgentSignal · pub/sub signal bus</p>
+      <img class="logo" src="data:image/png;base64,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" alt="AgentSignal logo">
+    </div>
+    <h1>运行时架构 — 四通道同权，信封先于体验</h1>
+
+    <svg viewBox="0 0 1120 704" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="runtime-architecture-title runtime-architecture-desc">
+      <title id="runtime-architecture-title">AgentSignal 运行时架构</title>
+      <desc id="runtime-architecture-desc">架构图：CLI、MCP、Agent 宿主、浏览器 UI 四条消费通道以同等地位访问 Fastify API 的三链路端点，请求经 Token Firewall 过滤后读写 Postgres，静态 UI 由 API 同域托管。</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#a1a1aa"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#22c55e"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#09090b"/>
+
+      <!-- zones -->
+      <rect x="32" y="96" width="264" height="464" rx="8" fill="rgba(228,228,231,0.03)" stroke="rgba(228,228,231,0.18)" stroke-width="0.8" stroke-dasharray="4,4"/>
+      <rect x="36" y="100" width="140" height="12" rx="2" fill="#09090b"/>
+      <text x="106" y="110" fill="rgba(228,228,231,0.40)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">消费通道 · 四通道同权</text>
+
+      <rect x="328" y="96" width="360" height="464" rx="8" fill="rgba(228,228,231,0.03)" stroke="rgba(228,228,231,0.18)" stroke-width="0.8" stroke-dasharray="4,4"/>
+      <rect x="332" y="100" width="164" height="12" rx="2" fill="#09090b"/>
+      <text x="414" y="110" fill="rgba(228,228,231,0.40)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">应用 · FASTIFY 单服务</text>
+
+      <rect x="720" y="96" width="368" height="464" rx="8" fill="rgba(228,228,231,0.03)" stroke="rgba(228,228,231,0.18)" stroke-width="0.8" stroke-dasharray="4,4"/>
+      <rect x="724" y="100" width="140" height="12" rx="2" fill="#09090b"/>
+      <text x="794" y="110" fill="rgba(228,228,231,0.40)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">数据 · 同域托管</text>
+
+      <!-- arrows first -->
+      <!-- CLI -> API -->
+      <path d="M 280,176 H 304 Q 312,176 312,184 V 224 Q 312,232 320,232 H 360" fill="none" stroke="#a1a1aa" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="288" y="148" width="56" height="12" rx="2" fill="#09090b"/>
+      <text x="316" y="157" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REST</text>
+
+      <!-- MCP -> API -->
+      <path d="M 280,288 H 360" fill="none" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="292" y="268" width="72" height="12" rx="2" fill="#09090b"/>
+      <text x="328" y="277" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STDIO 镜像 REST</text>
+
+      <!-- Agent 宿主 -> API（SKILL 引导虚线 + REST 直角） -->
+      <path d="M 280,352 H 312 Q 320,352 320,344 V 288 Q 320,280 328,280 H 360" fill="none" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="288" y="312" width="100" height="12" rx="2" fill="#09090b"/>
+      <text x="338" y="321" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">GET /SKILLS 引导</text>
+
+      <!-- UI SPA -> API（XHR，垂直下行入底？UI 与 API 高度差——用右出口水平入 API 左侧下部） -->
+      <path d="M 280,448 H 344 Q 352,448 352,440 V 336 Q 352,328 360,328 H 360" fill="none" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="292" y="420" width="60" height="12" rx="2" fill="#09090b"/>
+      <text x="322" y="429" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">XHR JSON</text>
+
+      <!-- API -> Token Firewall（同 zone 垂直） -->
+      <path d="M 508,352 V 400" fill="none" stroke="#a1a1aa" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="520" y="368" width="76" height="12" rx="2" fill="#09090b"/>
+      <text x="558" y="377" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PREHANDLER</text>
+
+      <!-- Firewall -> Postgres（跨 zone 蓝，水平） -->
+      <path d="M 688,448 H 744 Q 752,448 752,440 V 296 Q 752,288 760,288 H 784" fill="none" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="704" y="360" width="60" height="12" rx="2" fill="#09090b"/>
+      <text x="734" y="369" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SQL:5432</text>
+
+      <!-- 静态 dist -> UI（回流虚线：同域托管 GET） -->
+      <path d="M 784,464 H 712 Q 704,464 704,472 V 512 Q 704,520 696,520 H 336 Q 328,520 328,512 V 492 Q 328,484 320,484 H 280" fill="none" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="452" y="504" width="120" height="12" rx="2" fill="#09090b"/>
+      <text x="512" y="513" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">同域静态托管 DIST</text>
+
+      <!-- Z1 nodes -->
+      <rect x="64" y="136" width="216" height="88" rx="6" fill="#09090b"/>
+      <rect x="64" y="136" width="216" height="88" rx="6" fill="rgba(228,228,231,0.06)" stroke="#e4e4e7" stroke-width="1"/>
+      <rect x="72" y="142" width="32" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="88" y="151" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PKG</text>
+      <text x="172" y="176" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">agentsignal CLI</text>
+      <text x="172" y="192" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">register/publish/query/use</text>
+
+      <rect x="64" y="248" width="216" height="88" rx="6" fill="#09090b"/>
+      <rect x="64" y="248" width="216" height="88" rx="6" fill="rgba(228,228,231,0.06)" stroke="#e4e4e7" stroke-width="1"/>
+      <rect x="72" y="254" width="40" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="92" y="263" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MCP</text>
+      <text x="172" y="288" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">MCP stdio server</text>
+      <text x="172" y="304" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">五工具 1:1 镜像 REST</text>
+
+      <rect x="64" y="336" width="216" height="72" rx="6" fill="#09090b"/>
+      <rect x="64" y="336" width="216" height="72" rx="6" fill="rgba(228,228,231,0.03)" stroke="rgba(228,228,231,0.30)" stroke-width="1"/>
+      <rect x="72" y="342" width="80" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="112" y="351" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AGENT 宿主</text>
+      <text x="172" y="376" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">SKILL 引导 · 一行提示词</text>
+
+      <rect x="64" y="432" width="216" height="104" rx="6" fill="#09090b"/>
+      <rect x="64" y="432" width="216" height="104" rx="6" fill="rgba(228,228,231,0.06)" stroke="#e4e4e7" stroke-width="1"/>
+      <rect x="72" y="438" width="56" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="100" y="447" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BROWSER</text>
+      <text x="172" y="480" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">UI SPA（apps/ui）</text>
+      <text x="172" y="496" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">React 19 · Vite · 七屏</text>
+
+      <!-- Z2 nodes -->
+      <rect x="360" y="232" width="328" height="120" rx="6" fill="rgba(34,197,94,0.10)"/>
+      <rect x="360" y="232" width="328" height="120" rx="6" fill="rgba(34,197,94,0.10)" stroke="#22c55e" stroke-width="1"/>
+      <rect x="368" y="238" width="72" height="12" rx="2" fill="transparent" stroke="rgba(34,197,94,0.50)" stroke-width="0.8"/>
+      <text x="404" y="247" fill="rgba(34,197,94,0.85)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FOCAL · API</text>
+      <text x="524" y="284" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Fastify 六端点 · 三链路</text>
+      <text x="524" y="300" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">分享 / 检索 / 构建发布 · GET /skills</text>
+      <text x="524" y="332" fill="#71717a" font-size="9" font-family="'Geist', sans-serif" text-anchor="middle">信封先于体验 · 正文 include 才下发</text>
+
+      <rect x="360" y="400" width="328" height="96" rx="6" fill="rgba(34,197,94,0.05)"/>
+      <rect x="360" y="400" width="328" height="96" rx="6" fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.50)" stroke-width="1" stroke-dasharray="4,4"/>
+      <rect x="368" y="406" width="108" height="12" rx="2" fill="transparent" stroke="rgba(34,197,94,0.50)" stroke-width="0.8"/>
+      <text x="422" y="415" fill="rgba(34,197,94,0.85)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SECURITY</text>
+      <text x="524" y="444" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Token Firewall · Server Filter</text>
+      <text x="524" y="460" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Bearer ags_ · 限频 10/min · 硬校验限 · TTL</text>
+
+      <!-- Z3 nodes -->
+      <rect x="784" y="240" width="272" height="96" rx="6" fill="rgba(228,228,231,0.05)"/>
+      <rect x="784" y="240" width="272" height="96" rx="6" fill="rgba(228,228,231,0.05)" stroke="#a1a1aa" stroke-width="1"/>
+      <rect x="792" y="246" width="56" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="820" y="255" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STORE</text>
+      <text x="920" y="284" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Postgres 16</text>
+      <text x="920" y="300" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Db 接口直写 · 无 ORM · pg-data 卷</text>
+
+      <rect x="784" y="400" width="272" height="96" rx="6" fill="#09090b"/>
+      <rect x="784" y="400" width="272" height="96" rx="6" fill="rgba(228,228,231,0.06)" stroke="#e4e4e7" stroke-width="1"/>
+      <rect x="792" y="406" width="64" height="12" rx="2" fill="transparent" stroke="rgba(228,228,231,0.40)" stroke-width="0.8"/>
+      <text x="824" y="415" fill="rgba(228,228,231,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STATIC</text>
+      <text x="920" y="444" fill="#e4e4e7" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">UI 静态产物（dist）</text>
+      <text x="920" y="460" fill="#a1a1aa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">@fastify/static 同域托管 · build:ui</text>
+
+      <!-- legend strip -->
+      <line x1="32" y1="608" x2="1088" y2="608" stroke="rgba(228,228,231,0.15)" stroke-width="0.8"/>
+      <text x="32" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="104" y1="628" x2="132" y2="628" stroke="#a1a1aa" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="144" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace">内部调用</text>
+      <line x1="232" y1="628" x2="260" y2="628" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <text x="272" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace">跨边界 HTTP</text>
+      <line x1="408" y1="628" x2="436" y2="628" stroke="#a1a1aa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="448" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace">引导 / 托管（虚线）</text>
+      <rect x="616" y="620" width="12" height="12" rx="2" fill="rgba(34,197,94,0.10)" stroke="#22c55e" stroke-width="0.8"/>
+      <text x="640" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace">focal</text>
+      <rect x="704" y="620" width="12" height="12" rx="2" fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.50)" stroke-width="0.8" stroke-dasharray="4,4"/>
+      <text x="728" y="632" fill="#a1a1aa" font-size="8" font-family="'Geist Mono', monospace">安全边界</text>
+      <text x="1088" y="632" fill="#71717a" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">空闲零 token · 过滤先于推理</text>
+    </svg>
+  </div>
+</body>
+</html>

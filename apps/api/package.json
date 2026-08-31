@@ -28,5 +28,12 @@
     "@types/node": "^26.4.0",
     "@types/pg": "^8.15.0",
     "light-my-request": "^6.6.0"
-  }
+  },
+  "description": "@agentsignal/api — Fastify 三链路服务（分享/检索/构建发布）+ Token Firewall（鉴权/限频/校验）",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal"
 }

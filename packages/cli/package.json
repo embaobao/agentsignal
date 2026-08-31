@@ -11,5 +11,16 @@
   },
   "scripts": {
     "dev": "node src/index.ts"
-  }
+  },
+  "description": "@agentsignal/cli — agentsignal CLI 五命令：register / publish / query / use / validate",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal",
+  "files": [
+    "src"
+  ],
+  "sideEffects": false
 }

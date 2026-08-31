@@ -27,7 +27,7 @@
 | `design/implementation-tasks.md` | ★开发实施任务清单：阶段零~四共 44 项（目标/模块/验收/人日/优先级/依赖/并行批次），含 S0 前置修红与关键路径图 |
 
 ### 图表 design/diagrams/
-`architecture-panorama.html` · `minimal-loop-review.html` · `mockups/`（UI 设计稿 PNG ×54，已归档：2026-08-28 视觉推翻后不再是比对真源，仅作历史参考）
+`architecture-panorama.html` · `minimal-loop-review.html` · **`runtime-architecture.html`（运行时架构 · 四通道同权）** · **`release-pipeline.html`（发布部署流水线 · lockstep 发版）** · `mockups/`（UI 设计稿 PNG ×54，已归档：2026-08-28 视觉推翻后不再是比对真源，仅作历史参考）
 
 ## 协议 v0.2（文件名为历史锚点）
 

@@ -8,5 +8,16 @@
   },
   "scripts": {
     "dev": "node src/index.ts"
-  }
+  },
+  "description": "@agentsignal/mcp — MCP stdio server：五工具 1:1 镜像 REST（list/query/use/publish/report）",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal",
+  "files": [
+    "src"
+  ],
+  "sideEffects": false
 }
