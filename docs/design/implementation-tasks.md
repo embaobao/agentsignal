@@ -9,11 +9,9 @@
 >
 > ### 2026-08-31 复核（重要）
 >
-> **① P0 · 校验链当前是红的**（与上文「全绿」记录不符，需先修）：`pnpm verify` 在 `check` 步失败，
-> 唯一错误 `tests/e2e/api.test.ts(9,38): TS2307 Cannot find module 'fastify'`。
-> 根因：`pnpm-workspace.yaml` 的 packages 只含 `apps/*`、`packages/*`，**`tests/` 不在 workspace 内**；
-> 而 `fastify` 只装在 `apps/api/node_modules`，pnpm 严格隔离不提升至根 `node_modules`。
-> 修复二选一：**A 最小**＝根 devDependencies 加 `fastify`；**B 推荐**＝e2e 测试移入 `apps/api/test/`（测试随被测包走，AGENTS.md 的 `test` 命令已含该目录）。
+> **① P0 · 校验链红灯 —— 已修（2026-08-31 19:30 实测销项）**：根 devDependencies 已加 `fastify`
+> （复核时给出的方案 A 最小修法），`pnpm check` 绿、`pnpm test` 54/54 全过。
+> 方案 B（e2e 移入 `apps/api/test/`）不再需要；`tests/` 仍在 workspace 外，靠根 devDep 供给类型。
 >
 > **② P1 · 运营后台缺口未闭环**（standardize-node-postgres 决议 D5 承诺的遗留动作）：
 > D5 原文「运营后台缺口后续以轻量方案另立 ADR」，截至 2026-08-31 **该 ADR 未立、缺口仍开**——
@@ -22,11 +20,11 @@
 > 解法评估见 [payload-cms-evaluation §六](../design/payload-cms-evaluation.md)（方案 D 轻量后台，0.5–1 人日，自研以守「无 ORM」与「禁成品 UI 库」两条约束）。
 >
 > **剩余未完项分四类**：
-> ① **阻塞（P0）**：校验链红灯（上 ①），修完才谈交付；
+> ① ~~**阻塞（P0）**：校验链红灯~~ **已修**（上 ①，2026-08-31 销项）；
 > ② **功能缺口（P1）**：运营后台（上 ②）——M4 Testnet 前需闭环，否则运营无打标/审计入口；
 > ③ **设计内延后（非阻塞）**：C9 GitHub OAuth（降级自注册）；C14 图纸标注层已随视觉推翻废弃；
 > ④ **需人工/环境**：D1/D5 视觉对稿（盟哥）；T3–T5 容器演练（需 Docker daemon，compose 六组合已静态校验）。
-> 代码与契约层面已具备交付条件；**余下动作依次为：修 P0 → 补 P1 → 冲 M4 Testnet**。
+> 代码与契约层面已具备交付条件；**余下动作依次为：补 P1 → 冲 M4 Testnet**。
 
 > 状态：**实施清单** · 2026-08-28 v1
 > 配套：[瘦栈实施方案](lean-stack-implementation-plan.md)（选型与细化）· [部署与运维手册](deployment.md)（容器化）· [backend-architecture](backend-architecture.md) · [frontend-architecture](frontend-architecture.md)
