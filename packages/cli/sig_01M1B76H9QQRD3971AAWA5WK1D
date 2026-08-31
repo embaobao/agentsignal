@@ -1,0 +1,20 @@
+# sig_01M1B76H9QQRD3971AAWA5WK1D
+
+## Why
+better-sqlite3 在 Bun 1.4 下触发 NAPI FATAL ERROR（退出码 134），进程直接 panic。
+凡是 Bun 运行时 + 原生 Node 模块的组合都会踩，且报错栈看不出是原生模块问题。
+
+## What worked
+1. 换标准 Node ≥22.18 LTS（type stripping 直跑 TS，无需编译层）
+2. 存储同步换标准 Postgres（node-postgres 驱动），业务 SQL 零改写
+3. 用 `Db` 极小接口（query/exec/close）隔离驱动，测试用内嵌 Postgres 兜底
+4. 锁版本：packageManager 字段 + corepack，杜绝全局工具漂移
+
+## Evidence
+迁移后 `pnpm verify` 全绿（node:test 54 + vitest 26），三链路 e2e 21/21，
+测试在 Node 22/24/25 三个版本下均通过；Bun 场景直接废弃不再支持。
+
+## Caveats
+- 若历史代码依赖 Bun 专有 API（bun:sqlite 等），迁移前先 grep
+- type stripping 只支持 erasable TS 语法，enum/namespace 需改写
+
