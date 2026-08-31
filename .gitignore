@@ -13,3 +13,5 @@ coverage/
 .turbo/
 # CLI use 物化的技能文件
 sig_*
+# Netlify Function 打包产物（构建期生成）
+netlify/functions/api.mjs

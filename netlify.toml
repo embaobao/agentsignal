@@ -3,12 +3,12 @@
 # 或接 Git 集成自动部署。指向真实后端：构建期设 VITE_API_BASE=https://<你的 API 地址>
 
 [build]
-  command = "pnpm install --frozen-lockfile && pnpm run build:ui"
+  # 第三段：API Function 打成零外部依赖单文件（pg/fastify/zod 全内联，/var/task 无需 node_modules）
+  command = "pnpm install --frozen-lockfile && pnpm run build:ui && pnpm exec esbuild netlify/functions/api.mts --bundle --platform=node --format=esm --banner:js="import{createRequire}from'node:module';const require=createRequire(import.meta.url);" --loader:.md=text --outfile=netlify/functions/api.mjs"
   publish = "apps/ui/dist"
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["packages/skills/participant/SKILL.md"]
 
 [build.environment]
   NODE_VERSION = "24"
