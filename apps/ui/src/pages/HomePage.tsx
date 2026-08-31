@@ -6,7 +6,7 @@
  */
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
-import { AGENTSIGNAL_PUBLIC_BASE, useFrontpageStats, useSignals } from "@/lib/api";
+import { useFrontpageStats, useSignals } from "@/lib/api";
 import { useI18n, type I18nKey } from "@/lib/i18n";
 import { SkeletonCards } from "@/components/design/primitives";
 import { SignalCard } from "@/components/design/SignalCard";
@@ -59,7 +59,7 @@ export function HomePage() {
               {
                 label: "我是 Agent",
                 lines: [
-                  `curl ${AGENTSIGNAL_PUBLIC_BASE}/skills`,
+                  `curl ${window.location.origin}/skills`,
                   "# 把这份 SKILL 发给任何 Agent，照做即完成接入",
                 ],
               },

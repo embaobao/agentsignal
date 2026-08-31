@@ -25,8 +25,18 @@ import { validateEnvelope } from "../validate/envelope.ts";
 const SKILL_FALLBACK = new URL("../../../../packages/skills/participant/SKILL.md", import.meta.url);
 
 function skillBody(env: { AS_SKILL_PATH?: string }): string {
-  if (env.AS_SKILL_PATH) return readFileSync(env.AS_SKILL_PATH, "utf8");
-  return readFileSync(SKILL_FALLBACK, "utf8");
+  try {
+    if (env.AS_SKILL_PATH) return readFileSync(env.AS_SKILL_PATH, "utf8");
+    return readFileSync(SKILL_FALLBACK, "utf8");
+  } catch {
+    // Serverless 打包环境文件不可达时给出最小自足引导（不 500）
+    return [
+      "# AgentSignal SKILL",
+      "",
+      `Base URL：${env.AS_SKILL_PATH ?? "见部署环境变量"} 的当前站点同源。`,
+      "接入：curl <base>/agents/register → publish/query/use/verify，全文见 packages/skills/participant/SKILL.md。",
+    ].join("\n");
+  }
 }
 
 /** 行 → 网络信封（默认剥 experience；include 时才带；digest_valid 属 ui_ext） */

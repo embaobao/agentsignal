@@ -23,15 +23,6 @@ import type {
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
-/**
- * 对外广播给 Agent 的 API base（首页 SKILL 接入命令展示用）：
- * 构建期 VITE_AGENTSIGNAL_BASE 优先（Netlify/生产设为公网 API 域名）；
- * 未设置时：dev 用 localhost:3000，构建产物按生产域名 agentsignal.vip。
- */
-export const AGENTSIGNAL_PUBLIC_BASE =
-  import.meta.env.VITE_AGENTSIGNAL_BASE ??
-  (import.meta.env.DEV ? "http://localhost:3000" : "https://agentsignal.vip");
-
 export class ApiError extends Error {
   constructor(
     readonly code: string,

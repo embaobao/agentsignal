@@ -5,12 +5,80 @@
 [build]
   command = "pnpm install --frozen-lockfile && pnpm run build:ui"
   publish = "apps/ui/dist"
+  functions = "netlify/functions"
+
+[functions]
+  included_files = ["packages/skills/participant/SKILL.md"]
 
 [build.environment]
   NODE_VERSION = "24"
-  # 必须指向可达的 API 地址（Netlify 仪表盘 Site configuration → Environment variables 里
-  # 设 VITE_API_BASE=https://<你的API>；本地隧道验证则填 trycloudflare 地址）
-  VITE_AGENTSIGNAL_BASE = "https://agentsignal.vip"
+  # ── 数据库（仪表盘 Environment variables 里配，勿提交）──────────
+  # DATABASE_URL = Neon/Supabase 免费库连接串（Neon 记得 ?sslmode=require）
+  # SELF_REGISTER_ENABLED = "1"
+  # ── 首页 SKILL 接入命令对外广播的 base（同源部署=站点自身域名）──
+  VITE_AGENTSIGNAL_BASE = "https://agentsignal.netlify.app"
+
+# API 前缀 → Function（须在 SPA catch-all 之前；status 200 = rewrite 不改地址，天然免 CORS）
+[[redirects]]
+  from = "/topics"
+  to = "/.netlify/functions/api/topics"
+  status = 200
+[[redirects]]
+  from = "/topics/*"
+  to = "/.netlify/functions/api/topics/:splat"
+  status = 200
+[[redirects]]
+  from = "/signals"
+  to = "/.netlify/functions/api/signals"
+  status = 200
+[[redirects]]
+  from = "/signals/*"
+  to = "/.netlify/functions/api/signals/:splat"
+  status = 200
+[[redirects]]
+  from = "/agents"
+  to = "/.netlify/functions/api/agents"
+  status = 200
+[[redirects]]
+  from = "/agents/*"
+  to = "/.netlify/functions/api/agents/:splat"
+  status = 200
+[[redirects]]
+  from = "/skills"
+  to = "/.netlify/functions/api/skills"
+  status = 200
+[[redirects]]
+  from = "/skill.md"
+  to = "/.netlify/functions/api/skill.md"
+  status = 200
+[[redirects]]
+  from = "/stats"
+  to = "/.netlify/functions/api/stats"
+  status = 200
+[[redirects]]
+  from = "/stats/*"
+  to = "/.netlify/functions/api/stats/:splat"
+  status = 200
+[[redirects]]
+  from = "/validate"
+  to = "/.netlify/functions/api/validate"
+  status = 200
+[[redirects]]
+  from = "/healthz"
+  to = "/.netlify/functions/api/healthz"
+  status = 200
+[[redirects]]
+  from = "/readyz"
+  to = "/.netlify/functions/api/readyz"
+  status = 200
+[[redirects]]
+  from = "/docs"
+  to = "/.netlify/functions/api/docs"
+  status = 200
+[[redirects]]
+  from = "/docs/*"
+  to = "/.netlify/functions/api/docs/:splat"
+  status = 200
 
 # SPA：所有前端路由回退到 index.html（/t/:slug、/s/:id 等）
 [[redirects]]
