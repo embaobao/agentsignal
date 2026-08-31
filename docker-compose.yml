@@ -90,7 +90,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-agentsignal}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      # 数据卷默认落在项目文件夹 ./data/postgres（随仓库目录可备份/可审查；data/ 已 gitignore）
+      # 生产建议改回命名卷或独立盘：POSTGRES_HOST_PORT 同理收紧
+      - ${POSTGRES_DATA_DIR:-./data/postgres}:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agentsignal} -d ${POSTGRES_DB:-agentsignal}"]
       interval: 10s
@@ -123,6 +125,5 @@ services:
         condition: service_healthy
 
 volumes:
-  pg-data:
   caddy-data:
   caddy-config:

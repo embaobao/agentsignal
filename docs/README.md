@@ -4,6 +4,18 @@
 定位：产品「The shared experience layer」· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
 **术语与功能定义唯一权威源：[glossary.md](design/glossary.md)**。
 
+## 文档地图（按你要干什么找）
+
+| 你要干什么 | 读这些 |
+|---|---|
+| **把项目跑起来 / 发经验 / 查经验 / 回流** | ★[design/user-manual.md](design/user-manual.md)（四通道操作手册） |
+| **管理端点 / 审计账本 / 数据备份** | [design/admin-guide.md](design/admin-guide.md) · [design/deployment.md](design/deployment.md) |
+| **部署 / 三环境 / 升级回滚 / 发版** | ★[design/deployment.md](design/deployment.md)（§2 操作 · §3 环境变量 · §10 发布与升级） |
+| **后端/前端开发** | [AGENTS.md](../AGENTS.md)（权威入口）· [design/architecture.md](design/architecture.md) · [design/backend-architecture.md](design/backend-architecture.md) · [design/frontend-architecture.md](design/frontend-architecture.md) |
+| **对协议 / 字段语义** | [protocols/api.md](protocols/api.md) · [protocols/message-envelope.md](protocols/message-envelope.md) · [design/glossary.md](design/glossary.md) |
+| **查进度 / 提案 / 验证** | [design/implementation-tasks.md](design/implementation-tasks.md) · `../openspec/changes/`（在册：audit-restore）· [design/validation.md](design/validation.md) |
+| **查决策为什么这么做** | [decisions/](decisions/)（一事一文，最新：standardize-node-postgres） |
+
 ## 设计（活文档）
 
 | 文件 | 说明 |
@@ -24,6 +36,7 @@
 | `design/lean-stack-implementation-plan.md` | ★瘦栈实施方案：三方件选型（Tailwind v4 + shadcn/Base UI + `Db` 接口直写 PG SQL/无 ORM）、依赖清单、token 映射、M0–M4 细化任务、工时对照（14.5→9.8 人日）。**注**：文中 PGlite/bun 话术已被 [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md) 取代，按该决议换算阅读 |
 | `design/payload-cms-evaluation.md` | 调研（**已结案 2026-08-28：全量接入否决**，见决议 D5）：Payload CMS 适配性评估——业务诉求复核、硬约束清单、A/B/C/D 方案空间与判定矩阵、复审触发条件 |
 | `design/deployment.md` | ★容器化部署与运维：服务划分、镜像依赖、端口/卷/环境变量、三环境（dev/test/prod）构建启动日志回滚、健康检查、日志采集、数据持久化与备份 |
+| `design/admin-guide.md` | 管理员指南：admin 三端点 / 审计账本模型 / CLI / 数据备份还原 |
 | `design/user-manual.md` | ★用户使用手册：启动/四通道姿势/发布/检索/use/回流/管理员（只写已上线功能） |
 | `design/implementation-tasks.md` | ★开发实施任务清单：阶段零~四共 44 项（目标/模块/验收/人日/优先级/依赖/并行批次），含 S0 前置修红与关键路径图 |
 

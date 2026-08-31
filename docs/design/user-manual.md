@@ -92,6 +92,8 @@ curl -X POST localhost:3000/topics/ai-research/signals \
 
 ## 7. 管理员（可选）
 
+> 完整说明见 [admin-guide.md](admin-guide.md)。
+
 `.env` 配 `AS_ADMIN_USER` + `AS_ADMIN_PASS_BCRYPT` 后：
 
 ```bash

@@ -44,5 +44,3 @@ services:
     depends_on:
       - api
 
-volumes:
-  agentsignal-dev-data:

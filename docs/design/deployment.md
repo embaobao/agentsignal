@@ -71,7 +71,7 @@
 
 | 卷 | 挂载点 | 类型 | 内容 | 备份 |
 |---|---|---|---|---|
-| `pg-data` | `/var/lib/postgresql/data` | 命名卷 | PostgreSQL 数据目录 | `./scripts/backup.sh`（pg_dump，在线不停机） |
+| `./data/postgres`（宿主 bind） | `/var/lib/postgresql/data` | 项目文件夹 | PostgreSQL 数据目录（`POSTGRES_DATA_DIR` 可改独立盘/命名卷） | `./scripts/backup.sh`（pg_dump，在线不停机） |
 | `caddy-data` / `caddy-config` | `/data` `/config` | 命名卷 | ACME 证书与配置 | 证书可重签，建议留 |
 | 源码（dev） | `./apps/api/src` `./packages` | bind mount | 热重载 | — |
 | `/tmp`（test） | tmpfs 256m | tmpfs | 测试库，销毁即清 | — |
@@ -293,6 +293,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 | `CADDY_DOMAIN` | `agentsignal.vip` | profile=prod 必填 |
 | `ACME_EMAIL` | 空 | 证书到期通知；为空走 Caddy 默认注册 |
 | `POSTGRES_USER` / `_PASSWORD` / `_DB` | `agentsignal` / `agentsignal` / `agentsignal` | 本地默认与 DATABASE_URL 默认值一致；**生产必须改强密码**并显式设 `DATABASE_URL` |
+| `POSTGRES_DATA_DIR` | `./data/postgres` | 数据卷落点（项目文件夹 bind）；生产可改独立盘或命名卷 |
 
 ### 3.8 备份与管理（Phase 1B 预留）
 
@@ -380,7 +381,7 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 |---|---|
 | 数据库 | PostgreSQL 16（compose `db` 服务，`postgres:16-alpine`） |
 | 驱动 | `pg`（node-postgres 连接池，`max=10`）经 `Db` 接口直写 SQL，无 ORM |
-| 数据卷 | `pg-data` → `/var/lib/postgresql/data` |
+| 数据卷 | `./data/postgres`（项目文件夹 bind，`POSTGRES_DATA_DIR` 可覆盖） |
 | 迁移 | 幂等 DDL（create ... if not exists），启动时 `migrateToLatest` |
 | 测试 | 真 PG 临时库（`TEST_DATABASE_URL`）或内嵌 Postgres 夹具兜底，见 `apps/api/test/helpers/testdb.ts` |
 
