@@ -4,7 +4,7 @@
 
 [build]
   # 第三段：API Function 打成零外部依赖单文件（pg/fastify/zod 全内联，/var/task 无需 node_modules）
-  command = "pnpm install --frozen-lockfile && pnpm run build:ui && pnpm exec esbuild netlify/functions/api.mts --bundle --platform=node --format=esm --banner:js="import{createRequire}from'node:module';const require=createRequire(import.meta.url);" --loader:.md=text --outfile=netlify/functions/api.mjs"
+  command = 'pnpm install --frozen-lockfile && pnpm run build:ui && pnpm exec esbuild netlify/functions-src/api.mts --bundle --platform=node --format=esm --loader:.md=text --banner:js="import{createRequire}from\"node:module\";const require=createRequire(import.meta.url);" --outfile=netlify/functions/api.mjs'
   publish = "apps/ui/dist"
   functions = "netlify/functions"
 
