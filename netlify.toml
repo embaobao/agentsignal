@@ -9,6 +9,8 @@
   functions = "netlify/functions"
 
 [functions]
+  # SKILL.md 以原始仓库相对路径打进 Function 部署包，/skills 端点读真文件（非内嵌副本）
+  included_files = ["packages/skills/participant/SKILL.md"]
 
 [build.environment]
   NODE_VERSION = "24"

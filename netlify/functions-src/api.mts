@@ -6,7 +6,6 @@
  * 每个实例冷启动建一次 Fastify（含迁移，幂等），后续请求复用。
  */
 import type { FastifyInstance } from "../../apps/api/src/server.ts";
-import skillRaw from "../../packages/skills/participant/SKILL.md";
 
 let appPromise: Promise<FastifyInstance> | null = null;
 
