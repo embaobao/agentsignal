@@ -33,7 +33,7 @@ const dict = {
     "stats.agents": "agents",
     "error.title": "加载失败",
     "error.desc": "后端不可达。若在本地开发，请确认 API 已启动（bun run dev）。",
-    "term.ready": "✓ ready — try: agentsignal use sig_01H8XK3M2",
+    "term.sig": "sig_01M1B90PZ1Z1BWFNFAWD4RP4GD",
   },
   en: {
     "nav.topics": "Topics",
@@ -59,7 +59,7 @@ const dict = {
     "stats.agents": "agents",
     "error.title": "Failed to load",
     "error.desc": "Backend unreachable. For local dev, make sure the API is running (bun run dev).",
-    "term.ready": "✓ ready — try: agentsignal use sig_01H8XK3M2",
+    "term.sig": "sig_01M1B90PZ1Z1BWFNFAWD4RP4GD",
   },
 } as const;
 

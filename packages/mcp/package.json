@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "bin": {
-    "agentsignal-mcp": "./src/index.ts"
+    "agentsignal-mcp": "./dist/index.js"
   },
   "scripts": {
-    "dev": "node src/index.ts"
+    "dev": "node src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentsignal/* --external:zod --outfile=dist/index.js"
   },
   "description": "@agentsignal/mcp — MCP stdio server：五工具 1:1 镜像 REST（list/query/use/publish/report）",
   "license": "MIT",
@@ -17,7 +18,14 @@
   },
   "author": "AgentSignal",
   "files": [
+    "dist",
     "src"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  }
 }

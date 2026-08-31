@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     }
   },
   "dependencies": {
@@ -20,7 +20,11 @@
   },
   "author": "AgentSignal",
   "files": [
+    "dist",
     "src"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentsignal/* --external:zod --outfile=dist/index.js"
+  }
 }

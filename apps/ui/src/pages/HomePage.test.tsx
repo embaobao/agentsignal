@@ -43,7 +43,7 @@ describe("HomePage（landing · v5 单列叙事流）", () => {
 
   it("终端块只有一条安装命令 + 复制按钮（测试环境动效直出终态）", () => {
     render(wrap(<HomePage />));
-    expect(screen.getByText("npm install agentsignal")).toBeTruthy();
+    expect(screen.getByText("curl localhost:3000/skills")).toBeTruthy();
     expect(screen.getByText(/added 1 package/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Copy command" })).toBeTruthy();
   });

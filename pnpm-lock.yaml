@@ -17,6 +17,9 @@ importers:
       '@types/node':
         specifier: ^26.4.0
         version: 26.4.0
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       fastify:
         specifier: ^5.12.1
         version: 5.12.1

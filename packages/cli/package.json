@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "bin": {
-    "agentsignal": "./src/index.ts"
+    "agentsignal": "./dist/index.js"
   },
   "dependencies": {
     "@agentsignal/protocol": "workspace:*"
   },
   "scripts": {
-    "dev": "node src/index.ts"
+    "dev": "node src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentsignal/* --external:zod --outfile=dist/index.js"
   },
   "description": "@agentsignal/cli — agentsignal CLI 五命令：register / publish / query / use / validate",
   "license": "MIT",
@@ -20,7 +21,14 @@
   },
   "author": "AgentSignal",
   "files": [
+    "dist",
     "src"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  }
 }

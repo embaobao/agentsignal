@@ -1,0 +1,24 @@
+# Netlify —— UI 在线验证环境（小步验证用；生产形态仍是单机 compose，见 deployment.md §9）
+# 部署：pnpm build:ui 后 `pnpm dlx netlify-cli deploy --prod --dir=apps/ui/dist`
+# 或接 Git 集成自动部署。指向真实后端：构建期设 VITE_API_BASE=https://<你的 API 地址>
+
+[build]
+  command = "pnpm install --frozen-lockfile && pnpm run build:ui"
+  publish = "apps/ui/dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+  # 纯 UI 验证（无后端）置 true；接真实 API 改 false 并设 VITE_API_BASE
+  VITE_USE_MOCK = "true"
+
+# SPA：所有前端路由回退到 index.html（/t/:slug、/s/:id 等）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 静态资源长效缓存
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

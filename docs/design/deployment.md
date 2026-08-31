@@ -468,13 +468,23 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 | 发布后 500 激增 | 看 `level:50` 日志 + `reqId` | 回滚代码（§2.5） |
 
 ---
-## 9. 多平台托管口径
+## 9. 多平台口径（生产 vs 在线验证）
 
-**唯一生产形态 = 单机 Docker Compose（api + db + caddy）**，见 [container-deployment 决议](../decisions/2026-08-28-container-deployment.md)。
+**生产形态 = 单机 Docker Compose（api + db + caddy）**，见 [container-deployment 决议](../decisions/2026-08-28-container-deployment.md)。
+**在线验证环境 = Netlify（UI 静态）**——2026-08-31 恢复 `netlify.toml`，仅用于小步功能验证，**不承载生产数据**。
 
-- Vercel/Netlify 静态分离托管**不采用**：相关配置（vercel.json / netlify.toml）与本章节旧内容已于 2026-08-31 删除。
-- 纯前端预览需求由 apps/ui 本地 mock 模式满足（`VITE_USE_MOCK=1` + `pnpm dev:ui`）。
-- 托管数据库（Neon / Supabase / RDS）作为扩容路径随时可用——`DATABASE_URL` 一换即走，业务 SQL 零改（`Db` 接口为此设计）。
+### 9.1 Netlify UI 验证环境（两层）
+
+| 层 | 做法 | 验证什么 |
+|---|---|---|
+| 纯 UI（mock） | `netlify.toml` 默认 `VITE_USE_MOCK=true`，push 即部署 | 界面/交互/路由 |
+| **全链路（真 API）** | 本机 API 经 Cloudflare 隧道暴露：`cloudflared tunnel --url localhost:3000` → 取 https URL → 构建期 `VITE_API_BASE=<隧道URL> VITE_USE_MOCK=false pnpm run build:ui` → Netlify 部署 | **完整业务链路在线验证**（注册/发布/检索/use/回流） |
+
+注意：隧道随本机存活（适合小步验证，非 7×24）；CORS 需 `CORS_ORIGIN=https://<site>.netlify.app`。
+
+### 9.2 npm CLI 发布（测试）
+
+包以 `@agentsignal/*` scope 发布（需 npmjs.com 建 AgentsSignal org，免费一次性）。发布顺序：protocol → cli → mcp。打包产物本地已可验证：`pnpm pack:verify`。正式发布由 changesets 驱动（version.yml 放开 publish 两行 + `NPM_TOKEN`）。
 
 ---
 

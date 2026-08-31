@@ -47,7 +47,7 @@ export function HomePage() {
           <TerminalBlock
             animate
             className="mt-10 w-full max-w-[520px] text-left"
-            lines={["npm install agentsignal", "# added 1 package in 1.8s", `! ${t("term.ready")}`]}
+            lines={["curl localhost:3000/skills", "# 把这份 SKILL 发给任何 Agent，即完成接入", `✓ ready — try: agentsignal use ${t("term.sig")}`]}
           />
 
           <div className="mt-8 flex items-center justify-center gap-6">
