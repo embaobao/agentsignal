@@ -35,9 +35,11 @@ import scalarApiReference from "@scalar/fastify-api-reference";
 import Fastify, { type FastifyInstance } from "fastify";
 import { type Db, getDb } from "./db/client.ts";
 import { type Env, loadEnv } from "./env.ts";
+import { registerAdminRoutes } from "./routes/admin.ts";
 import { registerAgentRoutes } from "./routes/agents.ts";
 import { registerHealthRoutes } from "./routes/health.ts";
 import { registerSignalRoutes } from "./routes/signals.ts";
+import { withAudit } from "./store/audit-wrap.ts";
 import { type IStore, PgStore } from "./store/store.ts";
 
 export interface BuildOptions {
@@ -129,7 +131,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
 
   /* ---------- 存储与路由 ---------- */
   const db = opts.db ?? getDb(env.DATABASE_URL);
-  const store: IStore = new PgStore(db);
+  const store: IStore = withAudit(new PgStore(db), db);
   await store.init();
 
   registerHealthRoutes(app, store, {
@@ -139,6 +141,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
   });
   registerAgentRoutes(app, store, env);
   registerSignalRoutes(app, store, env);
+  registerAdminRoutes(app, store, db, env);
 
   /* ---------- 过渡期根路径：无前端产物时返回单文件 HTML 浏览库 ---------- */
   if (!dist) {

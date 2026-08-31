@@ -76,7 +76,7 @@ describe("健康检查", () => {
     const body = res.json();
     assert.equal(body.status, "ready");
     assert.equal(body.store, "up");
-    assert.equal(body.migration, "001_init");
+    assert.equal(body.migration, "002_audit");
   });
 });
 

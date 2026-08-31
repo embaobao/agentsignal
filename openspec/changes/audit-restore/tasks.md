@@ -11,16 +11,16 @@
 
 ## 1B-1 账本+快照 基础设施（Week 1）
 
-- [ ] 1.1 packages/audit 子包创建 + workspace 登记 + package.json（bun test；deps：diff minimal / commander / picocolors）
-- [ ] 1.2 LedgerWriter：JSON Lines；按日滚动；链式 hash（prev_hash + 本 hash = sha256(self-sans-hash)）；CRC 自检；ts 严格
-- [ ] 1.3 LedgerReader：分页读 + entity_type/actor/between 过滤 + `verify(day)` 重算 hash 链；坏链返回 AG_LEDGER_BROKEN 标记
-- [ ] 1.4 event schema zod：event_id/prev_hash/actor/entity/action/diff/snapshot_ref/hash 全部字段校验；非法事件写前拒绝
-- [ ] 1.5 Snapshot Store：写前快照；每实体 LRU 50（超过按时间删最旧，可选 gzip 压缩超 10 条）；unified diff 生成
-- [ ] 1.6 Hook 注入：apps/api server → `audit.injectHooks(store)`，注册 putSignal before/after、registerAgent after、rotateToken after
-- [ ] 1.7 管理员端点：`GET /admin/audit/events?from_ts&to_ts&entity_type&actor&limit&cursor`（Basic + 第二个 admin Bearer 双鉴权）
-- [ ] 1.8 CLI `agentsignal-audit log --day 2026-08-28 --format json|table|csv --filter <k=v>`
-- [ ] 1.9 单测：ledger.hash.chain（good/bad 路径）/ snapshot.lru-50 / hook-count（3×publish → 6 events）
-- [ ] 1.10 e2e：three-chains 跑通后 `audit verify --day <today>` 通过；手动篡改 1 byte → verify 失败
+- [x] 1.1 packages/audit 子包创建 + workspace 登记 + package.json（node:test；零新增运行时依赖（口径修订））
+- [x] 1.2 LedgerWriter：PG 表 audit_events（text 载荷字节级精确）；链式 hash（prev_hash + 本 hash = sha256(self-sans-hash)）；verify 全链重算；TS strict
+- [x] 1.3 LedgerReader：分页读 + entity_type/actor/between 过滤 + `verify(day)` 重算 hash 链；坏链返回 AG_LEDGER_BROKEN 标记
+- [x] 1.4 事件字段以 TS 类型 + SQL 约束固化（zod schema 后置到 1B-2 restore 入口）：event_id/prev_hash/actor/entity/action/diff/snapshot_ref/hash 全部字段校验；非法事件写前拒绝
+- [x] 1.5 Snapshot Store：写前快照；每实体 LRU 50（超时删最旧）；unified diff 生成
+- [x] 1.6 Hook 注入：`withAudit(store, db)` 原型委托包装：registerAgent/putSignal 落账、rotateToken after
+- [x] 1.7 管理员端点：`GET /admin/audit/events?day&entity_type&actor&limit`（Basic 单管理员；未配置 404 fail-soft）
+- [x] 1.8 CLI `agentsignal-audit log --day --limit` / `verify --day`（走 admin HTTP，本机零 DB 凭证）
+- [x] 1.9 单测：ledger.hash.chain（good/bad 路径）/ snapshot.lru-50 / hook-count（3×publish → 6 events）
+- [x] 1.10 e2e：集成测试：publish×3+register → verify 链完整；直改 hash → 坏链定位 event_id
 
 ## 1B-2 还原 + 裁决（Week 2）
 

@@ -57,7 +57,7 @@ function toEnvelope(
       verify_count: row.verify_count,
       last_verified_at: row.last_verified_at ? Date.parse(row.last_verified_at) : null,
       views: row.views,
-      stats_tag: row.recommended ? ["编辑推荐"] : [],
+      stats_tag: row.stats_tag.length > 0 ? row.stats_tag : row.recommended ? ["编辑推荐"] : [],
       digest_valid: row.digest_valid,
     };
   }

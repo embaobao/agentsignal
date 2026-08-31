@@ -45,6 +45,7 @@ export interface SignalRow {
   last_verified_at: string | null;
   views: number;
   recommended: boolean;
+  stats_tag: string[];
   created_at: string;
   expires_at: string | null;
 }
@@ -93,6 +94,11 @@ export interface IStore {
   relatedSignals(id: string, limit: number): Promise<SignalRow[]>;
   bumpVerify(id: string): Promise<number>;
   bumpViews(id: string): Promise<void>;
+  /** 运营策展写路径（admin 专用）：recommended / stats_tag */
+  updateCuration(
+    id: string,
+    patch: { recommended?: boolean; stats_tag?: string[] },
+  ): Promise<SignalRow | undefined>;
   frontpageStats(): Promise<FrontpageStats>;
   ready(): Promise<boolean>;
   migrationVersion(): Promise<string>;
@@ -113,7 +119,7 @@ const SIGNAL_COLS = `
   a.number as sender_number, a.name as sender_name,
   s.kind, s.priority, s.tokens_est, s.digest, s.origin, s.experience,
   s.digest_valid, s.verify_count, s.last_verified_at, s.views,
-  s.recommended, s.created_at, s.expires_at
+  s.recommended, s.stats_tag, s.created_at, s.expires_at
 `;
 
 const FROM_JOIN = `
@@ -124,13 +130,14 @@ const FROM_JOIN = `
 
 type RawSignal = Omit<
   SignalRow,
-  "origin" | "experience" | "created_at" | "expires_at" | "last_verified_at"
+  "origin" | "experience" | "created_at" | "expires_at" | "last_verified_at" | "stats_tag"
 > & {
   origin: unknown;
   experience: unknown;
   created_at: unknown;
   expires_at: unknown;
   last_verified_at: unknown;
+  stats_tag: unknown;
 };
 
 /** pg 把 timestamptz 解析为 Date；行边界统一归一为 ISO 字符串（SignalRow 类型口径） */
@@ -145,6 +152,7 @@ function toSignalRow(r: RawSignal): SignalRow {
     created_at: iso(r.created_at) as string,
     expires_at: iso(r.expires_at),
     last_verified_at: iso(r.last_verified_at),
+    stats_tag: Array.isArray(r.stats_tag) ? (r.stats_tag as string[]) : [],
   };
 }
 
@@ -282,8 +290,8 @@ export class PgStore implements IStore {
     await this.db.query(
       `insert into signals
          (id, topic_id, sender_agent_id, kind, priority, tokens_est, digest,
-          origin, experience, digest_valid, created_at, expires_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+          origin, experience, digest_valid, stats_tag, created_at, expires_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [
         id,
         topic.id,
@@ -295,6 +303,7 @@ export class PgStore implements IStore {
         input.origin ? JSON.stringify(input.origin) : null,
         input.experience ? JSON.stringify(input.experience) : null,
         input.digest_valid,
+        JSON.stringify([]),
         new Date().toISOString(),
         ttlDays > 0 ? new Date(Date.now() + ttlDays * 86_400_000).toISOString() : null,
       ],
@@ -378,6 +387,22 @@ export class PgStore implements IStore {
 
   async bumpViews(id: string): Promise<void> {
     await this.db.query(`update signals set views = views + 1 where id = $1`, [id]);
+  }
+
+  async updateCuration(
+    id: string,
+    patch: { recommended?: boolean; stats_tag?: string[] },
+  ): Promise<SignalRow | undefined> {
+    const r = await this.db.query<RawSignal>(
+      `update signals
+          set recommended = coalesce($2, recommended),
+              stats_tag   = coalesce($3, stats_tag)
+        where id = $1
+        returning id`,
+      [id, patch.recommended ?? null, patch.stats_tag ? JSON.stringify(patch.stats_tag) : null],
+    );
+    if (r.rows.length === 0) return undefined;
+    return this.findSignal(id);
   }
 
   async frontpageStats(): Promise<FrontpageStats> {

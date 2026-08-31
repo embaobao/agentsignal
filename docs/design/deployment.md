@@ -300,7 +300,7 @@ bash tests/e2e/three-chains.test.sh https://${CADDY_DOMAIN}
 |---|---|---|
 | `BACKUP_DIR` | `./backups` | 备份落盘目录（应在宿主持久化盘，最好异地） |
 | `BACKUP_RETENTION_DAYS` | `14` | 按 mtime 清理 |
-| `AS_ADMIN_USER` / `AS_ADMIN_PASS_BCRYPT` / `AS_ADMIN_SINGLE` | 空 / 空 / `n` | audit-restore 管理后台；**当前不启用** |
+| `AS_ADMIN_USER` / `AS_ADMIN_PASS_BCRYPT` / `AS_ADMIN_SINGLE` | `admin` / 空 / `n` | audit-restore 1B-1 管理端点（Basic）；留空则 /admin/* 404 fail-soft |
 
 **环境变量校验**（任务 C2）：`apps/api/src/env.ts` 用 zod 在启动时校验，缺失即 **fail-fast 非零退出**，不允许带着半套配置启动。
 

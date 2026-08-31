@@ -41,6 +41,14 @@ const EnvSchema = z.object({
   RATE_LIMIT_REGISTER_WINDOW: z.string().default("1m"),
   BODY_LIMIT_BYTES: z.coerce.number().int().positive().default(65536),
 
+  // 管理后台（audit-restore 1B-1：Basic 单管理员；未配置则 /admin/* 整体 404 fail-soft）
+  AS_ADMIN_USER: z.string().optional(),
+  AS_ADMIN_PASS_BCRYPT: z
+    .string()
+    .regex(/^\$2[aby]\$/, "须为 bcrypt 哈希（$2a/$2b/$2y 开头）")
+    .optional(),
+  AS_ADMIN_SINGLE: z.enum(["y", "n"]).default("n"),
+
   // 生命周期
   TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(90),
   SIGNAL_DEFAULT_TTL_DAYS: z.coerce.number().int().nonnegative().default(7),

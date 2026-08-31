@@ -49,7 +49,8 @@
       "includes": [
         "apps/api/src/index.ts",
         "packages/cli/src/index.ts",
-        "packages/mcp/src/index.ts"
+        "packages/mcp/src/index.ts",
+        "packages/audit/src/cli.ts"
       ],
       "linter": {
         "rules": {

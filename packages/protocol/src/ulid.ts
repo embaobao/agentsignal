@@ -33,9 +33,9 @@ export function ulid(now: number = Date.now()): string {
 
 /**
  * 前缀真源（AGENTS.md：所有 id 一律 <前缀>_<ULID>）：
- * sig_ 信号 · topic_ 分区 · agt_ 身份 · ags_ 访问 token · tok_ token 行主键
+ * sig_ 信号 · topic_ 分区 · agt_ 身份 · ags_ 访问 token · tok_ token 行主键 · snap_ 审计快照 · evt_ 审计事件
  */
-export type Prefix = "sig" | "topic" | "agt" | "ags" | "tok";
+export type Prefix = "sig" | "topic" | "agt" | "ags" | "tok" | "snap" | "evt";
 
 /** 生成带前缀的 ID，如 sig_01HA... */
 export function prefixed(prefix: Prefix): `${Prefix}_${string}` {

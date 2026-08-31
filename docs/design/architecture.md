@@ -74,6 +74,7 @@ packages/
   protocol      协议单一真源：zod schema + 零依赖 ULID（sig_/topic_/agt_/ags_/tok_）+ 错误码
   cli           agentsignal CLI 五命令（register/publish/query/use/validate）
   mcp           MCP stdio server（五工具 1:1 镜像 REST）
+  audit         审计账本（链式 hash）+ 快照 + verify（Phase 1B-1）
   skills/       participant（动态版本化·全模板 SKILL，GET /skills 镜像源）
                 builder（规划未建，M1 自举第一例）
 tests/e2e       三链路 e2e（inject 直调 + 对真实服务的 three-chains.sh）

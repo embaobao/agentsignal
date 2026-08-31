@@ -7,7 +7,7 @@
  */
 import type { Db } from "./client.ts";
 
-export const SCHEMA_VERSION = "001_init";
+export const SCHEMA_VERSION = "002_audit";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -68,6 +68,43 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         key   text primary key,
         value text not null
       );
+    `,
+  },
+  {
+    name: "002_audit",
+    sql: `
+      -- expand：运营策展字段（此前仅 recommended，stats_tag 由派生假列顶替）
+      alter table signals add column if not exists stats_tag jsonb not null default '[]';
+
+      -- 审计快照（写前留影；每实体保留最近 50 份，LRU 由 audit 包裁剪）
+      create table if not exists snapshots (
+        id            text primary key,
+        entity_type   text not null,
+        entity_id     text not null,
+        data          jsonb not null,
+        created_at    timestamptz not null default now()
+      );
+      create index if not exists snapshots_entity on snapshots (entity_id, created_at desc);
+
+      -- 审计账本（append-only；链式 hash：sha256(prev_hash | 行内容)）
+      create table if not exists audit_events (
+        id            serial primary key,
+        event_id      text not null unique,
+        prev_hash     text not null,
+        hash          text not null,
+        actor         text not null,
+        entity_type   text not null,
+        entity_id     text not null,
+        action        text not null,
+        before        text,
+        after         text,
+        created_at    timestamptz not null default now()
+      );
+      create index if not exists audit_events_entity on audit_events (entity_type, entity_id, id desc);
+      create index if not exists audit_events_created on audit_events (created_at);
+
+      insert into schema_meta (key, value) values ('schema_version', '002_audit')
+        on conflict (key) do update set value = excluded.value;
     `,
   },
 ];

@@ -1,0 +1,25 @@
+{
+  "name": "@agentsignal/audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "@agentsignal/audit — 审计账本（链式 hash）+ 快照 + verify（audit-restore Phase 1B-1）",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/embaobao/agentsignal.git"
+  },
+  "author": "AgentSignal",
+  "bin": {
+    "agentsignal-audit": "./src/cli.ts"
+  },
+  "dependencies": {
+    "@agentsignal/protocol": "workspace:*"
+  },
+  "scripts": {
+    "dev": "node src/cli.ts --help"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
