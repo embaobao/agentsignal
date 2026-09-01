@@ -510,6 +510,69 @@ CORS：Netlify 域名需在 API 侧 `CORS_ORIGIN=https://agentsignal.netlify.app
 
 ---
 
+## 9.5 运维速查（凭证 · Netlify · Neon · GitHub · 本机）
+
+> 本节是运维操作速查表。所有凭证只存 `.env`（本地）和 Netlify 仪表盘（远程），**不入 git**。
+
+### 9.5.1 环境变量清单（.env ↔ Netlify 仪表盘）
+
+| 变量 | 本地 .env | Netlify env | 说明 |
+|---|---|---|---|
+| `DATABASE_URL` | ✅ Neon 串 | ✅ 已配 | 三方云库（Neon 免费层） |
+| `SELF_REGISTER_ENABLED` | `1` | `1` | 自注册开关 |
+| `GITHUB_CLIENT_ID` | `Iv23lik…` | ✅ 已配 | GitHub OAuth App |
+| `GITHUB_CLIENT_SECRET` | `2d2c52…` | ✅ 已配 | 同上（勿泄露） |
+| `BETTER_AUTH_SECRET` | ✅ 已生成 | ✅ 已配 | better-auth session 签名 |
+| `NPM_TOKEN` | ~/.npmrc | ✅ 已配 | npm 自动发版 |
+| `VITE_AGENTSIGNAL_BASE` | — | `https://agentsignal.netlify.app` | 首页广播 base |
+| `VITE_API_BASE` | — | 上 API 后设 `https://agentsignal.vip` | 前端请求 base |
+
+### 9.5.2 Netlify 管理
+
+- **站点 ID**: `4adc98ad-17ef-4ebb-8423-fa9814fcd244` · URL: `https://agentsignal.netlify.app`
+- **Auth token**: `.env` 的 `NETLIFY_AUTH_TOKEN`（nfp_ 开头）
+- **CLI 操作**（`NETLIFY_AUTH_TOKEN` 设好后）:
+
+```bash
+npx netlify-cli env:list --site 4adc98ad…          # 列环境变量
+npx netlify-cli env:set KEY value --site 4adc98ad… # 设环境变量
+npx netlify-cli deploy --prod --dir=apps/ui/dist --site 4adc98ad…  # 手动部署 UI
+curl -X POST https://api.netlify.com/api/v1/sites/4adc98ad…/builds -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN"  # 触发重部署
+```
+
+- **Git 集成**: push main → 自动部署（netlify.toml 驱动构建）
+
+### 9.5.3 Neon 云数据库
+
+- **免费层**：PG 18.6 · 0.5 GB · 计算自动休眠（冷启动 1–2s）
+- **连接串**: `postgresql://neondb_owner:…@ep-long-hill…neon.tech/neondb?sslmode=require`
+- **管理控制台**: [console.neon.tech](https://console.neon.tech)（GitHub 登录）
+- **迁移**: API 启动时 `migrateToLatest` 自动执行（幂等 DDL），无需手动跑迁移
+- **备份**: `./scripts/backup.sh`（pg_dump，Neon 连接串作 DATABASE_URL）
+
+### 9.5.4 GitHub OAuth App
+
+| 项 | 值 |
+|---|---|
+| Owner | `embaobao` |
+| App ID | 4789570 |
+| Client ID | Iv23likMUYpJLJwRJGzr |
+| Callback URL | `https://agentsignal.netlify.app/api/auth/callback/github` |
+| Client Secret | （存 .env / Netlify env，不在本文档记录） |
+
+### 9.5.5 本机工具链
+
+| 工具 | 用途 | 安装 |
+|---|---|---|
+| Node ≥22.18 | 运行时 | nvm / brew |
+| pnpm 10 | 包管理 | corepack enable |
+| OrbStack | Docker（本地 DB + 容器） | [orbstack.dev](https://orbstack.dev) |
+| postgresql@17 | 本地直连 PG（可选） | brew install postgresql@17 |
+| netlify-cli | Netlify 管理 | npx netlify-cli |
+| cloudflared | 调试隧道（非标准路径） | brew install cloudflared |
+
+---
+
 ## 10. 发布与升级（lockstep 版本 · changelog · 依赖维护）
 
 ### 10.1 版本纪律（全仓 lockstep 单一版本）
