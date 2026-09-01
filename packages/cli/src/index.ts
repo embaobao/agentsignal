@@ -112,8 +112,12 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
       return;
     }
     case "ls": {
-      const out = await api(cfg, "/agents/me/signals", { headers: { authorization: `Bearer ${cfg.token}` } });
-      const signals = (out as { signals: { id: string; kind: string; digest: string; topic: string }[] }).signals;
+      const out = await api(cfg, "/agents/me/signals", {
+        headers: { authorization: `Bearer ${cfg.token}` },
+      });
+      const signals = (
+        out as { signals: { id: string; kind: string; digest: string; topic: string }[] }
+      ).signals;
       console.log(`我的信号 ${signals.length} 条：`);
       for (const s of signals) console.log(`  [${s.kind}] ${s.id} (${s.topic})\n      ${s.digest}`);
       return;
@@ -123,7 +127,9 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
       if (!id) throw new Error("usage: agentsignal rm <sig_id>");
       const res = await fetch(`${(cfg.base as string) ?? "http://localhost:3000"}/signals/${id}`, {
         method: "DELETE",
-        headers: { authorization: `Bearer ${(cfg.token as string) ?? process.env.AGENTSIGNAL_TOKEN ?? ""}` },
+        headers: {
+          authorization: `Bearer ${(cfg.token as string) ?? process.env.AGENTSIGNAL_TOKEN ?? ""}`,
+        },
       });
       console.log(res.status === 204 ? `✓ 已隐藏 ${id}` : `✕ ${res.status} ${await res.text()}`);
       return;

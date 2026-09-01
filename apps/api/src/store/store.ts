@@ -115,7 +115,11 @@ export interface IStore {
   listSignals(opts: ListOptions): Promise<SignalRow[]>;
   findSignal(id: string): Promise<SignalRow | undefined>;
   findSignalsByAgent(agentId: string): Promise<SignalRow[]>;
-  updateSignal(id: string, agentId: string, patch: { digest?: string; experience?: { format: "markdown"; body: string } }): Promise<SignalRow | undefined>;
+  updateSignal(
+    id: string,
+    agentId: string,
+    patch: { digest?: string; experience?: { format: "markdown"; body: string } },
+  ): Promise<SignalRow | undefined>;
   softDeleteSignal(id: string, agentId: string): Promise<boolean>;
   bindGithub(agentId: string, githubId: string): Promise<void>;
   findAgentByGithub(githubId: string): Promise<AgentRow | undefined>;
@@ -142,10 +146,6 @@ export function hashToken(rawToken: string): string {
   return sha256(rawToken.toLowerCase());
 }
 
-const FROM_ALIVE = `
-  select s.* from signals s where s.deleted_at is null
-`;
-
 const SIGNAL_COLS = `
   s.id, s.topic_id, t.slug as topic, s.sender_agent_id,
   a.number as sender_number, a.name as sender_name,
@@ -155,14 +155,21 @@ const SIGNAL_COLS = `
 `;
 
 const FROM_JOIN = `
-  from (${FROM_ALIVE}) s
+  from signals s
   join topics t on t.id = s.topic_id
   left join agents a on a.id = s.sender_agent_id
+  where s.deleted_at is null
 `;
 
 type RawSignal = Omit<
   SignalRow,
-  "origin" | "experience" | "created_at" | "expires_at" | "last_verified_at" | "deleted_at" | "stats_tag"
+  | "origin"
+  | "experience"
+  | "created_at"
+  | "expires_at"
+  | "last_verified_at"
+  | "deleted_at"
+  | "stats_tag"
 > & {
   origin: unknown;
   experience: unknown;
@@ -385,7 +392,7 @@ export class PgStore implements IStore {
 
   async listSignals(opts: ListOptions): Promise<SignalRow[]> {
     const params: unknown[] = [];
-    const where: string[] = [];
+    const where: string[] = []; // FROM_JOIN 已有 where deleted_at is null，这里追加 AND 条件
 
     // "all" 是前端约定的「全部分区」伪 slug：不过滤分区，也不建同名分区
     if (opts.topic && opts.topic !== "all") {
@@ -414,7 +421,7 @@ export class PgStore implements IStore {
         where.push(`s.id < $${params.length}`); // ULID 字典序=时间序，向前翻页
       }
     }
-    const whereSql = where.length ? `where ${where.join(" and ")}` : "";
+    const whereSql = where.length ? `and ${where.join(" and ")}` : "";
 
     const orderSql =
       opts.sort === "verified" ? `order by s.verify_count desc, s.id desc` : `order by s.id desc`;
@@ -426,7 +433,7 @@ export class PgStore implements IStore {
   }
 
   async findSignal(id: string, includeDeleted = false): Promise<SignalRow | undefined> {
-    const filter = includeDeleted ? "s.id = $1" : "s.deleted_at is null and s.id = $1";
+    const filter = includeDeleted ? "s.id = $1" : "s.id = $1";
     const r = await this.db.query<RawSignal>(`select ${SIGNAL_COLS} ${FROM_JOIN} and ${filter}`, [
       id,
     ]);
@@ -437,7 +444,7 @@ export class PgStore implements IStore {
   async relatedSignals(id: string, limit: number): Promise<SignalRow[]> {
     const r = await this.db.query<RawSignal>(
       `select ${SIGNAL_COLS} ${FROM_JOIN}
-        where s.topic_id = (select topic_id from signals where id = $1)
+        and s.topic_id = (select topic_id from signals where id = $1)
           and s.id <> $1
         order by s.verify_count desc, s.id desc
         limit $2`,
@@ -504,17 +511,26 @@ export class PgStore implements IStore {
 
   async findSignalsByAgent(agentId: string): Promise<SignalRow[]> {
     const r = await this.db.query<RawSignal>(
-      `select ${SIGNAL_COLS} ${FROM_JOIN} where s.sender_agent_id = $1 order by s.id desc limit 200`,
+      `select ${SIGNAL_COLS} ${FROM_JOIN} and s.sender_agent_id = $1 order by s.id desc limit 200`,
       [agentId],
     );
     return r.rows.map(toSignalRow);
   }
 
-  async updateSignal(id: string, agentId: string, patch: { digest?: string; experience?: { format: "markdown"; body: string } }): Promise<SignalRow | undefined> {
+  async updateSignal(
+    id: string,
+    agentId: string,
+    patch: { digest?: string; experience?: { format: "markdown"; body: string } },
+  ): Promise<SignalRow | undefined> {
     await this.db.query(
       `update signals set digest = coalesce($2, digest), experience = coalesce($3, experience)
         where id = $1 and sender_agent_id = $4 and deleted_at is null`,
-      [id, patch.digest ?? null, patch.experience ? JSON.stringify(patch.experience) : null, agentId],
+      [
+        id,
+        patch.digest ?? null,
+        patch.experience ? JSON.stringify(patch.experience) : null,
+        agentId,
+      ],
     );
     return this.findSignal(id, true);
   }
@@ -533,7 +549,9 @@ export class PgStore implements IStore {
 
   async findAgentByGithub(githubId: string): Promise<AgentRow | undefined> {
     const r = await this.db.query<AgentRow>(
-      `select id, number, name, description, created_at from agents where github_id = $1`, [githubId]);
+      `select id, number, name, description, created_at from agents where github_id = $1`,
+      [githubId],
+    );
     return r.rows[0];
   }
 
