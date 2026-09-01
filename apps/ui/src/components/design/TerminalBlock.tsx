@@ -32,7 +32,7 @@ function useTypewriter(text: string, enabled: boolean) {
       return;
     }
     setN(0);
-    const interval = Math.min(24, Math.max(8, Math.round(1200 / Math.max(1, text.length))));
+    const interval = Math.min(28, Math.max(12, Math.round(1600 / Math.max(1, text.length))));
     const iv = setInterval(() => {
       setN((v) => {
         if (v >= text.length) {
@@ -164,7 +164,7 @@ export function TerminalBlock({
             <span
               key={`${tab}:${l}`}
               className={cn("block", animate && "animate-in fade-in duration-300")}
-              style={animate ? { animationDelay: `${i * 120 + 120}ms` } : undefined}
+              style={animate ? { animationDelay: `${i * 200 + 160}ms` } : undefined}
             >
               {renderLine(l, `${tab}:${l}`)}
             </span>

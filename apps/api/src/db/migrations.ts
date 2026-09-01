@@ -7,7 +7,7 @@
  */
 import type { Db } from "./client.ts";
 
-export const SCHEMA_VERSION = "003_topic_governance";
+export const SCHEMA_VERSION = "004_ux";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -115,6 +115,18 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       create index if not exists topics_archived on topics (archived_at) where archived_at is not null;
 
       insert into schema_meta (key, value) values ('schema_version', '003_topic_governance')
+        on conflict (key) do update set value = excluded.value;
+    `,
+  },
+  {
+    name: "004_ux",
+    sql: `
+      -- 软删（用户可隐藏自己的信号）
+      alter table signals add column if not exists deleted_at timestamptz;
+      -- GitHub OAuth 绑定
+      alter table agents add column if not exists github_id text unique;
+
+      insert into schema_meta (key, value) values ('schema_version', '004_ux')
         on conflict (key) do update set value = excluded.value;
     `,
   },

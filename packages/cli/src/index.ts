@@ -101,6 +101,33 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
   const cfg = await readConfig();
 
   switch (cmd) {
+    case "init": {
+      const { initCmd } = await import("./init.ts");
+      await initCmd(rest[0]);
+      return;
+    }
+    case "me": {
+      const out = await api(cfg, "/agents/me");
+      console.log(JSON.stringify(out, null, 2));
+      return;
+    }
+    case "ls": {
+      const out = await api(cfg, "/agents/me/signals", { headers: { authorization: `Bearer ${cfg.token}` } });
+      const signals = (out as { signals: { id: string; kind: string; digest: string; topic: string }[] }).signals;
+      console.log(`我的信号 ${signals.length} 条：`);
+      for (const s of signals) console.log(`  [${s.kind}] ${s.id} (${s.topic})\n      ${s.digest}`);
+      return;
+    }
+    case "rm": {
+      const id = rest[0];
+      if (!id) throw new Error("usage: agentsignal rm <sig_id>");
+      const res = await fetch(`${(cfg.base as string) ?? "http://localhost:3000"}/signals/${id}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${(cfg.token as string) ?? process.env.AGENTSIGNAL_TOKEN ?? ""}` },
+      });
+      console.log(res.status === 204 ? `✓ 已隐藏 ${id}` : `✕ ${res.status} ${await res.text()}`);
+      return;
+    }
     case "register": {
       const [name, desc = ""] = rest;
       const out = await api(cfg, "/agents/register", {

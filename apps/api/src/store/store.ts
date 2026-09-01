@@ -62,6 +62,7 @@ export interface SignalRow {
   views: number;
   recommended: boolean;
   stats_tag: string[];
+  deleted_at: string | null;
   created_at: string;
   expires_at: string | null;
 }
@@ -113,6 +114,11 @@ export interface IStore {
   putSignal(input: PutSignalInput): Promise<SignalRow>;
   listSignals(opts: ListOptions): Promise<SignalRow[]>;
   findSignal(id: string): Promise<SignalRow | undefined>;
+  findSignalsByAgent(agentId: string): Promise<SignalRow[]>;
+  updateSignal(id: string, agentId: string, patch: { digest?: string; experience?: { format: "markdown"; body: string } }): Promise<SignalRow | undefined>;
+  softDeleteSignal(id: string, agentId: string): Promise<boolean>;
+  bindGithub(agentId: string, githubId: string): Promise<void>;
+  findAgentByGithub(githubId: string): Promise<AgentRow | undefined>;
   relatedSignals(id: string, limit: number): Promise<SignalRow[]>;
   bumpVerify(id: string): Promise<number>;
   bumpViews(id: string): Promise<void>;
@@ -136,23 +142,27 @@ export function hashToken(rawToken: string): string {
   return sha256(rawToken.toLowerCase());
 }
 
+const FROM_ALIVE = `
+  select s.* from signals s where s.deleted_at is null
+`;
+
 const SIGNAL_COLS = `
   s.id, s.topic_id, t.slug as topic, s.sender_agent_id,
   a.number as sender_number, a.name as sender_name,
   s.kind, s.priority, s.tokens_est, s.digest, s.origin, s.experience,
   s.digest_valid, s.verify_count, s.last_verified_at, s.views,
-  s.recommended, s.stats_tag, s.created_at, s.expires_at
+  s.recommended, s.stats_tag, s.created_at, s.expires_at, s.deleted_at
 `;
 
 const FROM_JOIN = `
-  from signals s
+  from (${FROM_ALIVE}) s
   join topics t on t.id = s.topic_id
   left join agents a on a.id = s.sender_agent_id
 `;
 
 type RawSignal = Omit<
   SignalRow,
-  "origin" | "experience" | "created_at" | "expires_at" | "last_verified_at" | "stats_tag"
+  "origin" | "experience" | "created_at" | "expires_at" | "last_verified_at" | "deleted_at" | "stats_tag"
 > & {
   origin: unknown;
   experience: unknown;
@@ -160,6 +170,7 @@ type RawSignal = Omit<
   expires_at: unknown;
   last_verified_at: unknown;
   stats_tag: unknown;
+  deleted_at: unknown;
 };
 
 /** pg 把 timestamptz 解析为 Date；行边界统一归一为 ISO 字符串（SignalRow 类型口径） */
@@ -175,6 +186,7 @@ function toSignalRow(r: RawSignal): SignalRow {
     expires_at: iso(r.expires_at),
     last_verified_at: iso(r.last_verified_at),
     stats_tag: Array.isArray(r.stats_tag) ? (r.stats_tag as string[]) : [],
+    deleted_at: iso(r.deleted_at),
   };
 }
 
@@ -413,8 +425,9 @@ export class PgStore implements IStore {
     return r.rows.map(toSignalRow);
   }
 
-  async findSignal(id: string): Promise<SignalRow | undefined> {
-    const r = await this.db.query<RawSignal>(`select ${SIGNAL_COLS} ${FROM_JOIN} where s.id = $1`, [
+  async findSignal(id: string, includeDeleted = false): Promise<SignalRow | undefined> {
+    const filter = includeDeleted ? "s.id = $1" : "s.deleted_at is null and s.id = $1";
+    const r = await this.db.query<RawSignal>(`select ${SIGNAL_COLS} ${FROM_JOIN} and ${filter}`, [
       id,
     ]);
     return r.rows[0] ? toSignalRow(r.rows[0]) : undefined;
@@ -487,6 +500,41 @@ export class PgStore implements IStore {
       installs: row.agents,
       new_this_week: row.new_this_week,
     };
+  }
+
+  async findSignalsByAgent(agentId: string): Promise<SignalRow[]> {
+    const r = await this.db.query<RawSignal>(
+      `select ${SIGNAL_COLS} ${FROM_JOIN} where s.sender_agent_id = $1 order by s.id desc limit 200`,
+      [agentId],
+    );
+    return r.rows.map(toSignalRow);
+  }
+
+  async updateSignal(id: string, agentId: string, patch: { digest?: string; experience?: { format: "markdown"; body: string } }): Promise<SignalRow | undefined> {
+    await this.db.query(
+      `update signals set digest = coalesce($2, digest), experience = coalesce($3, experience)
+        where id = $1 and sender_agent_id = $4 and deleted_at is null`,
+      [id, patch.digest ?? null, patch.experience ? JSON.stringify(patch.experience) : null, agentId],
+    );
+    return this.findSignal(id, true);
+  }
+
+  async softDeleteSignal(id: string, agentId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `update signals set deleted_at = now() where id = $1 and sender_agent_id = $2 and deleted_at is null returning id`,
+      [id, agentId],
+    );
+    return r.rows.length > 0;
+  }
+
+  async bindGithub(agentId: string, githubId: string): Promise<void> {
+    await this.db.query(`update agents set github_id = $1 where id = $2`, [githubId, agentId]);
+  }
+
+  async findAgentByGithub(githubId: string): Promise<AgentRow | undefined> {
+    const r = await this.db.query<AgentRow>(
+      `select id, number, name, description, created_at from agents where github_id = $1`, [githubId]);
+    return r.rows[0];
   }
 
   async ready(): Promise<boolean> {
