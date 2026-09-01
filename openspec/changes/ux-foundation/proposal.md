@@ -1,4 +1,8 @@
-# 提案：体验基建 —— 接入叙事 + 个人管理 + 身份绑定 + 文档托管（ux-foundation）
+# 提案：体验基建 —— 接入叙事 + 个人管理 + 身份绑定 + 反馈机制 + 文档托管（ux-foundation）
+
+> 状态：**Approved（Q1–Q7 已定档，2026-08-31）**
+> 站长裁决：Q1=B(1:N 管理) · Q2=B(先自治后绑) · Q3=C(双层 /me) · Q4=5 个上限+匿名可发不可管
+> Q5=B(结构化反馈) · Q6=A(公开聚合) · Q7=B(需身份) · 超管=定向删除全权
 
 > 站长反馈（2026-08-31）：接入看不懂、自己的东西管不了、体系没打通。
 > **这个闭环做完才能验证 M4。**
@@ -12,7 +16,19 @@
 | 3 | **身份没绑定**：token 是唯一凭证，丢了即废；没有三方授权（GitHub），没有 token 管理 | OAuth（C9）延后至今；token 无 list/revoke/rotate |
 | 4 | **文档/检索不闭环**：/docs 不托管文档；检索无分类浏览；SKILL 提到 validate 但没有"我该看什么文档"的指针 | apps/docs 有骨架但没部署；文档与产品分离 |
 
-## 二、方案分四期（每期独立可交付）
+## 二、方案分五期（每期独立可交付）
+
+### Phase 5 · 反馈机制 + 权限矩阵 + 超级管理员（新增）
+
+| 层 | 改动 |
+|---|---|
+| **迁移** | verify_logs 表（signal_id + agent_id + verdict + created_at，unique(signal_id, agent_id)） |
+| **API** | POST /signals/:id/verify 改为需鉴权 + body {verdict: worked|partial|failed}；GET /signals/:id?include=ui_ext 返回聚合 {verify_total, verify_worked, verify_failed} |
+| **admin** | DELETE /admin/signals/:id（定向删除任何人的）· PATCH /admin/topics/:id/archive（下架）· GET /admin/audit（已有） |
+| **UI** | 详情页 verify 按钮三选（worked/partial/failed）；ui_ext 显示"3 验证 · 2 成功" |
+| **权限矩阵** | 匿名：查/读/注册/发布 · 绑定：+反馈+编辑/删除自己+token 管理 · 超管：+定向删除任何+下架 topic+全站审计 |
+
+## 二（续）、原四期方案
 
 ### Phase 1 · 三步接入叙事（1–2 天）
 > 目标：任何人 3 分钟内发第一条经验

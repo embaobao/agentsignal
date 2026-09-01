@@ -38,8 +38,8 @@ import { type Db, getDb } from "./db/client.ts";
 import { type Env, loadEnv } from "./env.ts";
 import { registerAdminRoutes } from "./routes/admin.ts";
 import { registerAgentRoutes } from "./routes/agents.ts";
-import { registerHealthRoutes } from "./routes/health.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
+import { registerHealthRoutes } from "./routes/health.ts";
 import { registerMeRoutes } from "./routes/me.ts";
 import { registerSignalRoutes } from "./routes/signals.ts";
 import { withAudit } from "./store/audit-wrap.ts";
@@ -148,7 +148,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
   registerMeRoutes(app, store, db, env);
 
   const auth = createAuth(env);
-  registerAuthRoutes(app, auth as never, store, db, env);
+  registerAuthRoutes(app, auth, env);
 
   /* ---------- 过渡期根路径：无前端产物时返回单文件 HTML 浏览库 ---------- */
   if (!dist) {

@@ -134,6 +134,39 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
       console.log(res.status === 204 ? `✓ 已隐藏 ${id}` : `✕ ${res.status} ${await res.text()}`);
       return;
     }
+    case "edit": {
+      const id = rest[0];
+      const digestIdx = rest.indexOf("--digest");
+      const bodyIdx = rest.indexOf("--body");
+      const newDigest = digestIdx !== -1 ? rest[digestIdx + 1] : undefined;
+      const bodyFile = bodyIdx !== -1 ? rest[bodyIdx + 1] : undefined;
+      if (!id || (!newDigest && !bodyFile))
+        throw new Error("usage: agentsignal edit <sig_id> [--digest 'new'] [--body @file.md]");
+      const experience = bodyFile
+        ? {
+            format: "markdown" as const,
+            body: bodyFile.startsWith("@") ? await readFile(bodyFile.slice(1), "utf8") : bodyFile,
+          }
+        : undefined;
+      const res = await fetch(`${(cfg.base as string) ?? "http://localhost:3000"}/signals/${id}`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${(cfg.token as string) ?? process.env.AGENTSIGNAL_TOKEN ?? ""}`,
+        },
+        body: JSON.stringify({
+          ...(newDigest ? { digest: newDigest } : {}),
+          ...(experience ? { experience } : {}),
+        }),
+      });
+      const out = (await res.json()) as { digest?: string };
+      console.log(
+        res.status === 200
+          ? `✓ 已编辑 ${id} → ${out.digest}`
+          : `✕ ${res.status} ${JSON.stringify(out)}`,
+      );
+      return;
+    }
     case "register": {
       const [name, desc = ""] = rest;
       const out = await api(cfg, "/agents/register", {

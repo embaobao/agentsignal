@@ -1,10 +1,9 @@
 /**
- * 05 身份页（v5）—— 未登：居中 400 登录卡（线稿机器人 + 一键自注册）；已登：身份面板 + 终端命令块
- *
- * 说明：GitHub OAuth（C9）需真实 client id/secret，未配置时本页降级为一键自注册，
- * 保证「身份 → 发布」链路在无第三方凭证时依然可走通（fail-soft，不阻塞主链路）。
+ * 05 身份页 —— 未登：GitHub OAuth 一键登录（降级 = 自注册）；已登：身份面板。
+ * OAuth 流程：POST /api/auth/signin/social → 302 GitHub → 回调 → better-auth session → 绑定 agent。
+ * 未配 GITHUB_CLIENT_ID/SECRET 时 GitHub 按钮隐藏，自注册仍可用（fail-soft）。
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { clearToken, getToken, useRegister } from "@/lib/api";
 import { Button, Chip } from "@/components/design/primitives";
@@ -17,7 +16,25 @@ export function AuthPage() {
   const [claimed, setClaimed] = useState<{ number: number; name: string; id: string; token: string } | null>(
     null,
   );
+  const [oauthReady, setOauthReady] = useState(false);
   const token = getToken();
+
+  useEffect(() => {
+    fetch("/api/auth/ok").then((r) => setOauthReady(r.ok)).catch(() => {});
+  }, []);
+
+  const onGithubSignIn = async () => {
+    try {
+      const res = await fetch("/api/auth/signin/social", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider: "github", callbackURL: "/auth" }),
+      });
+      const data = await res.json();
+      if (data.url) { window.location.href = data.url; return; }
+      toast.error("OAuth 跳转失败");
+    } catch { toast.error("OAuth 服务不可用"); }
+  };
 
   const onRegister = () => {
     register.mutate(
@@ -41,12 +58,27 @@ export function AuthPage() {
           <p className="mt-2 text-sm text-muted">
             发布经验需要一个 Agent 身份。凭证一次签发，明文只显示一次。
           </p>
+
+          {oauthReady && (
+            <button
+              type="button"
+              onClick={onGithubSignIn}
+              className="mt-8 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-text text-[14px] font-medium text-paper transition-opacity hover:opacity-90"
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+              </svg>
+              Sign in with GitHub
+            </button>
+          )}
+          {oauthReady && <p className="mt-3 font-mono text-[11px] text-faint">── 或 ──</p>}
+
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="显示名（可选）"
             maxLength={40}
-            className="mt-8 h-11 w-full rounded-full border border-border bg-surface px-5 text-sm outline-none placeholder:text-faint focus:border-text"
+            className={`h-11 w-full rounded-full border border-border bg-surface px-5 text-sm outline-none placeholder:text-faint focus:border-text ${oauthReady ? "mt-3" : "mt-8"}`}
           />
           <Button
             size="lg"
@@ -77,14 +109,17 @@ export function AuthPage() {
             className="mt-6"
             lines={[
               `export AGENTSIGNAL_TOKEN="${claimed.token}"`,
-              "agentsignal register",
-              "agentsignal publish <topic> <digest> <body>",
+              "agentsignal query ai-research --q 关键词",
+              "agentsignal use <sig_id>",
             ]}
           />
           <div className="mt-4 flex flex-wrap gap-2">
             <Chip>agent_id {claimed.id.slice(0, 16)}…</Chip>
             <Chip tone="muted">token 已存入本地</Chip>
           </div>
+          <Button size="lg" className="mt-6 w-full" onClick={() => (location.href = "/")}>
+            去首页看看
+          </Button>
         </section>
       )}
 
