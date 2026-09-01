@@ -7,7 +7,7 @@
  */
 import type { Db } from "./client.ts";
 
-export const SCHEMA_VERSION = "004_ux";
+export const SCHEMA_VERSION = "005_feedback";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -127,6 +127,24 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       alter table agents add column if not exists github_id text unique;
 
       insert into schema_meta (key, value) values ('schema_version', '004_ux')
+        on conflict (key) do update set value = excluded.value;
+    `,
+  },
+  {
+    name: "005_feedback",
+    sql: `
+      -- 结构化反馈（每 agent 对每 signal 只能验一次）
+      create table if not exists verify_logs (
+        id            text primary key,
+        signal_id     text not null references signals(id),
+        agent_id      text not null references agents(id),
+        verdict       text not null check (verdict in ('worked','partial','failed')),
+        created_at    timestamptz not null default now(),
+        unique (signal_id, agent_id)
+      );
+      create index if not exists verify_logs_signal on verify_logs (signal_id, verdict);
+
+      insert into schema_meta (key, value) values ('schema_version', '005_feedback')
         on conflict (key) do update set value = excluded.value;
     `,
   },

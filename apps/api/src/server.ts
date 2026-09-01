@@ -40,6 +40,7 @@ import { registerAdminRoutes } from "./routes/admin.ts";
 import { registerAgentRoutes } from "./routes/agents.ts";
 import { registerAuthRoutes } from "./routes/auth.ts";
 import { registerHealthRoutes } from "./routes/health.ts";
+import { registerFeedbackRoutes } from "./routes/feedback.ts";
 import { registerMeRoutes } from "./routes/me.ts";
 import { registerSignalRoutes } from "./routes/signals.ts";
 import { withAudit } from "./store/audit-wrap.ts";
@@ -146,6 +147,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
   registerSignalRoutes(app, store, env);
   registerAdminRoutes(app, store, db, env);
   registerMeRoutes(app, store, db, env);
+  registerFeedbackRoutes(app, store, db, env);
 
   const auth = createAuth(env);
   registerAuthRoutes(app, auth, env);

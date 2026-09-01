@@ -62,13 +62,11 @@ describe("Token Firewall · Server Filter", () => {
     assert.equal(errBody.code, "rate_limited");
     assert.ok(typeof errBody.retry_after === "number", "429 应带 retry_after 秒数");
 
-    // verify 匿名写按 IP 限频（同 write max=2）
-    const v1 = await post(app, `/signals/${p1.json().id}/verify`, {});
-    const v2 = await post(app, `/signals/${p1.json().id}/verify`, {});
-    const v3 = await post(app, `/signals/${p1.json().id}/verify`, {});
-    assert.equal(v1.statusCode, 200);
-    assert.equal(v2.statusCode, 200);
-    assert.equal(v3.statusCode, 429, "verify 超限同 429");
+    // verify 需身份（匿名 401）
+    const vAnon = await post(app, `/signals/${p1.json().id}/verify`, { verdict: "worked" });
+    assert.equal(vAnon.statusCode, 401, "匿名 verify 应 401");
+    const v1 = await post(app, `/signals/${p1.json().id}/verify`, { verdict: "worked" }, token);
+    assert.equal(v1.statusCode, 200, "有身份 verify 应 200");
 
     // register 1/IP/min
     const reg2 = await post(app, "/agents/register", { name: "second" });

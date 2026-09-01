@@ -123,6 +123,10 @@ export interface IStore {
   softDeleteSignal(id: string, agentId: string): Promise<boolean>;
   bindGithub(agentId: string, githubId: string): Promise<void>;
   findAgentByGithub(githubId: string): Promise<AgentRow | undefined>;
+  verifySignal(signalId: string, agentId: string, verdict: "worked" | "partial" | "failed"): Promise<{ total: number; worked: number; partial: number; failed: number }>;
+  getVerdictSummary(signalId: string): Promise<{ total: number; worked: number; partial: number; failed: number }>;
+  adminDeleteSignal(signalId: string): Promise<boolean>;
+  adminArchiveTopic(topicId: string): Promise<boolean>;
   relatedSignals(id: string, limit: number): Promise<SignalRow[]>;
   bumpVerify(id: string): Promise<number>;
   bumpViews(id: string): Promise<void>;
@@ -553,6 +557,50 @@ export class PgStore implements IStore {
       [githubId],
     );
     return r.rows[0];
+  }
+
+  async verifySignal(signalId: string, agentId: string, verdict: "worked" | "partial" | "failed"): Promise<{ total: number; worked: number; partial: number; failed: number }> {
+    await this.db.query(
+      `insert into verify_logs (id, signal_id, agent_id, verdict) values ($1,$2,$3,$4)
+        on conflict (signal_id, agent_id) do update set verdict = $4, created_at = now()`,
+      [prefixed("vfy"), signalId, agentId, verdict],
+    );
+    await this.db.query(
+      `update signals set verify_count = verify_count + 1, last_verified_at = now() where id = $1`,
+      [signalId],
+    );
+    return this.getVerdictSummary(signalId);
+  }
+
+  async getVerdictSummary(signalId: string): Promise<{ total: number; worked: number; partial: number; failed: number }> {
+    const r = await this.db.query<{ verdict: string; count: number }>(
+      `select verdict, count(*)::int as count from verify_logs where signal_id = $1 group by verdict`,
+      [signalId],
+    );
+    const s = { total: 0, worked: 0, partial: 0, failed: 0 };
+    for (const row of r.rows) {
+      s.total += row.count;
+      if (row.verdict === "worked") s.worked = row.count;
+      if (row.verdict === "partial") s.partial = row.count;
+      if (row.verdict === "failed") s.failed = row.count;
+    }
+    return s;
+  }
+
+  async adminDeleteSignal(signalId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `update signals set deleted_at = now() where id = $1 and deleted_at is null returning id`,
+      [signalId],
+    );
+    return r.rows.length > 0;
+  }
+
+  async adminArchiveTopic(topicId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `update topics set archived_at = now() where id = $1 and archived_at is null returning id`,
+      [topicId],
+    );
+    return r.rows.length > 0;
   }
 
   async ready(): Promise<boolean> {

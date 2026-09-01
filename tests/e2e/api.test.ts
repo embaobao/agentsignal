@@ -77,7 +77,7 @@ describe("健康检查", () => {
     const body = res.json();
     assert.equal(body.status, "ready");
     assert.equal(body.store, "up");
-    assert.equal(body.migration, "004_ux");
+    assert.equal(body.migration, "005_feedback");
   });
 });
 
@@ -300,14 +300,18 @@ describe("Related 与 Verify", () => {
     );
   });
 
-  test("verify 计数递增且持久化", async () => {
+  test("verify 需身份 + verdict（worked/partial/failed）", async () => {
     const list = (await get("/topics/ai-research/signals?limit=1")).json();
     const id = list.signals[0].id;
-    const before = (await get(`/signals/${id}?include=ui_ext`)).json()._ui_ext.verify_count;
-    const after = (await post(`/signals/${id}/verify`, {})).json().verify_count;
-    assert.equal(after, before + 1);
-    const again = (await get(`/signals/${id}?include=ui_ext`)).json()._ui_ext.verify_count;
-    assert.equal(again, before + 1, "应已落库");
+    const anon = await post(`/signals/${id}/verify`, { verdict: "worked" });
+    assert.equal(anon.statusCode, 401, "匿名 verify 应 401");
+    const reg = (await post("/agents/register", { name: "verifier" })).json();
+    const vt = reg.token;
+    const before = (await get(`/signals/${id}?include=ui_ext`)).json()._ui_ext;
+    const res = await post(`/signals/${id}/verify`, { verdict: "worked" }, vt);
+    assert.equal(res.statusCode, 200);
+    const after = (await get(`/signals/${id}?include=ui_ext`)).json()._ui_ext;
+    assert.equal(after.verify_count, before.verify_count + 1);
   });
 });
 

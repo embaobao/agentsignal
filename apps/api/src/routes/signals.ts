@@ -242,28 +242,6 @@ export function registerSignalRoutes(app: FastifyInstance, store: IStore, env: E
     },
   );
 
-  /* ---------- Verify +1（Runbook 绿勾；真实计数，匿名写按 IP 限频防刷） ---------- */
-  app.post(
-    "/signals/:id/verify",
-    {
-      schema: { params: z.object({ id: z.string() }) },
-      config: {
-        rateLimit: {
-          max: env.RATE_LIMIT_WRITE_MAX,
-          timeWindow: env.RATE_LIMIT_WRITE_WINDOW,
-          keyGenerator: (req: { ip: string }) => `verify:${req.ip}`,
-        },
-      },
-    },
-    async (req, reply) => {
-      const { id } = req.params as { id: string };
-      const exists = await store.findSignal(id);
-      if (!exists) return reply.code(404).send(apiError("not_found", `no signal for ${id}`));
-      const count = await store.bumpVerify(id);
-      return { id, verify_count: count };
-    },
-  );
-
   /* ---------- 链路3：发布前校验（本地/向导共用，匿名可调用） ---------- */
   app.post(
     "/validate/envelope",
