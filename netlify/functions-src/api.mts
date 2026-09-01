@@ -44,7 +44,7 @@ export const config = {
     "/agents", "/agents/*",
     "/skills", "/skill.md",
     "/stats", "/stats/*",
-    "/validate",
+    "/validate", "/validate/*",
     "/healthz", "/readyz",
     "/docs", "/docs/*",
   ],
