@@ -26,9 +26,10 @@ const EnvSchema = z.object({
   OAUTH_REDIRECT_URI: z.string().optional(),
   CORS_ORIGIN: z.string().optional(),
 
-  // GitHub OAuth（留空则身份功能 fail-soft，不影响其他端点）
+  // GitHub OAuth（better-auth；留空则 /auth/* fail-soft，不影响其他端点）
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+  BETTER_AUTH_SECRET: z.string().optional(),
 
   // Token Firewall · Server Filter
   RATE_LIMIT_WRITE_MAX: z.coerce.number().int().positive().default(10),

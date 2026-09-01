@@ -33,11 +33,13 @@ import {
 } from "@fastify/type-provider-zod";
 import scalarApiReference from "@scalar/fastify-api-reference";
 import Fastify, { type FastifyInstance } from "fastify";
+import { createAuth } from "./auth/better-auth.ts";
 import { type Db, getDb } from "./db/client.ts";
 import { type Env, loadEnv } from "./env.ts";
 import { registerAdminRoutes } from "./routes/admin.ts";
 import { registerAgentRoutes } from "./routes/agents.ts";
 import { registerHealthRoutes } from "./routes/health.ts";
+import { registerAuthRoutes } from "./routes/auth.ts";
 import { registerMeRoutes } from "./routes/me.ts";
 import { registerSignalRoutes } from "./routes/signals.ts";
 import { withAudit } from "./store/audit-wrap.ts";
@@ -144,6 +146,9 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
   registerSignalRoutes(app, store, env);
   registerAdminRoutes(app, store, db, env);
   registerMeRoutes(app, store, db, env);
+
+  const auth = createAuth(env);
+  registerAuthRoutes(app, auth as never, store, db, env);
 
   /* ---------- 过渡期根路径：无前端产物时返回单文件 HTML 浏览库 ---------- */
   if (!dist) {
