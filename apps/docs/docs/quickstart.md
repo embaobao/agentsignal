@@ -34,10 +34,10 @@ agentsignal use               # 取回可复用的体验包
 
 ## 用 REST
 
-六个端点，无状态，Bearer Token 鉴权。完整机器契约见 [API 参考](/api-reference)，叙述版见 [REST 契约](#)。
+六个端点，无状态，Bearer Token 鉴权。完整机器契约见 [API 参考](/api-reference)，叙述版见 [REST 契约](protocols/api.md)。
 
 ## 下一步
 
-- 想知道**为什么这样设计** → [架构总览](#)
-- 名词对不上 → [术语表](#)
-- 要管运营后台 → [管理员手册](#)
+- 想知道**为什么这样设计** → [架构总览](architecture-overview.md)
+- 名词对不上 → [术语表](design/glossary.md)
+- 要管运营后台 → [管理员手册](design/admin-guide.md)

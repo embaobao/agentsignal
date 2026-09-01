@@ -10,7 +10,7 @@
  */
 import { execFileSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, normalize, resolve } from 'node:path'
+import { dirname, isAbsolute, join, normalize, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SITE_DIR = dirname(fileURLToPath(import.meta.url))
@@ -105,19 +105,15 @@ function sitePath(repoPath) {
   return repoPath.startsWith('docs/') ? repoPath.slice('docs/'.length) : repoPath
 }
 
-function toSiteAbs(repoPath) {
-  return join(REPO_ROOT, 'apps/docs/docs', sitePath(repoPath))
-}
-
 /**
  * 链接改写（三态）：
- * - 目标已入站 → 按站点目录重算相对 href
+ * - 目标已入站 → 按内容区落点重算相对 href
  * - 目标是仓库里真实存在但**未公开**的文件 → 换成 GitHub 绝对链接。
  *   理由：这些指针是文档的溯源线索（决议、提案、图），删掉等于把论证依据抹了；
  *   而 MIT 仓库本来就公开这些文件，指过去既不额外泄露，也不会给站内留死锚点。
  * - 目标不存在（旧稿残留）→ 降级为纯文本，并汇总提示销项
  */
-// destOf / repoView / included 在下面定义；链接改写要用它们，故延迟到那里再取用
+// destOf / included 在下面定义；链接改写要用它们，故延迟到那里再取用
 const linkIssues = { externalized: [], stale: [] }
 let rewriteLinksReady = false
 function rewriteLinks(...args) {
@@ -125,6 +121,8 @@ function rewriteLinks(...args) {
   return implRewriteLinks(...args)
 }
 function implRewriteLinks(text, fromRepoPath) {
+  // 源文件与目标都换算成内容区落点，href 就是这两个落点之间的相对路径——
+  // 只有一套坐标，不会再出现"同一串 ../ 两种解读"。
   const fromSiteDir = dirname(destOf(fromRepoPath).slice(CONTENT_DIR.length + 1))
   return text.replace(
     /\[([^\]]*)\]\((?!https?:|mailto:|#)([^)\s]+)\)/g,
@@ -140,51 +138,59 @@ function implRewriteLinks(text, fromRepoPath) {
         linkIssues.stale.push(`${fromRepoPath} → ${clean}`)
         return `[${label}](#${anchor ?? ''})`
       }
-      if (included.has(hit.repo)) {
-        return `[${label}](${relative(fromSiteDir, sitePath(hit.repo))}${anchor ? `#${anchor}` : ''})`
+      const toSite = 'sitePath' in hit ? hit.sitePath : destOf(hit.repo).slice(CONTENT_DIR.length + 1)
+      // 公开与否只由 included 判定：未入站的仓库文件一律指 GitHub，绝不留在站内当可达页
+      if ('repo' in hit && !included.has(hit.repo)) {
+        linkIssues.externalized.push(`${fromRepoPath} → ${hit.repo}`)
+        return `[${label} — 仓库原文](https://github.com/${REMOTE_REPO}/blob/main/${encodeURI(hit.repo)}${anchor ? `#${anchor}` : ''})`
       }
-      // 仓库里存在但未公开 → 指去 GitHub。MIT 仓库本就公开这些文件，
-      // 保留溯源线索比留个站内死锚点诚实，也不额外泄露任何东西。
-      linkIssues.externalized.push(`${fromRepoPath} → ${hit.repo}`)
-      return `[${label} — 仓库原文](https://github.com/${REMOTE_REPO}/blob/main/${encodeURI(hit.repo)}${anchor ? `#${anchor}` : ''})`
+      return `[${label}](${relative(fromSiteDir, toSite)}${anchor ? `#${anchor}` : ''})`
     },
   )
 }
 
 /**
- * 定位链接指向的真实文件。入站页的**站点目录层级与仓库并不一致**（docs/protocols/x.md 与
- * apps/docs/pages/y.md 都落在内容区的不同深度上），所以同一个 `../design/glossary.md`
- * 在不同页面里的基准不一样。这里枚举所有合理基准逐个试：
- * - 源文件的仓库目录（协议文档写 `../decisions/x.md` 走这条）
- * - 源文件的站点目录（手工页写在 pages/ 下但站点视角是 docs/，`./architecture-overview.md` 走这条）
- * - docs/ 根、仓库根（活文档里少打一层 `../` 的旧写法）
- * 全部落空才算断链——判定从严，宁可漏报也不把真断链洗白。
+ * 定位链接指向的文件。返回 `{ repo }`（仓库里的真实文件，可能未入站）或
+ * `{ sitePath }`（只在内容区存在：手工页、include 宿主页、policy 页）。找不到返回 null。
+ *
+ * 三条候选，**从严到宽**排列，安全性由顺序保证：
+ * 1. 仓库视角·严格：源文件所在目录 + 相对路径。协议文档写 `../decisions/x.md` 走这条，
+ *    认成内部决议后改指 GitHub——这条永远优先，所以内部引用不可能被后面的宽容档洗白。
+ * 2. 站点视角·严格：源文件的内容区位置 + 相对路径。手工页住在 pages/、站上却在 docs/ 下，
+ *    它写的 `../design/glossary.md` 只有这条连得上；结果强制夹在内容区内。
+ * 3. 仓库视角·宽松：把裸路径当作相对 docs/ 或仓库根。活文档里有少打一层 `../` 的旧写法
+ *    （glossary.md 写 `design/product.md`）。这条只能命中**真实存在**的文件，
+ *    且仍要过 included 才谈得上公开。
  */
 function findTarget(fromRepoPath, rawTarget) {
-  // 仓库视角与站点视角是两套坐标（手工页住在 pages/，站点里却算 docs/ 下），两个基准都要试；
-  // 最后再兜底 docs/ 根与仓库根——活文档里有少打一层 `../` 的旧写法。
-  // 手工页的仓库路径（apps/docs/pages/x.md）不在 docs/ 下，它的链接一律按 docs/ 视角写；
-  // docs/ 前缀要显式补上，否则 join('','../design/glossary.md') 会掉出内容区。
-  const inDocs = fromRepoPath.startsWith('docs/')
-  const repoBase = dirname(fromRepoPath)
-  const siteBase = dirname(sitePath(fromRepoPath))
-  const bases = [
-    inDocs ? repoBase : join('docs', siteBase === '.' ? '' : siteBase),
-    repoBase,
-    'docs',
-    '',
-  ]
-  const seen = new Set()
-  for (const b of bases) {
-    const repo = normalize(b ? join(b, rawTarget) : rawTarget)
-    // 每个基准单独夹在仓库根内：`docs` 视角下 `../design/x.md` 会掉出 docs/，
-    // 但它正是站点视角里那篇文档的位置，不能被 startsWith('..') 一票否掉。
-    const abs = resolve(REPO_ROOT, repo)
-    if (seen.has(repo) || !abs.startsWith(REPO_ROOT + '/')) continue
-    seen.add(repo)
-    if (existsSync(abs)) return { repo }
+  const at = (base) => normalize(base ? join(base, rawTarget) : rawTarget)
+  const strictRepo = at(dirname(fromRepoPath))
+  if (isIn(strictRepo, REPO_ROOT) && existsSync(join(REPO_ROOT, strictRepo))) return { repo: strictRepo }
+
+  // 内容区顶端在站上等价于 docs/ 子树，所以基准是 siteDir 本身再补一层 docs/；
+  // 少了这层，手工页写的 `../design/glossary.md` 会算成 design/glossary.md —— 内容区里没这个路径。
+  const siteDir = dirname(destOf(fromRepoPath).slice(CONTENT_DIR.length + 1))
+  const siteBase = join('docs', siteDir === '.' ? '' : siteDir)
+  const strictSite = normalize(at(siteBase))
+  if (isIn(strictSite, CONTENT_DIR) && existsSync(join(CONTENT_DIR, strictSite))) return { sitePath: strictSite }
+  // 上跳越出内容区顶端的那些（quickstart 的 `../design/glossary.md` → docs/../design/…）：
+  // 站上根之上就是 docs/ 子树，所以退到顶端后直接拼目标。仍夹在内容区内，够不到任何内部文件。
+  const top = normalize(siteBase)
+  if (strictSite.startsWith('..')) {
+    const clamped = normalize(rawTarget.replace(/^(\.\.\/)+/, ''))
+    const cand = normalize(join(top === '.' ? '' : top, clamped))
+    if (isIn(cand, CONTENT_DIR) && existsSync(join(CONTENT_DIR, cand))) return { sitePath: cand, clamped: true }
+  }
+
+  for (const guess of [at('docs'), at('')]) {
+    if (isIn(guess, REPO_ROOT) && existsSync(join(REPO_ROOT, guess))) return { repo: guess, loose: true }
   }
   return null
+}
+
+/** p 是否落在 root 之内（没有被 `../` 顶穿） */
+function isIn(p, root) {
+  return !p.startsWith('..') && !isAbsolute(p) && resolve(root, p).startsWith(root + '/')
 }
 
 function relative(fromDir, toSitePath) {
@@ -244,23 +250,26 @@ const listed = [...tiers.P0.flatMap((t) => resolved('P0', t)), ...tiers.P1.flatM
 const entries = [...new Map(listed.map((e) => [e.file, e])).values()]
 const included = new Set(entries.map((e) => e.file))
 // 手工页与 policy 页要在链接改写之前就登记，否则它们的互链会被当成断链降级
-for (const f of isDir(join(SITE_DIR, 'pages')) ? listFiles('apps/docs/pages/') : []) included.add(repoView(f))
+// 手工页没有 docs/ 前缀的仓库路径，它的站上落点即文件名；链接改写按 included 判可达，
+// 所以这里把"内容区落点名"也登记进去（rewriteLinks 用 sitePath 比较）。
+for (const f of isDir(join(SITE_DIR, 'pages')) ? listFiles('apps/docs/pages/') : []) {
+  included.add(f)
+  included.add(`docs/${f.slice('apps/docs/pages/'.length)}`)
+}
 included.add('docs/site-publishing-policy.md')
 
-/** 站点落盘路径：仓库路径 → apps/docs/docs/ 下的相对路径 */
+/**
+ * 入站页的**唯一坐标系就是仓库**：docs/x.md → 站上 x.md；apps/docs/pages/y.md → 站上 y.md。
+ *
+ * 早先版本把内容区再套一层 docs/、并给手工页造了个"仓库视角"别名，结果是同一串 `../`
+ * 有两套互相矛盾的解读（pages 页写 `../design/glossary.md`，按它的真实位置解析会掉到
+ * apps/docs/design/…），怎么兜底都补不回来。现在只有一条规则：**目标 = 源文件目录 + 相对路径**，
+ * 剥不剥 docs/ 前缀只在最后决定落盘位置时出现一次。
+ */
 function destOf(repoPath) {
   return repoPath.startsWith('apps/docs/pages/')
     ? join(CONTENT_DIR, repoPath.slice('apps/docs/pages/'.length))
     : join(CONTENT_DIR, sitePath(repoPath))
-}
-
-/**
- * 入站页的「仓库视角路径」：docs/x → x；apps/docs/pages/y.md → docs/y.md。
- * 链接改写与越级引用检查都以它为基准解析相对路径——手工页里写 `../protocols/api.md`
- * 必须和架构文档里写同样内容得到同样的结果，否则同类链接要记两套写法。
- */
-function repoView(repoPath) {
-  return repoPath.startsWith('apps/docs/pages/') ? `docs/${repoPath.slice('apps/docs/pages/'.length)}` : repoPath
 }
 
 const violations = []
@@ -280,9 +289,9 @@ for (const { tier, file } of entries) {
   }
   const dest = destOf(file)
   mkdirSync(dirname(dest), { recursive: true })
-  writeFileSync(dest, rewriteLinks(text, repoView(file)))
+  writeFileSync(dest, rewriteLinks(text, file))
   pages.push(dest)
-  sources.set(dest, new Set([repoView(file)]))
+  sources.set(dest, new Set([file]))
 }
 
 // policy 自身入站：分级规则是社区可查的公共约定
@@ -298,9 +307,9 @@ const overlayFiles = isDir(join(SITE_DIR, 'pages')) ? listFiles('apps/docs/pages
 for (const f of overlayFiles) {
   const dest = destOf(f)
   mkdirSync(dirname(dest), { recursive: true })
-  writeFileSync(dest, rewriteLinks(readFileSync(join(REPO_ROOT, f), 'utf8'), repoView(f)))
+  writeFileSync(dest, rewriteLinks(readFileSync(join(REPO_ROOT, f), 'utf8'), f))
   pages.push(dest)
-  sources.set(dest, new Set([repoView(f)]))
+  sources.set(dest, new Set([f]))
 }
 
 // 内联片段追加到宿主页：included 此时已完整，片段内的外链同样被降级
