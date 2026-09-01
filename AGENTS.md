@@ -53,10 +53,11 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 
 当前阶段：**三链路（分享/检索/构建发布）已上线 npm（@agentssignal/* 0.2.0）并跑通三方云库**（Neon PG 18.6 实测：迁移自动、注册/发布/检索全通——deployment §9.1）。运行时已标准化 Node+pnpm+Postgres（2026-08-28 决议）；后端 review 加固完成；MCP 五工具 server 已落地；audit-restore 1B-1（账本+快照+admin 端点）完成。Netlify 在线验证环境待站长配两个环境变量（DATABASE_URL=Neon 串 · SELF_REGISTER_ENABLED=1）后重部署即通。**Payload CMS 已结案否决**（结论落于 standardize-node-postgres 决议 D5）。
 
-剩余（2026-08-31 复核，同日 19:30 销项更新）：
+剩余（2026-08-31 复核，同日销项更新）：
 
-- ~~**P0 阻塞**：`pnpm verify` 红灯~~ **已修**：根 devDependencies 已加 `fastify`，`pnpm check` 绿 + `pnpm test` 54/54 全过（实测销项）。
-- **P1 功能缺口**：运营后台——`signals.recommended` 有列有读、**零写路径**；D5 承诺的轻量方案 ADR 未立。M4 Testnet 前需闭环（audit-restore 1B-1 已带 admin 审计端点，可复用基建）。
+- ~~**P0 阻塞**：`pnpm verify` 红灯~~ **已修**：根 devDependencies 已加 `fastify`，`pnpm check` 绿 + `pnpm test` 全过（实测销项）。
+- ~~**P1 功能缺口**：运营后台~~ **已闭环（2026-08-31 销项）**：`PATCH /admin/signals/:id/curate` 策展写路径（recommended/stats_tag + 审计落账）已随 audit-restore 1B-1 落地并有测试；D5 承诺的轻量方案 ADR 已立（[lightweight-admin-console 决议](docs/decisions/2026-08-31-lightweight-admin-console.md)）。1B-2（还原+裁决+双签）仍开放，属 audit-restore 既有排期。
+- **P1 用户域与文档站（reuse-boundary 决议开工中）**：Topic 治理端点（GET/PATCH/DELETE `/admin/topics*`，软删下架）✅ 2026-08-31；待做 = Better Auth 人类账号 + OAuth 绑定 → 私有 topic + 引用式书签 → apps/docs 公开站（Docusaurus + Netlify，分级规范 `docs/site-publishing-policy.md`）。CMS/低代码平台（Payload/Strapi/NocoBase/NocoDB）全部再否决，勿重议（复审条件见 payload-cms-evaluation §七）。
 - **P2 人工/环境**：D1/D5 视觉对稿（需盟哥）· T3–T5 容器演练（需 Docker daemon）· C9 GitHub OAuth（设计内延后，降级自注册）。
 
 任务台账 [implementation-tasks.md](docs/design/implementation-tasks.md)，里程碑状态见 roadmap。

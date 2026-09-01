@@ -13,11 +13,11 @@
 > （复核时给出的方案 A 最小修法），`pnpm check` 绿、`pnpm test` 54/54 全过。
 > 方案 B（e2e 移入 `apps/api/test/`）不再需要；`tests/` 仍在 workspace 外，靠根 devDep 供给类型。
 >
-> **② P1 · 运营后台缺口未闭环**（standardize-node-postgres 决议 D5 承诺的遗留动作）：
-> D5 原文「运营后台缺口后续以轻量方案另立 ADR」，截至 2026-08-31 **该 ADR 未立、缺口仍开**——
-> `signals.recommended` 有列（`migrations.ts:57`）、有读（`routes/signals.ts:56`）、**零写路径**；
-> `apps/api/src` 零 admin 端点；audit-restore 提案仍 `proposed`。
-> 解法评估见 [payload-cms-evaluation §六](../design/payload-cms-evaluation.md)（方案 D 轻量后台，0.5–1 人日，自研以守「无 ORM」与「禁成品 UI 库」两条约束）。
+> **② P1 · 运营后台缺口 —— 已闭环（2026-08-31 销项）**：`PATCH /admin/signals/:id/curate`
+> 策展写路径（recommended/stats_tag + 审计落账）已随 audit-restore 1B-1 落地（commit d3daeb3，
+> 单测见 `apps/api/test/audit.test.ts`）；D5 承诺的轻量方案 ADR 已立
+> （[lightweight-admin-console 决议](../decisions/2026-08-31-lightweight-admin-console.md)，
+> 方案 D 轻量自研：端点内嵌、无 ORM、无管理 UI）。
 >
 > **剩余未完项分四类**：
 > ① ~~**阻塞（P0）**：校验链红灯~~ **已修**（上 ①，2026-08-31 销项）；

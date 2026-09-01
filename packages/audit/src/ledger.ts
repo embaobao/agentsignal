@@ -18,7 +18,7 @@ export interface SqlDb {
   ): Promise<{ rows: T[] }>;
 }
 
-export type EntityType = "signal" | "agent" | "token";
+export type EntityType = "signal" | "agent" | "token" | "topic";
 export type AuditAction = "create" | "update";
 
 export interface AuditEventInput {

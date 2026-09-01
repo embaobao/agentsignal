@@ -394,7 +394,7 @@ curl -fsS https://${CADDY_DOMAIN}/readyz  || echo "readiness FAIL"
 # 2) 用它启动 API —— 迁移自动跑到最新版本
 DATABASE_URL="postgresql://...?sslmode=require" SELF_REGISTER_ENABLED=1 pnpm dev
 # 3) 验证
-curl localhost:3000/readyz      # → "status":"ready","migration":"002_audit"
+curl localhost:3000/readyz      # → "status":"ready","migration":"003_topic_governance"
 pnpm test:e2e http://localhost:3000   # 三链路全量打云端库
 
 # 本地继续用 compose 本地库，互不影响（两套只是 URL 不同）

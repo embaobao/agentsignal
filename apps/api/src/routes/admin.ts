@@ -60,7 +60,7 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
             .string()
             .regex(/^\d{4}-\d{2}-\d{2}$/)
             .optional(),
-          entity_type: z.enum(["signal", "agent", "token"]).optional(),
+          entity_type: z.enum(["signal", "agent", "token", "topic"]).optional(),
           actor: z.string().optional(),
         }),
       },
@@ -149,6 +149,133 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
         after: { recommended: row.recommended, stats_tag: row.stats_tag },
       });
       return { id, recommended: row.recommended, stats_tag: row.stats_tag };
+    },
+  );
+
+  // ── Topic 治理（决议 reuse-boundary D3）：改名带 slug 唯一校验；下架 = 软删标记 ──
+
+  app.get(
+    "/admin/topics",
+    {
+      schema: {
+        querystring: z.object({
+          include_archived: z
+            .enum(["1", "true"])
+            .optional()
+            .transform((v) => v !== undefined),
+        }),
+      },
+    },
+    async (req, reply) => {
+      try {
+        await requireAdmin(req, env);
+      } catch (err) {
+        return errorReply(reply, err);
+      }
+      const q = req.query as { include_archived?: boolean };
+      const topics = await store.listTopics({ includeArchived: q.include_archived });
+      return { topics };
+    },
+  );
+
+  app.patch(
+    "/admin/topics/:id",
+    {
+      schema: {
+        params: z.object({ id: z.string() }),
+        body: z.object({
+          name: z.string().min(1).max(120).optional(),
+          description: z.string().max(500).optional(),
+          mode: z.enum(["broadcast", "forum"]).optional(),
+          slug: z
+            .string()
+            .regex(/^[a-z0-9][a-z0-9-]{1,63}$/)
+            .optional(),
+        }),
+      },
+    },
+    async (req, reply) => {
+      let actor: string;
+      try {
+        const admin = await requireAdmin(req, env);
+        actor = admin.actor;
+      } catch (err) {
+        return errorReply(reply, err);
+      }
+      const { id } = req.params as { id: string };
+      const body = req.body as {
+        name?: string;
+        description?: string;
+        mode?: "broadcast" | "forum";
+        slug?: string;
+      };
+      if (
+        body.name === undefined &&
+        body.description === undefined &&
+        body.mode === undefined &&
+        body.slug === undefined
+      ) {
+        return reply.code(400).send(apiError("bad_request", "empty patch"));
+      }
+      const before = await store.topicById(id);
+      if (!before) return reply.code(404).send(apiError("not_found", `no topic for ${id}`));
+      if (body.slug && body.slug !== before.slug) {
+        const clash = await store.topicBySlug(body.slug);
+        if (clash) {
+          return reply.code(409).send(apiError("conflict", `slug already taken: ${body.slug}`));
+        }
+      }
+      const row = await store.updateTopic(id, body);
+      if (!row) return reply.code(404).send(apiError("not_found", `no topic for ${id}`));
+      await appendEvent(db, {
+        actor,
+        entityType: "topic",
+        entityId: id,
+        action: "update",
+        before: {
+          slug: before.slug,
+          name: before.name,
+          mode: before.mode,
+          description: before.description,
+        },
+        after: { slug: row.slug, name: row.name, mode: row.mode, description: row.description },
+      });
+      return row;
+    },
+  );
+
+  /** 下架 = 软删标记（?restore=1 撤销），绝不删行 */
+  app.delete(
+    "/admin/topics/:id",
+    {
+      schema: {
+        querystring: z.object({ restore: z.enum(["1", "true"]).optional() }),
+      },
+    },
+    async (req, reply) => {
+      let actor: string;
+      try {
+        const admin = await requireAdmin(req, env);
+        actor = admin.actor;
+      } catch (err) {
+        return errorReply(reply, err);
+      }
+      const { id } = req.params as { id: string };
+      const q = req.query as { restore?: string };
+      const restore = q.restore !== undefined;
+      const before = await store.topicById(id);
+      if (!before) return reply.code(404).send(apiError("not_found", `no topic for ${id}`));
+      const row = await store.setTopicArchived(id, !restore);
+      if (!row) return reply.code(404).send(apiError("not_found", `no topic for ${id}`));
+      await appendEvent(db, {
+        actor,
+        entityType: "topic",
+        entityId: id,
+        action: "update",
+        before: { archived_at: before.archived_at },
+        after: { archived_at: row.archived_at },
+      });
+      return row;
     },
   );
 }

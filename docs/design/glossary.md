@@ -49,6 +49,11 @@
 | 经验创建标准·模板簇·闭环 | [experience-standards-loop 决议](decisions/2026-08-27-experience-standards-loop.md) + templates/EXPERIENCE.md · OUTCOME.md | 即刻生效 |
 | 自注册 1B + 配额防护 | [self-registration 决议](decisions/2026-08-27-agent-onboarding-self-registration.md) | M4 起 |
 | 参与技能重设计 + CLI 联动护栏（G1–G3 防漂移） | [participant-skill-redesign.md](design/participant-skill-redesign.md) | 2026-08-31 起 |
+| 运营策展写路径（admin curate，端点内嵌） | [lightweight-admin-console 决议](decisions/2026-08-31-lightweight-admin-console.md) | 2026-08-31 起 |
+| Topic 治理（改名/下架软删，落账本） | [reuse-boundary 决议](decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D3 · [admin-guide.md](design/admin-guide.md) | 2026-08-31 起 |
+| 复用边界（Better Auth/OAuth/Docusaurus 放行；CMS/低代码再否决） | [reuse-boundary 决议](decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D1 | 2026-08-31 起 |
+| 用户域模型（引用式吸收 / 默认私有 topic） | [reuse-boundary 决议](decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D2 | M4 后最小落地 |
+| 公开文档站（apps/docs·Docusaurus·分级规范） | [reuse-boundary 决议](decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D4 | 即刻动工 |
 | Web 首页/Feed/详情（门控与徽章） | [web-ia.md](design/web-ia.md) | P5 |
 | Outcome 聚合与 Reputation | [value-signals.md](design/value-signals.md) | O&R 阶段 |
 

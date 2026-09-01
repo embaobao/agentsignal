@@ -24,7 +24,23 @@ export interface TopicRow {
   name: string;
   description: string;
   mode: "broadcast" | "forum";
+  /** 软删标记（admin 下架）；未归档时为 null */
+  archived_at: string | null;
   signal_count: number;
+}
+
+/** DB 原始行形态：archived_at 以空串占位，读出后 normalize 成 null */
+interface RawTopicRow extends Omit<TopicRow, "archived_at"> {
+  archived_at: string;
+}
+
+/** SQL 列清单（to_char 把 timestamptz 归一成 ISO 文本，与全仓行口径一致） */
+const TOPIC_COLS = `t.id, t.slug, t.name, t.description, t.mode,
+              coalesce(to_char(t.archived_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'), '') as archived_at,
+              (select count(*)::int from signals s where s.topic_id = t.id) as signal_count`;
+
+function normalizeTopic(row: RawTopicRow): TopicRow {
+  return { ...row, archived_at: row.archived_at || null };
 }
 
 export interface SignalRow {
@@ -86,8 +102,14 @@ export interface IStore {
   agentForToken(rawToken: string): Promise<AgentRow | undefined>;
   agentByIdOrNumber(idOrNumber: string): Promise<AgentRow | undefined>;
   ensureTopic(slug: string): Promise<TopicRow>;
-  listTopics(): Promise<TopicRow[]>;
+  listTopics(opts?: { includeArchived?: boolean }): Promise<TopicRow[]>;
   topicBySlug(slug: string): Promise<TopicRow | undefined>;
+  topicById(id: string): Promise<TopicRow | undefined>;
+  updateTopic(
+    id: string,
+    patch: { name?: string; description?: string; mode?: "broadcast" | "forum"; slug?: string },
+  ): Promise<TopicRow | undefined>;
+  setTopicArchived(id: string, archived: boolean): Promise<TopicRow | undefined>;
   putSignal(input: PutSignalInput): Promise<SignalRow>;
   listSignals(opts: ListOptions): Promise<SignalRow[]>;
   findSignal(id: string): Promise<SignalRow | undefined>;
@@ -264,23 +286,61 @@ export class PgStore implements IStore {
   }
 
   async topicBySlug(slug: string): Promise<TopicRow | undefined> {
-    const r = await this.db.query<TopicRow>(
-      `select t.id, t.slug, t.name, t.description, t.mode,
-              (select count(*)::int from signals s where s.topic_id = t.id) as signal_count
+    const r = await this.db.query<RawTopicRow>(
+      `select ${TOPIC_COLS}
          from topics t where t.slug = $1`,
       [slug],
     );
-    return r.rows[0];
+    return r.rows[0] ? normalizeTopic(r.rows[0]) : undefined;
   }
 
-  async listTopics(): Promise<TopicRow[]> {
-    const r = await this.db.query<TopicRow>(
-      `select t.id, t.slug, t.name, t.description, t.mode,
-              (select count(*)::int from signals s where s.topic_id = t.id) as signal_count
+  /** admin 专用：按 id 取行（含已下架） */
+  async topicById(id: string): Promise<TopicRow | undefined> {
+    const r = await this.db.query<RawTopicRow>(
+      `select ${TOPIC_COLS} from topics t where t.id = $1`,
+      [id],
+    );
+    return r.rows[0] ? normalizeTopic(r.rows[0]) : undefined;
+  }
+
+  async listTopics(opts: { includeArchived?: boolean } = {}): Promise<TopicRow[]> {
+    const r = await this.db.query<RawTopicRow>(
+      `select ${TOPIC_COLS}
          from topics t
+        ${opts.includeArchived ? "" : "where t.archived_at is null"}
         order by signal_count desc, t.slug asc`,
     );
-    return r.rows;
+    return r.rows.map(normalizeTopic);
+  }
+
+  /** 治理写路径（admin 专用）：改名 / 描述 / mode / slug；带 slug 唯一性由调用方先查 */
+  async updateTopic(
+    id: string,
+    patch: { name?: string; description?: string; mode?: "broadcast" | "forum"; slug?: string },
+  ): Promise<TopicRow | undefined> {
+    const r = await this.db.query(
+      `update topics
+          set name        = coalesce($2, name),
+              description = coalesce($3, description),
+              mode        = coalesce($4, mode),
+              slug        = coalesce($5, slug)
+        where id = $1
+        returning id`,
+      [id, patch.name ?? null, patch.description ?? null, patch.mode ?? null, patch.slug ?? null],
+    );
+    if (r.rows.length === 0) return undefined;
+    return this.topicById(id);
+  }
+
+  /** 下架 = 软删标记（append-only 铁律，绝不删行） */
+  async setTopicArchived(id: string, archived: boolean): Promise<TopicRow | undefined> {
+    const r = await this.db.query(
+      `update topics set archived_at = case when $2 then now() else null end
+        where id = $1 returning id`,
+      [id, archived],
+    );
+    if (r.rows.length === 0) return undefined;
+    return this.topicById(id);
   }
 
   async putSignal(input: PutSignalInput): Promise<SignalRow> {

@@ -7,7 +7,7 @@
  */
 import type { Db } from "./client.ts";
 
-export const SCHEMA_VERSION = "002_audit";
+export const SCHEMA_VERSION = "003_topic_governance";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -104,6 +104,17 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       create index if not exists audit_events_created on audit_events (created_at);
 
       insert into schema_meta (key, value) values ('schema_version', '002_audit')
+        on conflict (key) do update set value = excluded.value;
+    `,
+  },
+  {
+    name: "003_topic_governance",
+    sql: `
+      -- Topic 治理（决议 reuse-boundary-and-public-docs-site D3）：下架 = 软删标记，非删行（append-only 铁律）
+      alter table topics add column if not exists archived_at timestamptz;
+      create index if not exists topics_archived on topics (archived_at) where archived_at is not null;
+
+      insert into schema_meta (key, value) values ('schema_version', '003_topic_governance')
         on conflict (key) do update set value = excluded.value;
     `,
   },

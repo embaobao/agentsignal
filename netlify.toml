@@ -68,6 +68,10 @@
   to = "/.netlify/functions/api/validate"
   status = 200
 [[redirects]]
+  from = "/validate/*"
+  to = "/.netlify/functions/api/validate/:splat"
+  status = 200
+[[redirects]]
   from = "/healthz"
   to = "/.netlify/functions/api/healthz"
   status = 200
