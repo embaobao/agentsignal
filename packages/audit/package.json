@@ -1,6 +1,6 @@
 {
   "name": "@agentssignal/audit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "@agentssignal/audit — 审计账本（链式 hash）+ 快照 + verify（audit-restore Phase 1B-1）",
