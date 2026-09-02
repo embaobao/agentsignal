@@ -62,7 +62,14 @@ RUN apt-get update \
  && useradd -u 10001 -g app -m -d /home/app -s /bin/sh app
 
 # 仅生产依赖（workspace 链接由 pnpm 维护，与 deps 阶段共享 lock）
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml apps/api/package.json apps/ui/package.json packages/protocol/package.json packages/cli/package.json packages/mcp/package.json packages/audit/package.json ./
+# 注意：多文件 COPY 是平铺语义，必须逐目录拷贝，否则 apps/api/package.json 会覆盖根 package.json（lockfile 校验必炸）
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/ui/package.json apps/ui/
+COPY packages/protocol/package.json packages/protocol/
+COPY packages/cli/package.json packages/cli/
+COPY packages/mcp/package.json packages/mcp/
+COPY packages/audit/package.json packages/audit/
 RUN corepack enable && pnpm install --frozen-lockfile --prod && pnpm store prune
 
 COPY --from=build --chown=app:app /app/apps/api/src ./apps/api/src
