@@ -50,3 +50,24 @@ test("G2②: SKILL 中的 agentsignal <cmd> 全部存在于 CLI 命令集（防�
   const ghosts = [...mentioned].filter((cmd) => !COMMANDS.includes(cmd));
   assert.deepEqual(ghosts, [], "SKILL 出现了 CLI 不存在的命令（幽灵命令）");
 });
+
+/* G4 —— skills.sh（npx skills）分发镜像同步。
+ *
+ * 顶层 skills/agentsignal-participant/SKILL.md 是 skills.sh 索引器唯一默认扫描的
+ * skills/ 前缀位置（packages/skills/… 需 --full-depth 才可见）。它必须与 canonical
+ * （packages/skills/participant/SKILL.md）逐字节一致，防止双源漂移。
+ */
+test("G4: 顶层 skills/ 镜像与 canonical SKILL 逐字节一致（skills.sh 分发）", () => {
+  const MIRROR = readFileSync(
+    new URL("../../../skills/agentsignal-participant/SKILL.md", here),
+    "utf8",
+  );
+  assert.equal(
+    MIRROR,
+    SKILL,
+    "skills/agentsignal-participant/SKILL.md 必须与 packages/skills/participant/SKILL.md 完全一致——只改 canonical 再复制",
+  );
+  for (const line of ["name:", "description:"]) {
+    assert.ok(MIRROR.includes(line), `镜像 frontmatter 缺 ${line}（skills.sh 索引必需）`);
+  }
+});

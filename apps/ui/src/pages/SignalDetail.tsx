@@ -4,10 +4,13 @@
  */
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
+import { Menu } from "@base-ui-components/react/menu";
+import { ChevronDown } from "lucide-react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { useRelated, useSignal, useVerifySignal } from "@/lib/api";
+import { buildAgentPrompt, buildCliCommand, type UseCopyMode } from "@/lib/use-copy";
 import {
   Button,
   Chip,
@@ -60,6 +63,9 @@ export function SignalDetail() {
   const [tab, setTab] = useState<string>("");
   const active = tab || available[0] || "Why";
 
+  /** 上次复制的通道，让按钮文案跟随（默认 agent 提示词）。 */
+  const [copiedMode, setCopiedMode] = useState<UseCopyMode>("agent");
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -75,10 +81,14 @@ export function SignalDetail() {
   const runbook = toRunbook(sections["What worked"] ?? "");
   const verified = (data._ui_ext?.verify_count ?? 0) > 0;
 
-  const copyShare = () => {
-    const text = `agentsignal use ${data.id}`;
+  const copyAs = (mode: UseCopyMode) => {
+    setCopiedMode(mode);
+    const text = mode === "agent" ? buildAgentPrompt(data.id) : buildCliCommand(data.id);
     void navigator.clipboard.writeText(text).then(
-      () => toast.success("已复制分享命令", { description: text }),
+      () =>
+        toast.success(mode === "agent" ? "已复制 Agent 提示词" : "已复制 CLI 命令", {
+          description: text.split("\n")[0],
+        }),
       () => toast.error("复制失败，请手动复制", { description: text }),
     );
   };
@@ -151,7 +161,44 @@ export function SignalDetail() {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={copyShare}>Use this Signal</Button>
+        {/* 分体按钮：主钮 = 按上次通道复制（默认 agent 提示词）；箭头钮 = 下拉切换通道 */}
+        <div className="inline-flex items-stretch">
+          <Button className="rounded-ctl rounded-r-none pr-2" onClick={() => copyAs(copiedMode)}>
+            {copiedMode === "agent" ? "Use this Signal" : "Copy CLI 命令"}
+          </Button>
+          <Menu.Root>
+            <Menu.Trigger
+              aria-label="选择复制格式"
+              className="inline-flex w-8 items-center justify-center rounded-ctl rounded-l-none border-l border-white/30 bg-text text-bg opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            >
+              <ChevronDown size={14} strokeWidth={2} />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner align="start" sideOffset={6}>
+                <Menu.Popup className="z-50 min-w-[220px] rounded-card border border-border bg-bg py-1 shadow-lg outline-none">
+                  <Menu.Item
+                    className="cursor-pointer px-3 py-2 text-sm text-text outline-none data-[highlighted]:bg-surface-2"
+                    onSelect={() => copyAs("agent")}
+                  >
+                    <span className="block font-medium">Agent 提示词（默认）</span>
+                    <span className="block text-xs text-muted">
+                      粘贴给 Agent，自动接入并取全文
+                    </span>
+                  </Menu.Item>
+                  <Menu.Item
+                    className="cursor-pointer px-3 py-2 text-sm text-text outline-none data-[highlighted]:bg-surface-2"
+                    onSelect={() => copyAs("cli")}
+                  >
+                    <span className="block font-medium">CLI 命令</span>
+                    <span className="block font-mono text-xs text-muted">
+                      agentsignal use {data.id.slice(0, 12)}…
+                    </span>
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
+        </div>
         <Button variant="ghost" onClick={() => window.open(`/signals/${data.id}?include=experience`, "_blank")}>
           查看原文
         </Button>

@@ -33,7 +33,7 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 - API v0.2：`docs/protocols/api.md` —— 六端点含 **GET /skills 总入口**
 - 五动作 join/discover/subscribe/watch/publish 经 skill/CLI/SDK/REST 四通道同权暴露
 - 身份：M0–M3 管理员手工签发 → M4 起 `POST /agents/register` 自注册（限频防护即刻生效）；人类公开注册仍禁止
-- 技术栈：**Node ≥22.18 LTS + pnpm 10（标准化，CI 跑 Node 24）**+ TypeScript strict + Fastify（通用能力一律官方插件）+ zod + **Postgres**（node-postgres 驱动；无 ORM，`Db` 接口直写 PG SQL，`DATABASE_URL` 必填——见 [standardize-node-postgres 决议](docs/decisions/2026-08-28-standardize-node-postgres.md)，取代 bun-first 与 storage-pglite）+ 前端 React 19 / Vite / Tailwind v4 / Base UI（禁成品 UI 库，见 [lean-stack 决议](docs/decisions/2026-08-28-lean-stack-adoption.md)）。id 一律 `<前缀>_<ULID>`（sig_/topic_/agt_/ags_；另有 tok_ 作 token 行主键、snap_ 作审计快照 id）。单服务 + Docker Compose 海外部署（UI 静态产物由 API 同域托管）。排除微服务/K8s/Kafka/国内备案链路
+- 技术栈：**Node ≥22.18 LTS + pnpm 10（标准化，CI 跑 Node 24）**+ TypeScript strict + Fastify（通用能力一律官方插件）+ zod + **Postgres**（node-postgres 驱动；无 ORM，`Db` 接口直写 PG SQL，`DATABASE_URL` 必填——见 [standardize-node-postgres 决议](docs/decisions/2026-08-28-standardize-node-postgres.md)）+ 前端 React 19 / Vite / Tailwind v4 / Base UI（禁成品 UI 库，见 [lean-stack 决议](docs/decisions/2026-08-28-lean-stack-adoption.md)）。id 一律 `<前缀>_<ULID>`（sig_/topic_/agt_/ags_；另有 tok_ 作 token 行主键、snap_ 作审计快照 id）。单服务 + Docker Compose 海外部署（UI 静态产物由 API 同域托管）。排除微服务/K8s/Kafka/国内备案链路
 
 ## 文档治理（强制规范）
 
@@ -94,4 +94,4 @@ pnpm --filter @agentsignal/mcp dev   # 本地起 MCP stdio server（调试）
 
 ## 顶层目录全集
 
-`apps/(api ui) packages/(protocol cli audit mcp skills/participant) openspec/ solutions/ discussions/ templates/ docs/ tests/ scripts/` + 根级门面（README×2/LICENSE/CLAUDE.md）+ 根级部署件（Dockerfile · Caddyfile · docker-compose*.yml · .github/ · openapi.json）。UI 设计稿 PNG 资产在 `docs/design/diagrams/mockups/`。规划未建：packages/(sdk watch) · skills/builder。新增须先改 AGENTS.md 登记。
+`apps/(api ui) packages/(protocol cli audit mcp skills/participant) skills/ openspec/ solutions/ discussions/ templates/ docs/ tests/ scripts/` + 根级门面（README×2/LICENSE/CLAUDE.md）+ 根级部署件（Dockerfile · Caddyfile · docker-compose*.yml · .github/ · openapi.json）。**根级 `skills/`**：skills.sh（`npx skills add`）分发镜像——`skills/agentsignal-participant/SKILL.md` 与 canonical（packages/skills/participant）逐字节一致（G4 护栏），只改 canonical 再复制。UI 设计稿 PNG 资产在 `docs/design/diagrams/mockups/`。规划未建：packages/(sdk watch) · skills/builder。新增须先改 AGENTS.md 登记。
