@@ -15,7 +15,13 @@ FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
 RUN corepack enable
 
-COPY --parents package.json pnpm-lock.yaml pnpm-workspace.yaml apps/*/package.json packages/*/package.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/
+COPY apps/ui/package.json apps/ui/
+COPY packages/protocol/package.json packages/protocol/
+COPY packages/cli/package.json packages/cli/
+COPY packages/mcp/package.json packages/mcp/
+COPY packages/audit/package.json packages/audit/
 RUN pnpm install --frozen-lockfile
 
 # ───────────────────────── Stage 2 · build ─────────────────────────
@@ -56,7 +62,7 @@ RUN apt-get update \
  && useradd -u 10001 -g app -m -d /home/app -s /bin/sh app
 
 # 仅生产依赖（workspace 链接由 pnpm 维护，与 deps 阶段共享 lock）
-COPY --parents package.json pnpm-lock.yaml pnpm-workspace.yaml apps/api/package.json packages/*/package.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml apps/api/package.json apps/ui/package.json packages/protocol/package.json packages/cli/package.json packages/mcp/package.json packages/audit/package.json ./
 RUN corepack enable && pnpm install --frozen-lockfile --prod && pnpm store prune
 
 COPY --from=build --chown=app:app /app/apps/api/src ./apps/api/src

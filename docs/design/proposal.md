@@ -25,7 +25,7 @@
 
 ## 技术栈（Node + pnpm 标准化，见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)）
 
-Node ≥22.18（type stripping 直跑 TS）· pnpm 10 · Fastify + zod · Postgres（node-postgres，`Db` 接口直写 PG SQL + 幂等迁移）· pino · Docker（oven/bun 默认，node:22 回退）· TS strict 全仓 · 业务代码禁 bun:* 专有 API。前端：React 19 / Vite / Tailwind v4 / Base UI（瘦栈决议）。
+Node ≥22.18（type stripping 直跑 TS）· pnpm 10 · Fastify + zod · Postgres（node-postgres，`Db` 接口直写 PG SQL + 幂等迁移）· pino · Docker（node:24-slim）· TS strict 全仓 · 业务代码只用标准 Node API。前端：React 19 / Vite / Tailwind v4 / Base UI（瘦栈决议）。
 
 ## 里程碑与裁决点
 

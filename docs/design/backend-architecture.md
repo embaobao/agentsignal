@@ -64,7 +64,7 @@ packages/protocol/src/
 
 ---
 
-## 三、存储：标准 Postgres（历史：P3 文件存储 → PGlite 均已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 取代）
+## 三、存储：标准 Postgres（取代 P3 文件存储 + 手写内存索引）
 
 ### 数据目录结构
 
@@ -273,7 +273,7 @@ pnpm dev:ui                       # Vite:    http://localhost:5173
 ## 十一、交付验收（后端 D5）
 
 - [ ] `pnpm test`（node:test 单测：validate / storage / rate-limit / mcp 关键路径）全部通过
-- [ ] `bunx tsc --noEmit` zero any（strict 模式）
+- [ ] `pnpm check`（tsc --noEmit）zero any（strict 模式）
 - [ ] **三链路 curl 全通过**（tests/e2e/three-chains.test.sh 脚本跑绿）：
   1. `POST /agents/register` → 拿 token → `POST /topics/ai-research/signals` → 201 → `GET /signals/:id?include=experience` → 200
   2. 匿名 `GET /topics/ai-research/signals` → 200 → 新信号立即出现在列表

@@ -2,12 +2,13 @@
  * TerminalBlock —— 深色终端命令块（v5 转化核心，对标 ollama run）。
  * 全站唯一「常驻深色」组件：浅色主题下也用 --term-bg 底白字，不随主题反转。
  *
- * 行约定：普通行 = 命令（$ 前缀）；`# ` 开头 = 等宽灰输出；`! ` 开头 = success 绿输出。
+ * 行约定：普通行 = 命令（$ 前缀）；`> ` 开头 = 无前缀可复制行（URL 等非命令内容）；
+ * `# ` 开头 = 等宽灰输出；`! ` 开头 = success 绿输出。
  * animate=true 时模拟控制台打印：首行命令逐字打出（光标闪烁），输出行随后逐行浮现。
  * reduced-motion 与测试环境直接渲染终态（fail-open）。
  *
- * tabs：可选身份分标签（我是人 → npx CLI / 我是 Agent → SKILL 直发），
- * 单标签时不渲染 tab 栏。切 tab 重放打字动效；复制按钮复制当前 tab 全部行。
+ * tabs：可选身份分标签（我是人 → /skills 直发 / 我是 Agent → SKILL 自取），
+ * 单标签时不渲染 tab 栏。切 tab 重放打字动效；复制按钮复制当前 tab 的命令行（去前缀）。
  */
 import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
@@ -48,6 +49,41 @@ function useTypewriter(text: string, enabled: boolean) {
   return { typed: text.slice(0, n), done: n >= text.length };
 }
 
+/**
+ * 复制文本到剪贴板。
+ * 优先 Clipboard API（仅安全上下文 https/localhost 可用）；非安全上下文
+ * （http 局域网 IP）下 navigator.clipboard 为 undefined 或写权限被拒，
+ * 降级到 execCommand('copy')（老 API，http 下仍可用）。
+ */
+async function copyText(text: string): Promise<boolean> {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 权限被拒或不可用 → 落到降级路径
+    }
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.top = "0";
+  ta.style.left = "0";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  document.body.removeChild(ta);
+  return ok;
+}
+
 export interface TerminalTab {
   /** tab 名（我是人 / 我是 Agent） */
   label: string;
@@ -73,16 +109,18 @@ export function TerminalBlock({
   const active = groups[Math.min(tab, groups.length - 1)] ?? groups[0];
   const [copied, setCopied] = useState(false);
   const command = active.lines.find((l) => !l.startsWith("#") && !l.startsWith("!")) ?? "";
+  // `> ` 前缀仅用于「无 $ 前缀」渲染，不进剪贴板、不进打字动效
+  const commandText = command.replace(/^>\s*/, "");
   const outputs = active.lines.filter((l) => l !== command);
-  const { typed, done } = useTypewriter(command, animate);
+  const { typed, done } = useTypewriter(commandText, animate);
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(command || active.lines.join("\n"));
+    const ok = await copyText(commandText || active.lines.join("\n"));
+    if (ok) {
       setCopied(true);
       toast.success("已复制命令");
       setTimeout(() => setCopied(false), 1500);
-    } catch {
+    } else {
       toast.error("复制失败，请手动复制");
     }
   };
@@ -99,6 +137,16 @@ export function TerminalBlock({
       return (
         <p key={key} className="text-success">
           {l.slice(2)}
+        </p>
+      );
+    }
+    if (l.startsWith(">")) {
+      return (
+        <p key={key}>
+          {typedText ?? l.slice(2)}
+          {typedText !== undefined && !typedDone && (
+            <span className="ml-0.5 inline-block h-[14px] w-[7px] translate-y-[2px] animate-pulse bg-term-text" />
+          )}
         </p>
       );
     }

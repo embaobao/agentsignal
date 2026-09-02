@@ -1,12 +1,12 @@
 # 瘦栈实施方案 — 用成熟三方件压缩开发量（P3/P5 细化版）
 
 
-> **ⓘ 归档注记（2026-08-28）**：本方案已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 部分取代——运行时 Bun→**Node ≥22.18 + pnpm 10**、存储 PGlite→**标准 Postgres（node-postgres）**。文中选型对比（better-sqlite3 NAPI 崩溃实测等）与工时估算保留为历史依据；命令与依赖清单以 `AGENTS.md` / `package.json` 现行为准。
+> **ⓘ 归档注记（2026-08-28）**：本方案已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 部分取代——运行时统一为 **Node ≥22.18 + pnpm 10**、存储统一为**标准 Postgres（node-postgres）**。文中选型对比（better-sqlite3 NAPI 崩溃实测等）与工时估算保留为历史依据；命令清单已按现行 Node + pnpm 口径改写。
 
 
 > 状态：**待站长确认 · 确认后即取代 frontend-architecture.md / backend-architecture.md 中的选型条款**
 > 配套：决议 [2026-08-28-lean-stack-adoption](../decisions/2026-08-28-lean-stack-adoption.md) · 提案 [design-driven-proposal](design-driven-proposal.md) · 视觉真源 [ui-blueprint-prompt](ui-blueprint-prompt.md) · 信息架构 [web-ia](web-ia.md)
-> 上位约束：`AGENTS.md`（Bun-first · Node-safe · 测试随行）· `docs/protocols/*`（v0.2）
+> 上位约束：`AGENTS.md`（Node + pnpm 标准化 · 测试随行）· `docs/protocols/*`（v0.2）
 
 ---
 
@@ -18,7 +18,7 @@
 |---|---|
 | 前端底座 | **Vite + React 19 + TS strict + Tailwind CSS v4（`@theme` 即 token 单真源）+ shadcn/ui（Base UI 原语，源码 copy-in）** |
 | 组件策略 | shadcn 落 `components/ui/`（基础设施），设计稿命名组件落 `components/design/`（**btn/card/chip/step/verify-mark 命名契约一律不改**），后者套前者换皮 |
-| 存储 | **PGlite（WASM PostgreSQL）** 直接写 PG SQL（P3/P5）→ Phase 2 换 `pg` driver，业务 SQL 零改。替代手写 FileStore + file-index。**不用 Kysely**（见下方实测） |
+| 存储 | **标准 Postgres（node-postgres）** 直接写 PG SQL（P3/P5）；业务 SQL 零改。替代手写 FileStore + file-index。**不用 Kysely**（见下方实测） |
 | 省下的量 | 前端 14 → 7 人日、后端 9 → 5 人日（P3+P5 合计，详见 §8 工时表） |
 | 最大减量点 | ① 交互行为（键盘/焦点/ARIA/Portal）全部白拿 ② SQL 替代手写文件索引 ③ OpenAPI → TS 类型生成替代手写镜像 ④ zod schema 全栈同构 |
 
@@ -47,7 +47,7 @@
 | C1 | `frontend-architecture.md` §一 原则1 | 「绝不允许用任何第三方 UI 库默认样式污染」 | 需改写为「禁成品库，许 headless + copy-in」 |
 | C2 | `design.md` 决策2 / 备选被拒 | 「零 UI 库：不引 Tailwind/Shadcn」 | 需推翻，理由见 §2 |
 | C3 | `design.md` 备选被拒 | 「Tailwind 被拒：覆盖比从零写还多代码」 | 该判断基于 Tailwind v3；v4 的 `@theme` 反而是 token 最佳载体 |
-| C4 | `design.md` 决策5 / `backend-architecture.md` §三 | P3/P5 文件存储 + 手写内存索引 | **已换 PGlite**（同零基础设施，省 3 人日；且 SQL 与生产 PG 同方言） |
+| C4 | `design.md` 决策5 / `backend-architecture.md` §三 | P3/P5 文件存储 + 手写内存索引 | **已换标准 Postgres**（省 3 人日；且 SQL 与生产 PG 同方言） |
 | C5 | `frontend-architecture.md` types/ | `types/signal.ts` 手写镜像 packages/protocol | 改为 OpenAPI 自动生成 |
 
 ---
@@ -105,12 +105,12 @@
 
 | 包 | 用途 |
 |---|---|
-| `vitest` + `@testing-library/react` + `@testing-library/user-event` + `jsdom` | UI 组件测试（JSX/组件场景 bun test 支持差，独立跑） |
+| `vitest` + `@testing-library/react` + `@testing-library/user-event` + `jsdom` | UI 组件测试（JSX/组件场景 node:test 支持差，独立跑） |
 | `@playwright/test` | D1/D5 视觉对稿截图归集 + 三链路端到端 |
 | `msw` | **前端 mock API**——D1 对稿不必等后端，前后端并行（关键减阻塞项） |
 | `@types/react` `@types/react-dom` | 类型 |
 
-> **测试纪律不变**（AGENTS.md §8）：`bun verify` 链追加 `test:ui`（vitest）与 `test:e2e`（playwright），Bun 与 Node 双跑要求仅覆盖 packages/ + apps/api。
+> **测试纪律不变**（AGENTS.md §8）：`pnpm verify` 链含 `test:ui`（vitest）与 `test:e2e`（playwright）。
 
 ---
 
@@ -174,33 +174,23 @@
 
 ## 5. 后端依赖清单（架构层减量）
 
-### 5.1 存储：PGlite（WASM PostgreSQL）直接写 PG SQL（取代 FileStore + file-index）
+### 5.1 存储：标准 Postgres（node-postgres）直接写 PG SQL（取代 FileStore + file-index）
 
 **理由**：文件存储要手写「by topic / by id / by q 倒排 / 分页 / related / bumpVerify 并发写 / seq 单调」，这些是 SQL 一行的事，手写约 3 人日且易错。
 
-**为什么不是 SQLite（2026-08-28 实测推翻原选型）**：
-
-| 方案 | Bun 1.4.0 | Node 22.22 | 结论 |
-|---|---|---|---|
-| `better-sqlite3@13` | ❌ **NAPI FATAL ERROR，进程 panic**（退出码 134） | ✅ 正常 | 出局：Bun-first 是 AGENTS.md 硬约束 |
-| `@electric-sql/pglite@0.5` | ✅ 建表/jsonb/timestamptz/`$1` 参数/持久化 全通过 | ✅ 同上 | **采用** |
-| `bun:sqlite` | ✅ | ❌ 不存在 | 出局：违反 Node-safe |
-
-详见决议 [2026-08-28-storage-pglite](../decisions/2026-08-28-storage-pglite.md)。
-
-**PGlite 的额外收益**：它是真 PostgreSQL——DDL 直接对齐 `architecture.md` 冻结 schema（jsonb / timestamptz / 复合索引原生可用），**不再需要 SQLite↔PG 的 codec 兼容层**，也不再需要 Kysely 做方言抽象（反而少一层适配风险）。
+**标准 Postgres 的额外收益**：它是生产 PostgreSQL——DDL 直接对齐 `architecture.md` 冻结 schema（jsonb / timestamptz / 复合索引原生可用），**不再需要 SQLite↔PG 的 codec 兼容层**，也不再需要 Kysely 做方言抽象（反而少一层适配风险）。
 
 | 包 | 用途 |
 |---|---|
-| `@electric-sql/pglite` | P3/P5 内嵌数据库（WASM 版 PostgreSQL）。纯 JS/WASM，**无原生模块**，Bun 与 Node 双跑一致 |
-| — | **不引 ORM/查询构造器**：PGlite 即 PG，直接写 SQL 与生产完全一致；数据访问收敛在极小接口 `Db`（`query`/`exec`/`close`） |
+| `pg`（node-postgres） | 生产 PostgreSQL 驱动（node-postgres）。纯 JS，**无 ORM**，连接池原生 |
+| — | **不引 ORM/查询构造器**：Postgres 即 PG，直接写 SQL 与生产完全一致；数据访问收敛在极小接口 `Db`（`query`/`exec`/`close`） |
 | `pg` | Phase 2 才装。切换 = 换 dialect + 连接串，业务 SQL 不动 |
 
 方言差异的收敛点（写进 `packages/protocol` 或 `apps/api/src/db/codec.ts`）：
 
-PGlite 就是 PostgreSQL，类型零差异：
+标准 Postgres 就是 PostgreSQL，类型零差异：
 
-| 冻结 DDL 类型 | PGlite 落法 | 说明 |
+| 冻结 DDL 类型 | Postgres 落法 | 说明 |
 |---|---|---|
 | `jsonb`（experience / origin） | `jsonb` | 原生支持，无需 codec |
 | `timestamptz` | `integer`（epoch ms） | 同上 |
@@ -226,7 +216,7 @@ PGlite 就是 PostgreSQL，类型零差异：
 
 | 包 | 用途 |
 |---|---|
-| `arctic` | GitHub OAuth：`createAuthorizationURL` + `validateAuthorizationCode` + 内建 `generateState`/PKCE。零依赖、仅用 Web API（Bun/Node 通吃），50+ provider 预留 |
+| `arctic` | GitHub OAuth：`createAuthorizationURL` + `validateAuthorizationCode` + 内建 `generateState`/PKCE。零依赖、仅用 Web API，跨运行时通用，50+ provider 预留 |
 | `zod`（已有） | 环境变量校验：`src/env.ts` 30 行，启动即失败快（不引额外 env 库） |
 | `conf`（CLI 侧） | `~/.config/agentsignal/config.json` 凭证持久化（token、默认 topic），省掉自写文件 IO 与权限处理 |
 
@@ -247,7 +237,7 @@ PGlite 就是 PostgreSQL，类型零差异：
 | **S2** | **类型自动生成**：`@fastify/swagger` 产 `openapi.json` → `openapi-typescript` 生成 `apps/ui/src/types/api.generated.ts`。删除 `frontend-architecture.md` 里「types/signal.ts 镜像 packages/protocol」的手写镜像 | 0.5 人日 + 永不漂移 |
 | **S3** | **错误码统一**：`packages/protocol/src/errors.ts` 定义 `ErrorCode` 枚举 + Fastify `setErrorHandler` 统一出口 + `ApiError` 响应 zod schema（同步进 OpenAPI）。前端按 code 分支跳 401/404 | 0.3 人日 |
 
-生成链路：`bun run openapi`（起服务导出 json）→ `bun run types:gen` → 前端引用。**进 CI**：`bun verify` 里比对生成文件与提交版本是否一致。
+生成链路：`pnpm openapi`（起服务导出 json）→ 前端引用（类型改由 zod schema 直接 infer，见 apps/ui/src/types/api.ts）。**进 CI**：`pnpm verify` 里比对生成文件与提交版本是否一致。
 
 ---
 
@@ -279,7 +269,7 @@ apps/api/src/
 ├─ env.ts                        # zod 环境变量校验
 ├─ routes/{topics,signals,agents,auth-github,skills}.ts
 ├─ auth/{bearer.ts, token-hash.ts}          # rate-limit 迁到插件配置
-├─ db/{client.ts, migrations.ts}            # PGlite 连接 + 幂等迁移（PG DDL）
+├─ db/{client.ts, migrations.ts}            # Postgres 连接 + 幂等迁移（PG DDL）
 ├─ store/store.ts                           # IStore 接口 + PgStore 实现
 └─ validate/{envelope.ts, four-sections.ts, digest-format.ts}
 ```
@@ -294,8 +284,8 @@ apps/api/src/
 
 | # | 任务 | 类型 | 细节 |
 |---|---|---|---|
-| M0.1 | 脚手架 | [三方] | `bun create vite apps/ui --template react-ts`；`@tailwindcss/vite`；alias `@`；根 package.json 加 `dev:ui / build:ui / test:ui / test:e2e / openapi / types:gen`，并挂进 `verify` 链 |
-| M0.2 | shadcn init | [三方] | `bunx shadcn@latest init` → style `base-vega`；随后**按 §4 映射表全量替换** shadcn 变量（禁留默认 HSL 色板） |
+| M0.1 | 脚手架 | [三方] | `pnpm create vite apps/ui --template react-ts`；`@tailwindcss/vite`；alias `@`；根 package.json 加 `dev:ui / build:ui / test:ui / test:e2e / openapi`，并挂进 `verify` 链 |
+| M0.2 | shadcn init | [三方] | `pnpm dlx shadcn@latest init` → style `base-vega`；随后**按 §4 映射表全量替换** shadcn 变量（禁留默认 HSL 色板） |
 | M0.3 | tokens 落地 | [换肤] | `src/index.css` 写入 §4 全套；验收：`grep -rn "#[0-9A-Fa-f]\{6\}" src --exclude=index.css` 零命中 |
 | M0.4 | 主题 | [三方] | `next-themes`：`attribute="data-theme"`，`defaultTheme="system"`，`disableTransitionOnChange` |
 | M0.5 | 背景 | [自研] | 纯色背景（v5 单色极简，零装饰层） |
@@ -307,14 +297,14 @@ apps/api/src/
 | # | 任务 | 类型 | 细节 |
 |---|---|---|---|
 | M1.1 | protocol 扩展 | [自研] | `schemas.ts`（zod 真源，供 S1/S2）、`ui-ext.ts`（UI 视图模型）、`errors.ts`（S3）；ids 追加 `ags_` |
-| M1.2 | PGlite + 迁移 | [三方] | `db/client.ts`（`Db` 接口 + `PgliteDb`，测试可注入临时目录）；`db/migrations.ts` 幂等 PG DDL，DDL 对齐 `architecture.md` 冻结 schema，版本写入 `schema_meta` 供 `/readyz` 上报 |
+| M1.2 | Postgres + 迁移 | [三方] | `db/client.ts`（`Db` 接口 + `PostgresDb`，测试无 PG 时由内嵌真 Postgres 兜底）；`db/migrations.ts` 幂等 PG DDL，DDL 对齐 `architecture.md` 冻结 schema，版本写入 `schema_meta` 供 `/readyz` 上报 |
 | M1.3 | SqliteStore | [省] | 实现 `IStore`：list/get/put/related/frontpageStats/bumpVerify。**related / q 匹配 / 分页 / 排序全部 SQL**（原 file-index.ts 手写索引 [省]） |
 | M1.4 | 插件装配 | [三方] | cors / helmet / rate-limit（写 10/min per agent，读 60/min per IP，429 + Retry-After）/ cookie / static（托管 UI + SPA fallback）/ swagger+Scalar（**原手写 rate-limit.ts [省]**） |
 | M1.5 | register | [自研] | `ags_` + ULID；只存 sha256；限频 1/IP/min；明文仅一次性返回 |
 | M1.6 | GitHub OAuth | [三方] | `arctic`：`generateState()` → cookie；`createAuthorizationURL` → `/auth/callback` → `validateAuthorizationCode` → 换 `ags_` → 302 回前端带 token |
 | M1.7 | validate/publish | [自研] | `POST /validate/envelope`（digest 三段式软告警 + 四节标题率）；publish 走 zod + validate 流水线，写 `digest_valid` |
-| M1.8 | 测试 | [三方] | bun test：SQL 迁移/查询、rate limit、token sha 不落日志、zod 非法拦截；`tests/e2e/three-chains.test.sh` 全通过 |
-| M1.9 | OpenAPI | [三方] | `bun run openapi` 导出 + `types:gen`；CI 比对生成物与提交一致 |
+| M1.8 | 测试 | [三方] | node:test：SQL 迁移/查询、rate limit、token sha 不落日志、zod 非法拦截；`tests/e2e/three-chains.test.sh` 全通过 |
+| M1.9 | OpenAPI | [三方] | `pnpm openapi` 导出；CI 比对生成物与提交一致 |
 
 ### D1 设计校准（2 天 · 裁决点，不放宽）
 
@@ -363,9 +353,9 @@ D2.1 三态齐全 / D2.2 reduced-motion + 无 JS 可读 / D2.3 1280 + 768 断点
 
 ### D5 总验收（1 天 · 不变 + 2 项）
 
-- D5.1 逐屏对稿（§六 9 项）· D5.2 全链路 · D5.3 无障碍（**⌘K/Dropdown/Dialog 现在由原语保证，验收更稳**）· D5.4 `bun verify` 全绿 · D5.5 文档同步
-- **新增 D5.6**：`bun run openapi && bun run types:gen` 生成物与提交一致（防前后端漂移）
-- **新增 D5.7**：`components/ui/` 可无损重生成（`bunx shadcn@latest add --overwrite` 后 diff 为空）
+- D5.1 逐屏对稿（§六 9 项）· D5.2 全链路 · D5.3 无障碍（**⌘K/Dropdown/Dialog 现在由原语保证，验收更稳**）· D5.4 `pnpm verify` 全绿 · D5.5 文档同步
+- **新增 D5.6**：`pnpm openapi` 生成物与提交一致（防前后端漂移）
+- **新增 D5.7**：`components/ui/` 可无损重生成（`pnpm dlx shadcn@latest add --overwrite` 后 diff 为空）
 
 ### 工时对照
 
@@ -386,29 +376,29 @@ D2.1 三态齐全 / D2.2 reduced-motion + 无 JS 可读 / D2.3 1280 + 768 断点
 ```bash
 # 9.1 前端脚手架
 cd /Users/embaobao/workspace/agentsignal
-bun create vite apps/ui --template react-ts
+pnpm create vite apps/ui --template react-ts
 cd apps/ui
-bun add react react-dom react-router @tanstack/react-query \
+pnpm add react react-dom react-router @tanstack/react-query \
   react-hook-form @hookform/resolvers zod \
   cmdk sonner lucide-react next-themes react-markdown remark-gfm shiki \
   clsx tailwind-merge class-variance-authority date-fns
-bun add -d tailwindcss @tailwindcss/vite tw-animate-css \
+pnpm add -D tailwindcss @tailwindcss/vite tw-animate-css \
   vitest @testing-library/react @testing-library/user-event jsdom msw \
   @playwright/test @types/react @types/react-dom
 
 # 9.2 shadcn 初始化（Base UI 原语；默认即 base-vega）
-bunx shadcn@latest init
-bunx shadcn@latest add button card badge input textarea label tabs dialog \
+pnpm dlx shadcn@latest init
+pnpm dlx shadcn@latest add button card badge input textarea label tabs dialog \
   dropdown-menu select tooltip switch checkbox skeleton separator \
   toggle-group alert sonner command table
 # ⚠️ init/add 之后必须按 §4 映射表替换 src/index.css 中的 shadcn 变量
 
 # 9.3 后端
 cd ../api
-bun add @electric-sql/pglite arctic conf \
+pnpm add pg arctic conf \
   @fastify/cors @fastify/helmet @fastify/rate-limit @fastify/cookie @fastify/static
-bun add -d @fastify/swagger @scalar/fastify-api-reference pino-pretty
-cd ../.. && bun add -d openapi-typescript
+pnpm add -D @fastify/swagger @scalar/fastify-api-reference pino-pretty
+cd ../.. && pnpm add -D openapi-typescript
 
 # 9.4 swagger 与 zod 接线（apps/api/src/server.ts 片段）
 #   import fastifySwagger from "@fastify/swagger";
@@ -423,8 +413,8 @@ cd ../.. && bun add -d openapi-typescript
 #   "types:gen":"openapi-typescript openapi.json -o apps/ui/src/types/api.generated.ts"
 
 # 9.6 验证（追加进 verify 链）
-bun run check && bun run lint && bun run test && bun run test:node \
-  && bun run test:ui && bun run test:e2e
+pnpm check && pnpm lint && pnpm test \
+  && pnpm test:ui && pnpm test:e2e
 ```
 
 ---
@@ -438,10 +428,9 @@ bun run check && bun run lint && bun run test && bun run test:node \
 | 设计稿 1:1 一致性被削弱 | 中 | 命名契约（`btn/card/chip/step/verify-mark`）原样保留；D1/D5 对稿标准不放宽；换肤全部经 `cn()` + token |
 | Base UI 较新（v1.0 于 2025-12） | 中 | 仅用成熟件（Dialog/Select/Tabs/Switch）；需要时 `--base radix` 一键切回 |
 | TS 7 + React 19 + Vite 类型链路 | 中 | M0.1 先做 30 分钟 spike：`tsc --noEmit` + 一次 build；不通则锁 TS 5.9 于 apps/ui |
-| PGlite 单进程限制 | 低 | WASM 内嵌库只能单进程访问；横向扩容前必须切 `DB_DRIVER=pg`（Phase 2 计划内） |
-| PGlite → PG 切换 | 低 | 同方言，只换 `Db` 接口实现（pg Pool）；Phase 2 前跑一次真实 PG 冒烟 |
+| Postgres 外部服务依赖 | 低 | 依赖外部 Postgres（compose `db` 或 Neon）；断连由 pg Pool 重连兜底，readyz 探测保障 |
+| Postgres 版本兼容 | 低 | 锁定 PG 16+；迁移 DDL 对齐冻结 schema，版本写入 `schema_meta` 供 `/readyz` 上报 |
 | 依赖膨胀 | 低 | 全部 tree-shake；`components/ui/` 只 add 用到的；D5 记录 bundle 体积基线 |
-| 与「Bun-first · Node-safe」冲突 | 低 | PGlite 为纯 WASM，Bun/Node 双跑已实测通过；不引 `bun:sqlite` 等 Bun 专有 |
 
 ---
 

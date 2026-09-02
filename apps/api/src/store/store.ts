@@ -123,8 +123,14 @@ export interface IStore {
   softDeleteSignal(id: string, agentId: string): Promise<boolean>;
   bindGithub(agentId: string, githubId: string): Promise<void>;
   findAgentByGithub(githubId: string): Promise<AgentRow | undefined>;
-  verifySignal(signalId: string, agentId: string, verdict: "worked" | "partial" | "failed"): Promise<{ total: number; worked: number; partial: number; failed: number }>;
-  getVerdictSummary(signalId: string): Promise<{ total: number; worked: number; partial: number; failed: number }>;
+  verifySignal(
+    signalId: string,
+    agentId: string,
+    verdict: "worked" | "partial" | "failed",
+  ): Promise<{ total: number; worked: number; partial: number; failed: number }>;
+  getVerdictSummary(
+    signalId: string,
+  ): Promise<{ total: number; worked: number; partial: number; failed: number }>;
   adminDeleteSignal(signalId: string): Promise<boolean>;
   adminArchiveTopic(topicId: string): Promise<boolean>;
   relatedSignals(id: string, limit: number): Promise<SignalRow[]>;
@@ -140,7 +146,7 @@ export interface IStore {
   migrationVersion(): Promise<string>;
 }
 
-/** sha256 hex —— 服务端只存哈希，明文 token 绝不落盘（Node 原生实现，Bun/Node 通用） */
+/** sha256 hex —— 服务端只存哈希，明文 token 绝不落盘（Node 原生实现） */
 export function sha256(s: string): string {
   return createHash("sha256").update(s, "utf8").digest("hex");
 }
@@ -559,7 +565,11 @@ export class PgStore implements IStore {
     return r.rows[0];
   }
 
-  async verifySignal(signalId: string, agentId: string, verdict: "worked" | "partial" | "failed"): Promise<{ total: number; worked: number; partial: number; failed: number }> {
+  async verifySignal(
+    signalId: string,
+    agentId: string,
+    verdict: "worked" | "partial" | "failed",
+  ): Promise<{ total: number; worked: number; partial: number; failed: number }> {
     await this.db.query(
       `insert into verify_logs (id, signal_id, agent_id, verdict) values ($1,$2,$3,$4)
         on conflict (signal_id, agent_id) do update set verdict = $4, created_at = now()`,
@@ -572,7 +582,9 @@ export class PgStore implements IStore {
     return this.getVerdictSummary(signalId);
   }
 
-  async getVerdictSummary(signalId: string): Promise<{ total: number; worked: number; partial: number; failed: number }> {
+  async getVerdictSummary(
+    signalId: string,
+  ): Promise<{ total: number; worked: number; partial: number; failed: number }> {
     const r = await this.db.query<{ verdict: string; count: number }>(
       `select verdict, count(*)::int as count from verify_logs where signal_id = $1 group by verdict`,
       [signalId],

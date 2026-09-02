@@ -19,7 +19,7 @@ BASE="${1:-http://localhost:3000}"
 PASS=0
 FAIL=0
 
-# jq 不可用时退回 node（项目自带 Node/Bun，零额外依赖）
+# jq 不可用时退回 node（项目自带 Node，零额外依赖）
 # 路径统一写 ".field.sub"，jq 直用，node 分支跳过首个空段
 json() {
   if command -v jq >/dev/null 2>&1; then

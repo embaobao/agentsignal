@@ -38,7 +38,7 @@
 **设计取舍**：
 
 - **单进程单服务**：P3/P5 只有 `api` 一个常驻服务。前端是静态产物，由 `@fastify/static` 同域托管——省掉一个 Nginx/前端服务、省掉跨域与双域名。
-- **标准 Postgres**：node-postgres 驱动 + `Db` 接口直写 PG SQL（见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代 storage-pglite）；compose 的 `db` 服务（postgres:16-alpine）为默认依赖，本地开发 `docker compose up -d db`。
+- **标准 Postgres**：node-postgres 驱动 + `Db` 接口直写 PG SQL（见 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)）；compose 的 `db` 服务（postgres:16-alpine）为默认依赖，本地开发 `docker compose up -d db`。
 - **不用 K8s / 微服务 / 消息队列**：与 AGENTS.md 排除项一致。
 
 ### 1.1 镜像依赖
@@ -403,7 +403,7 @@ pnpm test:e2e http://localhost:3000   # 三链路全量打云端库
 - 测试同理：`TEST_DATABASE_URL=<云端串>` 让单测直接跑云端（会建临时库跑完即删）
 - 回本地：把 `.env` 的 DATABASE_URL 改回 localhost 即可
 
-> 历史（P3 文件存储 → PGlite WASM）已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 取代，归档见决议链。
+> 历史（P3 文件存储）已被 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 取代，归档见决议链。
 
 ### 6.2 备份
 
@@ -523,6 +523,7 @@ CORS：Netlify 域名需在 API 侧 `CORS_ORIGIN=https://agentsignal.netlify.app
 | `GITHUB_CLIENT_ID` | `Iv23lik…` | ✅ 已配 | GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | `2d2c52…` | ✅ 已配 | 同上（勿泄露） |
 | `BETTER_AUTH_SECRET` | ✅ 已生成 | ✅ 已配 | better-auth session 签名 |
+| `BETTER_AUTH_URL` | 局域网验证填 `http://<宿主IP>:3000` | `https://agentsignal.vip` | better-auth 直读（不进 `env.ts` 校验）；不设 → 启动 WARN，多 host 访问回调会串 |
 | `NPM_TOKEN` | ~/.npmrc | ✅ 已配 | npm 自动发版 |
 | `VITE_AGENTSIGNAL_BASE` | — | `https://agentsignal.netlify.app` | 首页广播 base |
 | `VITE_API_BASE` | — | 上 API 后设 `https://agentsignal.vip` | 前端请求 base |

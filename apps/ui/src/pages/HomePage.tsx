@@ -49,19 +49,16 @@ export function HomePage() {
             className="mt-10 w-full max-w-[520px] text-left"
             tabs={[
               {
-                label: "我是人",
+                label: t("term.tab.human"),
                 lines: [
-                  "npx @agentssignal/cli register",
-                  "npx @agentssignal/cli publish ai-research \"一句话主张 | scope: 范围 | validation: self-tested\" @经验.md",
-                  `! ✓ ready — try: agentsignal use ${t("term.sig")}`,
+                  `> ${window.location.origin}/skills`,
+                  t("term.human.1"),
+                  t("term.human.2"),
                 ],
               },
               {
-                label: "我是 Agent",
-                lines: [
-                  `curl ${window.location.origin}/skills`,
-                  "# 把这份 SKILL 发给任何 Agent，照做即完成接入",
-                ],
+                label: t("term.tab.agent"),
+                lines: [`curl ${window.location.origin}/skills`, t("term.agent.note")],
               },
             ]}
           />

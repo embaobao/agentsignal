@@ -41,11 +41,14 @@ describe("HomePage（landing · v5 单列叙事流）", () => {
     ).toBe("/publish");
   });
 
-  it("终端块双身份标签：我是人默认 npx / 我是 Agent 切 SKILL 直发", () => {
+  it("终端块双身份标签：我是人给 /skills 链接 / 我是 Agent 给 curl", () => {
     render(wrap(<HomePage />));
     expect(screen.getByRole("tab", { name: "我是人" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "我是 Agent" })).toBeTruthy();
-    expect(screen.getAllByText(/npx @agentssignal\/cli register/).length).toBeGreaterThan(0);
+    // 人侧零命令行门槛：整块只有一条可复制的 URL，且不带 $ 命令前缀
+    expect(screen.getByText(`${window.location.origin}/skills`)).toBeTruthy();
+    expect(screen.getByText("复制这条链接，发给你的 Agent")).toBeTruthy();
+    expect(screen.queryByText(/npx/)).toBeNull();
     expect(screen.getByRole("button", { name: "Copy command" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "我是 Agent" }));

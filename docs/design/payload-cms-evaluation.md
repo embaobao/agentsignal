@@ -1,7 +1,7 @@
 # Payload CMS 适配性评估 —— 业务诉求复核与结案
 
 > 状态：**已结案（2026-08-28）——全量接入否决**；结论落于 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) **D5**。
-> **2026-08-31 复核**：业务诉求视角重新论证，结论**维持否决且更强**（新增「无 ORM」硬约束）；本文正文按当下事实重写，移除已失效的 Bun/PGlite 探针章节（[文档卫生纪律](../design/roadmap.md)）。
+> **2026-08-31 复核**：业务诉求视角重新论证，结论**维持否决且更强**（新增「无 ORM」硬约束）；本文正文按当下事实重写，移除已失效的旧选型探针章节（[文档卫生纪律](../design/roadmap.md)）。
 > 触发问句（站长）：「我们是否很合适直接用 [Payload headless CMS](https://payloadcms.com/use-cases/headless-cms)，不用自己开发还得管理？」
 > 上位约束：[standardize-node-postgres](../decisions/2026-08-28-standardize-node-postgres.md) · [lean-stack-adoption](../decisions/2026-08-28-lean-stack-adoption.md) · [container-deployment](../decisions/2026-08-28-container-deployment.md) · AGENTS.md
 
@@ -68,7 +68,7 @@
 
 ## 四、硬约束清单（2026-08-31 当下事实）
 
-> 原清单 C1（Bun-first）、C2（PGlite）两根「一票否决」支柱已随 08-28 运行时决议**消失**——这正是需要复核的原因。以下为**当前仍成立**的约束。
+> 原清单 C1、C2 两根「一票否决」支柱已随 08-28 运行时决议**消失**——这正是需要复核的原因。以下为**当前仍成立**的约束。
 
 | # | 约束 | 来源 | Payload 冲突 |
 |---|---|---|---|

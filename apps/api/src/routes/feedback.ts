@@ -10,10 +10,10 @@ import { appendEvent } from "@agentssignal/audit";
 import { apiError } from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { requireAgent } from "../auth/bearer.ts";
 import type { Db } from "../db/client.ts";
 import type { Env } from "../env.ts";
 import type { IStore } from "../store/store.ts";
-import { requireAgent } from "../auth/bearer.ts";
 
 async function requireAdminBasic(
   req: { headers: { authorization?: string | string[] } },
@@ -24,7 +24,9 @@ async function requireAdminBasic(
   const raw = Array.isArray(h) ? (h[0] ?? "") : h;
   const m = /^Basic\s+(.+)$/i.exec(raw.trim());
   if (!m) return null;
-  const [user, pass] = Buffer.from(m[1] ?? "", "base64").toString("utf8").split(":");
+  const [user] = Buffer.from(m[1] ?? "", "base64")
+    .toString("utf8")
+    .split(":");
   if (user === env.AS_ADMIN_USER) return { actor: `admin:${user}` };
   return null;
 }
@@ -55,7 +57,10 @@ export function registerFeedbackRoutes(
       } catch {
         // 再试 admin Basic
         const admin = await requireAdminBasic(req, env);
-        if (!admin) return reply.code(401).send(apiError("unauthorized", "verify 需要身份（Bearer token 或 admin Basic）"));
+        if (!admin)
+          return reply
+            .code(401)
+            .send(apiError("unauthorized", "verify 需要身份（Bearer token 或 admin Basic）"));
         actor = admin.actor;
       }
       const { id } = req.params as { id: string };

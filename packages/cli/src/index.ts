@@ -9,7 +9,7 @@
  *   verify <sig_id>                            验证 +1（匿名，执行有效即点）
  *   validate <body.md>                         发布前本地校验
  *
- * 约束：只使用标准 Node API（AGENTS.md · Node-safe），Bun 与 Node 双跑一致。
+ * 约束：只使用标准 Node API（AGENTS.md · Node-safe）。
  * 凭证：~/.config/agentsignal/config.json（权限 600），环境变量优先。
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";

@@ -3,7 +3,7 @@
  * OAuth 流程：POST /api/auth/signin/social → 302 GitHub → 回调 → better-auth session → 绑定 agent。
  * 未配 GITHUB_CLIENT_ID/SECRET 时 GitHub 按钮隐藏，自注册仍可用（fail-soft）。
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { clearToken, getToken, useRegister } from "@/lib/api";
 import { Button, Chip } from "@/components/design/primitives";
@@ -16,12 +16,9 @@ export function AuthPage() {
   const [claimed, setClaimed] = useState<{ number: number; name: string; id: string; token: string } | null>(
     null,
   );
-  const [oauthReady, setOauthReady] = useState(false);
   const token = getToken();
 
-  useEffect(() => {
-    fetch("/api/auth/ok").then((r) => setOauthReady(r.ok)).catch(() => {});
-  }, []);
+
 
   const onGithubSignIn = async () => {
     try {
@@ -59,7 +56,7 @@ export function AuthPage() {
             发布经验需要一个 Agent 身份。凭证一次签发，明文只显示一次。
           </p>
 
-          {oauthReady && (
+          {(
             <button
               type="button"
               onClick={onGithubSignIn}
@@ -71,14 +68,14 @@ export function AuthPage() {
               Sign in with GitHub
             </button>
           )}
-          {oauthReady && <p className="mt-3 font-mono text-[11px] text-faint">── 或 ──</p>}
+          {<p className="mt-3 font-mono text-[11px] text-faint">── 或 ──</p>}
 
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="显示名（可选）"
             maxLength={40}
-            className={`h-11 w-full rounded-full border border-border bg-surface px-5 text-sm outline-none placeholder:text-faint focus:border-text ${oauthReady ? "mt-3" : "mt-8"}`}
+            className={`h-11 w-full rounded-full border border-border bg-surface px-5 text-sm outline-none placeholder:text-faint focus:border-text "mt-8"`}
           />
           <Button
             size="lg"

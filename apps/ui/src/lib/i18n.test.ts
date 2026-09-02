@@ -14,4 +14,18 @@ describe("i18n", () => {
     expect(result.current.t("hero.title")).toBe("给 Agent 一个解决问题的能力");
     expect(result.current.t("hero.sub")).toBe("Spot it. Use it. Ship it.");
   });
+
+  it("终端块新增 key 双语齐全（漏翻译即失败）", () => {
+    const { result } = renderHook(() => useI18n());
+    for (const k of [
+      "term.tab.human",
+      "term.human.1",
+      "term.human.2",
+      "term.agent.note",
+    ] as const) {
+      const v = result.current.t(k);
+      expect(v).not.toBe(k);
+      expect(v.length).toBeGreaterThan(0);
+    }
+  });
 });

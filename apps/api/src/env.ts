@@ -44,12 +44,13 @@ const EnvSchema = z.object({
 
   // 管理后台（audit-restore 1B-1：Basic 单管理员；未配置则 /admin/* 整体 404 fail-soft）
   AS_ADMIN_USER: z.string().optional(),
-  AS_ADMIN_PASS_BCRYPT: z
-    .preprocess(
-      (v) => (v === "" ? undefined : v),
-      z.string().regex(/^\$2[aby]\$/, "须为 bcrypt 哈希（$2a/$2b/$2y 开头）"),
-    )
-    .optional(),
+  AS_ADMIN_PASS_BCRYPT: z.preprocess(
+    (v) => (v === "" || v == null || v === "undefined" ? undefined : v),
+    z
+      .string()
+      .regex(/^\$2[aby]\$/, "须为 bcrypt 哈希")
+      .optional(),
+  ),
   AS_ADMIN_SINGLE: z.enum(["y", "n"]).default("n"),
 
   // 生命周期

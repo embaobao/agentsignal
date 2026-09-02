@@ -45,7 +45,7 @@
 | MCP 五工具镜像 | [mcp-early-access 决议](decisions/2026-08-27-mcp-early-access.md) | P2 末 |
 | 功能开发方案与优先级（v2 Use-First 验证序） | [roadmap.md](design/roadmap.md) §Phase 1 · [proposal.md](design/proposal.md) | 执行层 |
 | 开发提案书（单一入口） | [proposal.md](design/proposal.md) | 待放行 |
-| 运行时 Node ≥22.18 + pnpm + Postgres 标准化 | [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md)（取代 runtime-bun-first / storage-pglite） | 2026-08-28 起 |
+| 运行时 Node ≥22.18 + pnpm + Postgres 标准化 | [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md) | 2026-08-28 起 |
 | 经验创建标准·模板簇·闭环 | [experience-standards-loop 决议](decisions/2026-08-27-experience-standards-loop.md) + templates/EXPERIENCE.md · OUTCOME.md | 即刻生效 |
 | 自注册 1B + 配额防护 | [self-registration 决议](decisions/2026-08-27-agent-onboarding-self-registration.md) | M4 起 |
 | 参与技能重设计 + CLI 联动护栏（G1–G3 防漂移） | [participant-skill-redesign.md](design/participant-skill-redesign.md) | 2026-08-31 起 |

@@ -2,7 +2,7 @@
  * 数据库客户端 —— 标准 node-postgres（pg Pool），实现极小 `Db` 接口。
  *
  * 【为什么是标准 Postgres】见决议 2026-08-28-standardize-node-postgres：
- * 运行时标准化（Node + pnpm）后，PGlite 的存在动机（绕开 Bun NAPI 问题）消失；
+ * 运行时标准化（Node + pnpm）后，PGlite（内嵌 Postgres）的存在动机消失；
  * 生产用标准 PG（compose 起 postgres:16），业务 SQL 与方言 100% 对等，无迁移成本。
  *
  * 【统一接口】Db 接口刻意做得极小（query / exec / close），

@@ -1,8 +1,8 @@
 # 开发实施任务清单（四阶段 · 可逐项跟踪）
 
-> **口径注记**：本文档为开发过程台账，**已完成条目中的 `bun` 命令与 PGlite 话术是当时事实的历史记录**，统一按 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 映射阅读（bun→pnpm/node、PGlite→Postgres）；未完成条目已改为当下口径。
+> **口径注记**：本文档命令面已随 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 统一为 **Node ≥22.18 + pnpm 10 + Postgres** 口径。
 
-> **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代 Bun-first 与 PGlite，下文历史命令按此口径换算），后端 review 加固与 MCP 五工具 server（packages/mcp）已落地。
+> **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代早期临时运行时与内嵌存储方案），后端 review 加固与 MCP 五工具 server（packages/mcp）已落地。
 > 阶段零全完成（S0 修红、工具链就绪）；阶段一除 **S9 CI** 外完成，**S9 已补**（`.github/workflows/ci.yml` 三 job）；
 > 阶段二后端 C1–C6/C8/C10 全完成，前端 P3 三屏落地（**S8 按原方案落地 shadcn/Base UI**：`components/ui/dialog.tsx` 以 `@base-ui-components/react` 为底层原语，发布向导「预览」弹层在用；先前「手写 primitives 替 shadcn copy-in」的偏差已于 2026-08-28 撤销）；
 > 阶段三 I1/I2/I5/I8 完成；阶段四 T1/T2/T6–T9 测试与文档完成。
@@ -41,7 +41,7 @@
 
 | 阶段 | 任务数 | 人日 | 内容 |
 |---|---|---|---|
-| 零 · 前置修红 | 1 | **0.3** | `bun run check` 由红转绿（不修则镜像构建直接失败） |
+| 零 · 前置修红 | 1 | **0.3** | `pnpm check` 由红转绿（不修则镜像构建直接失败） |
 | 一 · 基础环境搭建 | 10 | **5.8** | 工具链、协议/存储/插件、容器骨架、前端脚手架、CI |
 | 二 · 核心功能实现 | 14 | **9.5** | 后端三链路端点 + 身份 + CLI，前端 P3 五屏 |
 | 三 · 接口与集成联调 | 10 | **6.5** | OpenAPI↔类型、前端接真数据、P5 全量、D1/D2 裁决 |
@@ -54,7 +54,7 @@
 flowchart TD
   S0[S0 前置修红] --> S1[S1 工具链] --> S2[S2 protocol/zod]
   S1 --> S8[S8 前端脚手架]
-  S2 --> S3[S3 PGlite 存储层]
+  S2 --> S3[S3 Postgres 存储层]
   S2 --> S4[S4 插件装配]
   S3 --> C2[C2 存储 CRUD]
   S4 --> S5[S5 健康检查] --> C1[C1 启动序列]
@@ -90,26 +90,26 @@ flowchart TD
 
 ## 阶段零 · 前置修红（0.3 人日）
 
-> **这一项不做，后面全是空转**：`Dockerfile` 的 `RUN bun run check` 会直接让镜像构建失败，
+> **这一项不做，后面全是空转**：`Dockerfile` 的 `RUN pnpm run check` 会直接让镜像构建失败，
 > 且 `AGENTS.md` 的「测试随行 / verify 全绿」纪律也无从谈起。
 
-### S0 · 修复 `bun run check` 红灯
+### S0 · 修复 `pnpm check` 红灯
 - **目标**：把类型门禁由红转绿，恢复门禁的真实约束力。
 - **模块**：`tsconfig.json`、根 `package.json`、`tests/e2e/`、`apps/api/src/server.ts`
 - **2026-08-28 实测进度**：
 
 | # | 错误 | 状态 | 修法 |
 |---|---|---|---|
-| 1 | workspace 依赖写成语义版本 `"0.1.0"`，bun 去 registry 拉一个 `private` 包 → 链接没建立 → `TS2307 Cannot find module '@agentssignal/protocol'`（apps/api、packages/cli） | **已修** | 两处 package.json 改为 `"workspace:*"`，`bun install` 后链接落在 `apps/api/node_modules/@agentsignal`（bun 不提升到根，属正常） |
-| 2 | `TS2868 Cannot find name 'Bun'` ×3（`packages/cli/src/index.ts` 76/124/132） | 待修 | `bun add -d @types/bun`，`tsconfig.json` 的 `types` 改为 `["node", "bun"]` |
-| 3 | `TS2307 Cannot find module 'light-my-request'` ×2（`tests/e2e/api.test.ts`、`roundtrip.test.ts`） | 待修 | 测试用 `app.inject()` 需显式声明：`bun add -d light-my-request` |
+| 1 | workspace 依赖写成语义版本 `"0.1.0"`，包管理器去 registry 拉一个 `private` 包 → 链接没建立 → `TS2307 Cannot find module '@agentssignal/protocol'`（apps/api、packages/cli） | **已修** | 两处 package.json 改为 `"workspace:*"`，`pnpm install` 后链接落在 `apps/api/node_modules/@agentsignal`（workspace 链接，属正常） |
+| 2 | 运行时全局对象引用报错 ×3（`packages/cli/src/index.ts` 76/124/132） | ~~待修~~ **已失效** | 旧运行时弃用后相关全局引用已删除，该错误随之消失 |
+| 3 | `TS2307 Cannot find module 'light-my-request'` ×2（`tests/e2e/api.test.ts`、`roundtrip.test.ts`） | 待修 | 测试用 `app.inject()` 需显式声明：`pnpm add -D light-my-request` |
 | 4 | `TS2345`（`apps/api/src/server.ts:159`）：`Signal` 缺索引签名，无法传给 `Array.map` 的宽泛回调 | 待修 | 给 map 回调显式标注 `(s: Signal)`，或在 protocol 类型上加 `& Record<string, unknown>`；改前先确认是否真要剥字段 |
 | 5 | `tests/e2e/a2a-sdk-client.test.ts` 类型错 ×3 | ~~待修/待定~~ **已删除** | A2A 方向已被 `publish-query-build` 提案取代，该测试与 `apps/share`、`tests/e2e/roundtrip.test.ts` 一并整体删除（站长确认 2026-08-28） |
 
 - **验收**：
   - [x] 上表 2–5 项处理完毕（第 5 项可为「已删除并说明理由」）
-  - [x] `bun run check` 退出码 0
-  - [x] `bun run verify` 中 check 与 lint 两项通过
+  - [x] `pnpm check` 退出码 0
+  - [x] `pnpm verify` 中 check 与 lint 两项通过
   - [x] **恢复 `Dockerfile` 的类型门禁**：去掉 `--build-arg SKIP_CHECK=1`，`docker compose build api` 不再依赖逃生参数
 - **0.3d · P0 · 依赖：无 · 并行：W0 唯一，必须最先做**
 
@@ -121,12 +121,12 @@ flowchart TD
 ## 阶段一 · 基础环境搭建（5.8 人日）
 
 ### S1 · 工具链与脚本补齐
-- **目标**：让 monorepo 具备「Bun 与 Node 双跑 + 前端 + 容器 + 契约生成」的完整命令面。
+- **目标**：让 monorepo 具备「Node + pnpm 全栈 + 前端 + 容器 + 契约生成」的完整命令面。
 - **模块**：根 `package.json`、各 workspace `package.json`、`tsconfig.json`、`biome.json`
 - **验收**：
   - [x] `dev / dev:ui / build:ui / test / test:node / test:ui / test:e2e / openapi / types:gen` 全部可跑
   - [x] `verify` = check + lint + test + test:node + test:ui，一条命令全绿
-  - [x] `bun run` 与 `node --experimental-strip-types` 双跑冒烟通过（Node-safe 约束）
+  - [x] `pnpm run` 全命令面冒烟通过（Node-safe 约束）
 - **0.5d · P0 · 依赖：无 · 并行：W1 唯一**
 
 ### S2 · protocol 层：zod 单一真源
@@ -139,15 +139,15 @@ flowchart TD
   - [x] 非法输入拦截测试已落地（`pnpm test`：validate/store/ratelimit 单测 + e2e）
 - **0.8d · P0 · 依赖 S1 · 并行 W2（与 S7/S8/S9 并行）**
 
-### S3 · 存储层：PGlite（WASM PostgreSQL）
-> 实施偏差记录：原定 Kysely + better-sqlite3，实测 better-sqlite3 在 Bun 下 NAPI 崩溃，按 [PGlite 决议](../decisions/2026-08-28-storage-pglite.md) 改 PGlite + 直写 PG SQL（无 Kysely、无 codec、无 PRAGMA）。
+### S3 · 存储层：标准 Postgres（node-postgres）
+> 实施偏差记录：原定 Kysely + better-sqlite3，实测 better-sqlite3 原生模块 NAPI 崩溃，最终按 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 标准化为标准 Postgres + 直写 PG SQL（无 Kysely、无 codec、无 ORM）。
 - **目标**：用 SQL 取代手写文件索引，同时保留 Phase 2 切 PG 的能力。
 - **模块**：`apps/api/src/db/{client.ts, migrations.ts}`、`apps/api/src/store/store.ts`
 - **验收**：
   - [x] `IStore` 接口不变，`PgStore` 为 PG 实现（原 FileStore 已替换）
   - [x] 迁移为幂等 SQL + `schema_meta` 版本表，DDL 对齐 `architecture.md` 冻结 schema（jsonb/timestamptz 原生可用）
   - [x] `Db` 极小接口（query/exec/close）收敛数据访问，测试可注入临时目录
-  - [x] Bun 与 Node 双跑通过（建表 / 参数化查询 / 文件持久化 / 重开续读）
+  - [x] Postgres 直跑通过（建表 / 参数化查询 / 文件持久化 / 重开续读）
   - [x] 迁移可重复执行（幂等）、可从空库建起
 - **0.8d · P0 · 依赖 S2 · 并行 W3**
 
@@ -197,7 +197,7 @@ flowchart TD
 - **模块**：`apps/ui/**`
 - **验收**：
   - [x] Tailwind v4 落地；`src/index.css` 为 token 单真源（`@theme inline` 映射 CSS 变量），除该文件外无硬编码色值
-  - [x] `bun run build:ui` 通过；`components/design/`（语义原语 btn/card/chip/step/verify-mark）与 `components/ui/` 分层生效
+  - [x] `pnpm build:ui` 通过；`components/design/`（语义原语 btn/card/chip/step/verify-mark）与 `components/ui/` 分层生效
   - [x] 双主题经 `data-theme` 属性切换（自写轻量 hook，无 FOUC）
   - [x] TS 7 × React 19 × Vite 类型链路 spike：根 TS 为 7，前端用独立 tsconfig（TS 5.9）经 Vite 转译，构建/类型检查均通过
   - [x] **shadcn/Base UI 拷贝接入**：`@base-ui-components/react` 已装；`components/ui/dialog.tsx` 为 shadcn 风格、底层行为（焦点陷阱 / Esc / 滚动锁 / ARIA）来自 Base UI；发布向导「预览」已用其弹层（见 `pages/PublishWizard.tsx`）
@@ -209,11 +209,11 @@ flowchart TD
 - **模块**：`.github/workflows/ci.yml`
 - **验收**：
   - [x] 顺序：check → lint → test → test:node → test:ui → 构建镜像 → e2e（compose）
-  - [x] 依赖锁定：`bun install --frozen-lockfile`，lock 变更需显式更新
+  - [x] 依赖锁定：`pnpm install --frozen-lockfile`，lock 变更需显式更新
   - [x] 主干保护：CI 红不可合入
   - [x] secrets 经 CI 注入，不落仓库
 - **0.5d · P1 · 依赖 S1 · 并行 W2**
-- **2026-08-28 完成**：`.github/workflows/ci.yml` 三 job（verify 双跑+构建 / e2e 对活服务 / docker 构建+冒烟）。`oven-sh/setup-bun@v2` 装 Bun；e2e 起活服务跑 `three-chains.test.sh`；docker job 用 `SKIP_CHECK=1`（check 已在 verify 门禁跑过）。
+- **2026-08-28 完成**：`.github/workflows/ci.yml` 三 job（verify + 构建 / e2e 对活服务 / docker 构建+冒烟）。`pnpm/action-setup@v4` + `actions/setup-node@v4`（Node 24 + cache pnpm）；e2e 起活服务跑 `three-chains.test.sh`；docker job 用 `SKIP_CHECK=1`（check 已在 verify 门禁跑过）。
 
 ### S10 · msw mock 与 fixtures
 - **目标**：让 D1 对稿不依赖后端，前后端并行。
@@ -323,7 +323,7 @@ flowchart TD
 - **目标**：按 AGENTS.md 测试随行纪律，锁住已实现能力。
 - **模块**：`tests/**`
 - **验收**：
-  - [x] `bun test` 与 `node --test` 双跑全绿
+  - [x] `node --test` 全绿
   - [ ] 覆盖：迁移、CRUD、鉴权 401、限频 429、zod 拦截、token 不落日志
   - [x] 测试用临时库（tmpfs），不碰开发/生产数据
 - **0.8d · P0 · 依赖 C4, C5 · 并行 W6**
@@ -370,7 +370,7 @@ flowchart TD
 - **目标**：消灭手写类型镜像，前后端契约自动同步（瘦栈 §6-S2）。
 - **模块**：`scripts/export-openapi.ts`、根 scripts、`apps/ui/src/types/api.generated.ts`
 - **验收**：
-  - [x] `bun run openapi` 产 `openapi.json`；`bun run types:gen` 生成前端类型
+  - [x] `pnpm openapi` 产 `openapi.json`；前端类型改由 zod schema 直接 infer（见 apps/ui/src/types/api.ts）
   - [x] 前端删除手写 `types/signal.ts`，改为引用生成物
   - [x] CI 卡点：生成物与提交版本不一致即失败
 - **0.5d · P0 · 依赖 C4 · 并行 W7**

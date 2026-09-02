@@ -5,7 +5,7 @@
  * 1. 仓库根用 TypeScript 7，openapi-typescript 7.13 依赖 ts.factory（TS 5 的 JS API），
  *    在 TS 7 下 `ts.factory` 为 undefined，生成直接崩；
  * 2. zod schema 本就是服务端校验的真源，前端 z.infer 同一份 = 更短的链路、零生成物漂移。
- * OpenAPI（bun run openapi）仍产出，供 /docs 与外部 SDK 使用。
+ * OpenAPI（pnpm openapi）仍产出，供 /docs 与外部 SDK 使用。
  */
 
 import type {

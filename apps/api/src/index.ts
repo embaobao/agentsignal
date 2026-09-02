@@ -4,7 +4,7 @@
  * 序列：env 校验 → 建 app（含迁移）→ 注册路由 → listen → 就绪
  * 关停：SIGTERM/SIGINT → 停止收新请求 → 等 drain → 关闭（30s 兜底强退）
  *
- * 导出模式：`bun apps/api/src/index.ts --export-openapi > openapi.json`
+ * 导出模式：`pnpm openapi`（node 直跑 src/index.ts --export-openapi）
  */
 import { writeFileSync } from "node:fs";
 import { loadEnv } from "./env.ts";

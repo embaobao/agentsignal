@@ -1,6 +1,5 @@
 /**
  * 单测：软校验流水线 + 硬校验限（backend-architecture §十一：validate 关键路径）。
- * bun test 与 node:test 双跑兼容。
  */
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
