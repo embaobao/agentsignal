@@ -7,6 +7,7 @@ import { RelatedRail, SignalDetail } from "@/pages/SignalDetail";
 import { NotFoundPage, UnauthorizedPage } from "@/components/design/EmptyState";
 import { AuthPage } from "@/pages/AuthPage";
 import { PublishWizard } from "@/pages/PublishWizard";
+import { MePage } from "@/pages/MePage";
 
 /** 旧路由 301：保留 query（如 ?q=）平滑迁移到语义化新路径 */
 function LegacyRedirect({ to }: { to: string }) {
@@ -65,6 +66,14 @@ export function App() {
           element={
             <AppLayout>
               <PublishWizard />
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/me"
+          element={
+            <AppLayout>
+              <MePage />
             </AppLayout>
           }
         />

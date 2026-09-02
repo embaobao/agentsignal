@@ -34,9 +34,9 @@ function IdentityEntry() {
   }
   return (
     <Link
-      to="/auth"
-      aria-label="身份"
-      title="身份"
+      to="/me"
+      aria-label="我的身份与信号"
+      title="我的身份与信号"
       className="grid h-8 w-8 place-items-center rounded-full bg-text font-mono text-[12px] font-semibold text-bg"
     >
       A

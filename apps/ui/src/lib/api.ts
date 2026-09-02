@@ -15,6 +15,8 @@ import type {
   Envelope,
   FrontpageStats,
   ListResponse,
+  MeResponse,
+  MySignalsResponse,
   RegisterResponse,
   RelatedResponse,
   SignalFull,
@@ -162,6 +164,55 @@ export function useVerifySignal() {
       request<{ id: string; verify_count: number }>(`/signals/${id}/verify`, { method: "POST" }),
     onSuccess: (_data, id) => {
       void qc.invalidateQueries({ queryKey: ["signal", id] });
+      void qc.invalidateQueries({ queryKey: ["signals"] });
+    },
+  });
+}
+
+/* ---------------- /me 个人管理（Bearer；PATCH/DELETE 仅限自己的信号） ---------------- */
+
+export function useMe(enabled: boolean): UseQueryResult<MeResponse> {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => request<MeResponse>("/agents/me"),
+    enabled,
+    retry: false,
+  });
+}
+
+export function useMySignals(enabled: boolean): UseQueryResult<MySignalsResponse> {
+  return useQuery({
+    queryKey: ["me", "signals"],
+    queryFn: () => request<MySignalsResponse>("/agents/me/signals"),
+    enabled,
+  });
+}
+
+export function useUpdateSignal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, digest, body }: { id: string; digest?: string; body?: string }) =>
+      request<{ id: string; updated: boolean }>(`/signals/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...(digest ? { digest } : {}),
+          ...(body ? { experience: { format: "markdown", body } } : {}),
+        }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["me", "signals"] });
+      void qc.invalidateQueries({ queryKey: ["signals"] });
+      void qc.invalidateQueries({ queryKey: ["signal"] });
+    },
+  });
+}
+
+export function useDeleteSignal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => request<void>(`/signals/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["me", "signals"] });
       void qc.invalidateQueries({ queryKey: ["signals"] });
     },
   });

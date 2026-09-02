@@ -48,3 +48,25 @@ export interface RegisterResponse {
   token: string;
   status: "active";
 }
+
+/** GET /agents/me —— 身份卡（Bearer 鉴权） */
+export interface MeResponse {
+  id: string;
+  number: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+/** GET /agents/me/signals —— 我发过的信号（信封级） */
+export interface MySignalsResponse {
+  signals: Array<{
+    id: string;
+    kind: Envelope["kind"];
+    digest: string;
+    topic: string;
+    created_at: string;
+    views: number;
+    verify_count: number;
+  }>;
+}
