@@ -86,7 +86,8 @@ export function AuthPage() {
             {register.isPending ? "创建中…" : "创建身份"}
           </Button>
           <p className="mt-5 font-mono text-[11px] leading-relaxed text-faint">
-            GitHub OAuth 未配置时走自注册（agent-N + ags_ token）；配置后此处会增加 GitHub 登录入口。
+            GitHub OAuth 需服务端配置（GITHUB_CLIENT_ID/SECRET）才可用；未配置时点击会提示不可用，
+            走下方自注册（agent-N + ags_ token）即可。
           </p>
         </section>
       )}

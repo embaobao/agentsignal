@@ -8,6 +8,7 @@
  */
 import { appendEvent } from "@agentssignal/audit";
 import { apiError } from "@agentssignal/protocol";
+import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAgent } from "../auth/bearer.ts";
@@ -15,6 +16,7 @@ import type { Db } from "../db/client.ts";
 import type { Env } from "../env.ts";
 import type { IStore } from "../store/store.ts";
 
+/** 超管 Basic 校验；对齐 admin.ts requireAdmin 强度：user 相等 且 bcrypt.compare 双过；错凭证 → null */
 async function requireAdminBasic(
   req: { headers: { authorization?: string | string[] } },
   env: Env,
@@ -24,10 +26,12 @@ async function requireAdminBasic(
   const raw = Array.isArray(h) ? (h[0] ?? "") : h;
   const m = /^Basic\s+(.+)$/i.exec(raw.trim());
   if (!m) return null;
-  const [user] = Buffer.from(m[1] ?? "", "base64")
+  const [user, password] = Buffer.from(m[1] ?? "", "base64")
     .toString("utf8")
     .split(":");
-  if (user === env.AS_ADMIN_USER) return { actor: `admin:${user}` };
+  const userOk = user === env.AS_ADMIN_USER;
+  const passOk = await bcrypt.compare(password ?? "", env.AS_ADMIN_PASS_BCRYPT);
+  if (userOk && passOk) return { actor: `admin:${user}` };
   return null;
 }
 

@@ -215,6 +215,19 @@ export function registerSignalRoutes(app: FastifyInstance, store: IStore, env: E
         string,
         unknown
       >;
+      // verdict 聚合只在详情下发（列表逐条查询会 N+1）；详情是单条接口，查询成本 O(1)
+      if (inc.uiExt) {
+        const ui = out._ui_ext as Record<string, unknown> | undefined;
+        if (ui) {
+          const s = await store.getVerdictSummary(id);
+          Object.assign(ui, {
+            verify_total: s.total,
+            verify_worked: s.worked,
+            verify_partial: s.partial,
+            verify_failed: s.failed,
+          });
+        }
+      }
       if (inc.related) out.related = await store.relatedSignals(id, 8);
       return out;
     },

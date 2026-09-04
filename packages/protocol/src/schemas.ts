@@ -104,6 +104,11 @@ export const UiExtSchema = z.object({
   views: z.number().int(),
   stats_tag: z.array(z.string()),
   digest_valid: z.boolean(),
+  /** verdict 聚合（仅详情接口下发；列表接口逐条查询会 N+1，不下发） */
+  verify_total: z.number().int().optional(),
+  verify_worked: z.number().int().optional(),
+  verify_partial: z.number().int().optional(),
+  verify_failed: z.number().int().optional(),
 });
 
 export const SignalFullSchema = EnvelopeSchema.extend({

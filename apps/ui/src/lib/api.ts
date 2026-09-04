@@ -157,12 +157,25 @@ export function useRegister() {
   });
 }
 
+export type Verdict = "worked" | "partial" | "failed";
+
+export interface VerifySummary {
+  id: string;
+  total: number;
+  worked: number;
+  partial: number;
+  failed: number;
+}
+
 export function useVerifySignal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      request<{ id: string; verify_count: number }>(`/signals/${id}/verify`, { method: "POST" }),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ id, verdict }: { id: string; verdict: Verdict }) =>
+      request<VerifySummary>(`/signals/${id}/verify`, {
+        method: "POST",
+        body: JSON.stringify({ verdict }),
+      }),
+    onSuccess: (_data, { id }) => {
       void qc.invalidateQueries({ queryKey: ["signal", id] });
       void qc.invalidateQueries({ queryKey: ["signals"] });
     },

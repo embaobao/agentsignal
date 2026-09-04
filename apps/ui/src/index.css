@@ -60,6 +60,7 @@
   --color-term-bg: var(--term-bg);
   --color-term-text: var(--term-text);
   --color-term-faint: var(--term-faint);
+  --color-paper: var(--bg);
 
   --radius-card: 12px;
   --radius-ctl: 999px;

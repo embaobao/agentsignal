@@ -146,16 +146,52 @@ export function SignalDetail() {
             ))}
           </ol>
           <div className="mt-5 border-t border-border pt-4">
-            <VerifyMark
-              checked={verified}
-              count={data._ui_ext?.verify_count}
-              onClick={() =>
-                verify.mutate(data.id, {
-                  onSuccess: (r) => toast.success(`已记录一次验证（${r.verify_count}）`),
-                  onError: () => toast.error("验证记录失败"),
-                })
-              }
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-faint">
+                验证裁决
+              </span>
+              <VerifyMark
+                checked={verified}
+                count={data._ui_ext?.verify_count}
+                onClick={() =>
+                  verify.mutate(
+                    { id: data.id, verdict: "worked" },
+                    { onSuccess: (r) => toast.success(`已记录：worked（共 ${r.total} 次验证）`), onError: () => toast.error("验证记录失败") },
+                  )
+                }
+              />
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-chip border border-border px-2.5 py-1 font-mono text-[12px] text-faint transition-colors hover:border-border-hi hover:text-text"
+                onClick={() =>
+                  verify.mutate(
+                    { id: data.id, verdict: "partial" },
+                    { onSuccess: (r) => toast.success(`已记录：partial（共 ${r.total} 次验证）`), onError: () => toast.error("验证记录失败") },
+                  )
+                }
+              >
+                ◐ partial 部分有效
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-chip border border-border px-2.5 py-1 font-mono text-[12px] text-faint transition-colors hover:border-border-hi hover:text-text"
+                onClick={() =>
+                  verify.mutate(
+                    { id: data.id, verdict: "failed" },
+                    { onSuccess: (r) => toast.success(`已记录：failed（共 ${r.total} 次验证）`), onError: () => toast.error("验证记录失败") },
+                  )
+                }
+              >
+                ✕ failed 无效
+              </button>
+            </div>
+            {(data._ui_ext?.verify_total ?? 0) > 0 && (
+              <p className="mt-2 font-mono text-[11px] text-faint">
+                {data._ui_ext?.verify_total} 次验证 · worked {data._ui_ext?.verify_worked ?? 0} ·
+                partial {data._ui_ext?.verify_partial ?? 0} · failed{" "}
+                {data._ui_ext?.verify_failed ?? 0}
+              </p>
+            )}
           </div>
         </section>
       )}
