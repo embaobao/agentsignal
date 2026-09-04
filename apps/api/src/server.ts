@@ -43,6 +43,7 @@ import { registerFeedbackRoutes } from "./routes/feedback.ts";
 import { registerHealthRoutes } from "./routes/health.ts";
 import { registerMeRoutes } from "./routes/me.ts";
 import { registerSignalRoutes } from "./routes/signals.ts";
+import { registerUserAgentRoutes } from "./routes/user.ts";
 import { withAudit } from "./store/audit-wrap.ts";
 import { type IStore, PgStore } from "./store/store.ts";
 
@@ -151,6 +152,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
 
   const auth = createAuth(env);
   registerAuthRoutes(app, auth, env);
+  registerUserAgentRoutes(app, auth, store, db, env);
 
   /* ---------- 过渡期根路径：无前端产物时返回单文件 HTML 浏览库 ---------- */
   if (!dist) {

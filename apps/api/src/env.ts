@@ -57,6 +57,9 @@ const EnvSchema = z.object({
   TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(90),
   SIGNAL_DEFAULT_TTL_DAYS: z.coerce.number().int().nonnegative().default(7),
 
+  // 用户域（身份模型 Q5：每 GitHub 用户名下 agent 上限）
+  AGENTS_PER_USER_MAX: z.coerce.number().int().positive().default(5),
+
   // 静态资源（C7：解开 import.meta.url 对打包/挂载的耦合）
   AS_SKILL_PATH: z.string().optional(),
   AS_UI_DIST_PATH: z.string().optional(),

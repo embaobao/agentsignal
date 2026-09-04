@@ -7,7 +7,7 @@
  */
 import type { Db } from "./client.ts";
 
-export const SCHEMA_VERSION = "005_feedback";
+export const SCHEMA_VERSION = "007_auth";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -145,6 +145,75 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       create index if not exists verify_logs_signal on verify_logs (signal_id, verdict);
 
       insert into schema_meta (key, value) values ('schema_version', '005_feedback')
+        on conflict (key) do update set value = excluded.value;
+    `,
+  },
+  {
+    name: "006_verify_actor",
+    sql: `
+      -- verify_logs.agent_id 语义放宽为 actor（admin Basic 代验时为 admin:<user>，非 agents.id）
+      -- 原 FK 会让 admin 代验插入即 500（user-domain-completion Phase 0.7）；expand-only，幂等
+      alter table verify_logs drop constraint if exists verify_logs_agent_id_fkey;
+
+      insert into schema_meta (key, value) values ('schema_version', '006_verify_actor')
+        on conflict (key) do update set value = excluded.value;
+    `,
+  },
+  {
+    name: "007_auth",
+    sql: `
+      -- better-auth 四表（官方 PG 方言默认 schema，单数表名；user-domain-completion Phase 1.1）
+      -- session↔agents 桥接靠 account(provider_id='github').account_id = agents.github_id，不加 FK
+      create table if not exists "user" (
+        id              text primary key,
+        name            text not null,
+        email           text not null unique,
+        "email_verified" boolean not null default false,
+        image           text,
+        created_at      timestamptz not null default now(),
+        updated_at      timestamptz not null default now()
+      );
+
+      create table if not exists "session" (
+        id              text primary key,
+        expires_at      timestamptz not null,
+        token           text not null unique,
+        created_at      timestamptz not null default now(),
+        updated_at      timestamptz not null default now(),
+        ip_address      text,
+        user_agent      text,
+        user_id         text not null references "user"(id)
+      );
+      create index if not exists session_user on "session" (user_id);
+
+      create table if not exists "account" (
+        id                       text primary key,
+        account_id               text not null,
+        provider_id              text not null,
+        user_id                  text not null references "user"(id),
+        access_token             text,
+        refresh_token            text,
+        id_token                 text,
+        access_token_expires_at  timestamptz,
+        refresh_token_expires_at timestamptz,
+        scope                    text,
+        password                 text,
+        created_at               timestamptz not null default now(),
+        updated_at               timestamptz not null default now()
+      );
+      create index if not exists account_user on "account" (user_id);
+      create index if not exists account_provider on "account" (provider_id, account_id);
+
+      create table if not exists "verification" (
+        id              text primary key,
+        identifier      text not null,
+        value           text not null,
+        expires_at      timestamptz not null,
+        created_at      timestamptz not null default now(),
+        updated_at      timestamptz not null default now()
+      );
+
+      insert into schema_meta (key, value) values ('schema_version', '007_auth')
         on conflict (key) do update set value = excluded.value;
     `,
   },

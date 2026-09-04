@@ -21,6 +21,7 @@ export function createAuth(env: Env) {
   const db = getPool(env.DATABASE_URL);
 
   return betterAuth({
+    secret: env.BETTER_AUTH_SECRET, // 测试/部署显式可配；缺省回落 BETTER_AUTH_SECRET env
     database: db,
     emailAndPassword: { enabled: false }, // 无密码，仅 OAuth
     socialProviders: {

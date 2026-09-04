@@ -1,9 +1,10 @@
 /**
  * 个人管理路由 —— GET /agents/me · GET /agents/me/signals · PATCH/DELETE /signals/:id
+ *                  + token 管理（GET /agents/me/tokens · rotate · revoke，Phase 1.4）
  * 全部需 Bearer 鉴权；编辑/删除仅限自己的信号，自动落审计。
  */
 import { appendEvent } from "@agentssignal/audit";
-import { apiError } from "@agentssignal/protocol";
+import { apiError, prefixed } from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAgent } from "../auth/bearer.ts";
@@ -46,6 +47,72 @@ export function registerMeRoutes(app: FastifyInstance, store: IStore, db: Db, _e
       return reply.code(401).send(apiError("unauthorized", (err as Error).message));
     }
   });
+
+  /* ---------- Token 管理（Phase 1.4）：明文只在 rotate 响应出现一次 ---------- */
+
+  app.get("/agents/me/tokens", async (req, reply) => {
+    let agent: AgentRow;
+    try {
+      agent = (await requireAgent(req, store)) as AgentRow;
+    } catch (err) {
+      return reply.code(401).send(apiError("unauthorized", (err as Error).message));
+    }
+    const tokens = await store.listAgentTokens(agent.id);
+    return { tokens };
+  });
+
+  app.post(
+    "/agents/me/tokens/:tokenId/rotate",
+    { schema: { params: z.object({ tokenId: z.string().min(1) }) } },
+    async (req, reply) => {
+      let agent: AgentRow;
+      try {
+        agent = (await requireAgent(req, store)) as AgentRow;
+      } catch (err) {
+        return reply.code(401).send(apiError("unauthorized", (err as Error).message));
+      }
+      const { tokenId } = req.params as { tokenId: string };
+      const rawToken = prefixed("ags");
+      const rotated = await store.rotateAgentToken(agent.id, tokenId, rawToken);
+      if (!rotated) {
+        return reply.code(404).send(apiError("not_found", "no such token for this agent"));
+      }
+      await appendEvent(db, {
+        actor: agent.id,
+        entityType: "agent_token",
+        entityId: tokenId,
+        action: "update",
+        after: { rotated: true },
+      });
+      return { id: rotated.id, token: rawToken, expires_at: rotated.expires_at };
+    },
+  );
+
+  app.post(
+    "/agents/me/tokens/:tokenId/revoke",
+    { schema: { params: z.object({ tokenId: z.string().min(1) }) } },
+    async (req, reply) => {
+      let agent: AgentRow;
+      try {
+        agent = (await requireAgent(req, store)) as AgentRow;
+      } catch (err) {
+        return reply.code(401).send(apiError("unauthorized", (err as Error).message));
+      }
+      const { tokenId } = req.params as { tokenId: string };
+      const ok = await store.revokeAgentToken(agent.id, tokenId);
+      if (!ok) {
+        return reply.code(404).send(apiError("not_found", "no such active token for this agent"));
+      }
+      await appendEvent(db, {
+        actor: agent.id,
+        entityType: "agent_token",
+        entityId: tokenId,
+        action: "update",
+        after: { revoked: true },
+      });
+      return reply.code(204).send();
+    },
+  );
 
   app.patch(
     "/signals/:id",

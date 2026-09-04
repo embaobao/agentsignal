@@ -16,6 +16,8 @@ export interface AgentRow {
   name: string;
   description: string;
   created_at: string;
+  /** GitHub 绑定 id（004_ux）；仅带 github_id 的查询填充，其余场景缺省 */
+  github_id?: string | null;
 }
 
 export interface TopicRow {
@@ -97,6 +99,14 @@ export interface FrontpageStats {
   new_this_week: number;
 }
 
+/** agent_tokens 行（只出元数据，token_hash 永不出库——身份 spec §2） */
+export interface AgentTokenRow {
+  id: string;
+  created_at: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+}
+
 export interface IStore {
   init(): Promise<void>;
   registerAgent(name: string, description: string, rawToken: string): Promise<{ agent: AgentRow }>;
@@ -122,7 +132,14 @@ export interface IStore {
   ): Promise<SignalRow | undefined>;
   softDeleteSignal(id: string, agentId: string): Promise<boolean>;
   bindGithub(agentId: string, githubId: string): Promise<void>;
+  unbindGithub(agentId: string, githubId: string): Promise<boolean>;
   findAgentByGithub(githubId: string): Promise<AgentRow | undefined>;
+  agentsByGithub(githubId: string): Promise<AgentRow[]>;
+  countAgentsByGithub(githubId: string): Promise<number>;
+  githubIdForUser(userId: string): Promise<string | undefined>;
+  listAgentTokens(agentId: string): Promise<AgentTokenRow[]>;
+  rotateAgentToken(agentId: string, tokenId: string, newRawToken: string): Promise<AgentTokenRow | undefined>;
+  revokeAgentToken(agentId: string, tokenId: string): Promise<boolean>;
   verifySignal(
     signalId: string,
     agentId: string,
@@ -268,8 +285,10 @@ export class PgStore implements IStore {
   async agentForToken(rawToken: string): Promise<AgentRow | undefined> {
     const hash = hashToken(rawToken);
     const ttlDays = Number(process.env.TOKEN_TTL_DAYS ?? 90);
-    const r = await this.db.query<Omit<AgentRow, "created_at"> & { created_at: unknown }>(
-      `select a.id, a.number, a.name, a.description, a.created_at
+    const r = await this.db.query<
+      Omit<AgentRow, "created_at" | "github_id"> & { created_at: unknown; github_id: string | null }
+    >(
+      `select a.id, a.number, a.name, a.description, a.created_at, a.github_id
          from agent_tokens t
          join agents a on a.id = t.agent_id
         where t.token_hash = $1
@@ -287,7 +306,7 @@ export class PgStore implements IStore {
         [ttlDays, hash],
       );
     }
-    return { ...agent, created_at: iso(agent.created_at) as string };
+    return { ...agent, created_at: iso(agent.created_at) as string, github_id: agent.github_id };
   }
 
   async agentByIdOrNumber(idOrNumber: string): Promise<AgentRow | undefined> {
@@ -563,6 +582,88 @@ export class PgStore implements IStore {
       [githubId],
     );
     return r.rows[0];
+  }
+
+  async agentsByGithub(githubId: string): Promise<AgentRow[]> {
+    const r = await this.db.query<AgentRow>(
+      `select id, number, name, description, created_at from agents where github_id = $1 order by number asc`,
+      [githubId],
+    );
+    return r.rows;
+  }
+
+  async countAgentsByGithub(githubId: string): Promise<number> {
+    const r = await this.db.query<{ n: number }>(
+      `select count(*)::int as n from agents where github_id = $1`,
+      [githubId],
+    );
+    return r.rows[0]?.n ?? 0;
+  }
+
+  /** session↔agents 桥接源：better-auth account 表里 GitHub provider 的 account_id = agents.github_id */
+  async githubIdForUser(userId: string): Promise<string | undefined> {
+    const r = await this.db.query<{ account_id: string }>(
+      `select account_id from "account" where user_id = $1 and provider_id = 'github'
+        order by created_at desc limit 1`,
+      [userId],
+    );
+    return r.rows[0]?.account_id;
+  }
+
+  async unbindGithub(agentId: string, githubId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `update agents set github_id = null where id = $1 and github_id = $2 returning id`,
+      [agentId, githubId],
+    );
+    return r.rows.length > 0;
+  }
+
+  async listAgentTokens(agentId: string): Promise<AgentTokenRow[]> {
+    const r = await this.db.query<Omit<AgentTokenRow, "created_at" | "expires_at" | "revoked_at"> & {
+      created_at: unknown;
+      expires_at: unknown;
+      revoked_at: unknown;
+    }>(
+      `select id, created_at, expires_at, revoked_at
+         from agent_tokens where agent_id = $1
+        order by (revoked_at is null) desc, created_at desc`,
+      [agentId],
+    );
+    return r.rows.map((t) => ({
+      id: t.id,
+      created_at: iso(t.created_at) as string,
+      expires_at: iso(t.expires_at),
+      revoked_at: iso(t.revoked_at),
+    }));
+  }
+
+  /** rotate = 原行换 hash（id 不变，历史连续）；旧 token 立即失效，新 token 重新起算 TTL */
+  async rotateAgentToken(
+    agentId: string,
+    tokenId: string,
+    newRawToken: string,
+  ): Promise<AgentTokenRow | undefined> {
+    const ttlDays = Number(process.env.TOKEN_TTL_DAYS ?? 90);
+    const r = await this.db.query<{ id: string }>(
+      `update agent_tokens
+          set token_hash = $3, created_at = now(), revoked_at = null,
+              expires_at = case when $4 > 0 then now() + make_interval(days => $4) else null end
+        where id = $1 and agent_id = $2
+        returning id`,
+      [tokenId, agentId, hashToken(newRawToken), ttlDays],
+    );
+    if (r.rows.length === 0) return undefined;
+    const tokens = await this.listAgentTokens(agentId);
+    return tokens.find((t) => t.id === tokenId);
+  }
+
+  async revokeAgentToken(agentId: string, tokenId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `update agent_tokens set revoked_at = now()
+        where id = $1 and agent_id = $2 and revoked_at is null returning id`,
+      [tokenId, agentId],
+    );
+    return r.rows.length > 0;
   }
 
   async verifySignal(
