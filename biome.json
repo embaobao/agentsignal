@@ -11,6 +11,7 @@
       "**/*.json",
       "!**/data",
       "!**/.turbo",
+      "!**/.codebuddy",
       "!packages/cli/src/skills/wizard/html.ts"
     ]
   },

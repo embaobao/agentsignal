@@ -138,7 +138,11 @@ export interface IStore {
   countAgentsByGithub(githubId: string): Promise<number>;
   githubIdForUser(userId: string): Promise<string | undefined>;
   listAgentTokens(agentId: string): Promise<AgentTokenRow[]>;
-  rotateAgentToken(agentId: string, tokenId: string, newRawToken: string): Promise<AgentTokenRow | undefined>;
+  rotateAgentToken(
+    agentId: string,
+    tokenId: string,
+    newRawToken: string,
+  ): Promise<AgentTokenRow | undefined>;
   revokeAgentToken(agentId: string, tokenId: string): Promise<boolean>;
   verifySignal(
     signalId: string,
@@ -619,11 +623,13 @@ export class PgStore implements IStore {
   }
 
   async listAgentTokens(agentId: string): Promise<AgentTokenRow[]> {
-    const r = await this.db.query<Omit<AgentTokenRow, "created_at" | "expires_at" | "revoked_at"> & {
-      created_at: unknown;
-      expires_at: unknown;
-      revoked_at: unknown;
-    }>(
+    const r = await this.db.query<
+      Omit<AgentTokenRow, "created_at" | "expires_at" | "revoked_at"> & {
+        created_at: unknown;
+        expires_at: unknown;
+        revoked_at: unknown;
+      }
+    >(
       `select id, created_at, expires_at, revoked_at
          from agent_tokens where agent_id = $1
         order by (revoked_at is null) desc, created_at desc`,

@@ -6,8 +6,9 @@
  * 本 helper 从请求 cookie 解析出「登录人类 + 其名下全部 agent」，
  * 供 claim / 用户域创建 agent / /me 双层身份使用。
  */
-import type { Auth } from "./better-auth.ts";
+
 import type { AgentRow, IStore } from "../store/store.ts";
+import type { Auth } from "./better-auth.ts";
 
 export interface SessionContext {
   user: { id: string; name: string; email: string };

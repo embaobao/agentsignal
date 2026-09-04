@@ -13,8 +13,8 @@ import { appendEvent } from "@agentssignal/audit";
 import { AppError, apiError, prefixed } from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { getSessionContext } from "../auth/bridge.ts";
 import type { Auth } from "../auth/better-auth.ts";
+import { getSessionContext } from "../auth/bridge.ts";
 import type { Db } from "../db/client.ts";
 import type { Env } from "../env.ts";
 import type { IStore } from "../store/store.ts";
@@ -56,7 +56,14 @@ export function registerUserAgentRoutes(
   /** 1.8 用户域创建 agent：出生即绑定，≤5（Q5），自注册路径不变 */
   app.post(
     "/agents",
-    { schema: { body: z.object({ name: z.string().min(1).max(40).optional(), description: z.string().max(200).optional() }) } },
+    {
+      schema: {
+        body: z.object({
+          name: z.string().min(1).max(40).optional(),
+          description: z.string().max(200).optional(),
+        }),
+      },
+    },
     async (req, reply) => {
       let ctx;
       try {
@@ -75,7 +82,11 @@ export function registerUserAgentRoutes(
       }
       const body = (req.body ?? {}) as { name?: string; description?: string };
       const rawToken = prefixed("ags");
-      const { agent } = await store.registerAgent(body.name ?? "", body.description ?? "", rawToken);
+      const { agent } = await store.registerAgent(
+        body.name ?? "",
+        body.description ?? "",
+        rawToken,
+      );
       await store.bindGithub(agent.id, ctx.githubId);
       await appendEvent(db, {
         actor: `user:${ctx.user.id}`,
@@ -112,7 +123,9 @@ export function registerUserAgentRoutes(
       const agent = await store.agentForToken(token);
       if (!agent) return reply.code(404).send(apiError("not_found", "invalid or expired token"));
       if (agent.github_id && agent.github_id !== ctx.githubId) {
-        return reply.code(409).send(apiError("conflict", "agent already bound to another GitHub identity"));
+        return reply
+          .code(409)
+          .send(apiError("conflict", "agent already bound to another GitHub identity"));
       }
       await store.bindGithub(agent.id, ctx.githubId);
       await appendEvent(db, {
