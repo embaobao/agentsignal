@@ -1,7 +1,7 @@
 # docs/ — 项目文档索引
 
-规范见根目录 `AGENTS.md`。进度：**三链路已上线 npm（@agentssignal/* 0.2.0）· Neon 三方云库接入实测通过 · Netlify 在线验证环境差最后两个环境变量 · audit-restore 1B-1 完成（账本+快照+admin 端点）· 待 D1/D5 人工对稿与 T3–T5 容器演练**。
-定位：产品「The shared experience layer」· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
+规范见根目录 `AGENTS.md`。进度（2026-09-02 账实对照口径）：**三链路公网全通 agentsignal.netlify.app（npm @agentssignal/* 0.3.0 lockstep）· ux-foundation Phase 0–2+5 主体已实施 · 在册 changes：user-domain-completion（**已批准 2026-09-02 · Phase 0 先行**）· audit-restore 1B-2 · participant-skill-cli-sync · **host-matrix-alignment（proposed 2026-09-03 · P1.5 · Hermes 优先）****。明细只看 [台账](design/implementation-tasks.md)与 AGENTS.md「当前阶段」，本行不重复维护细节。
+定位：产品「The shared experience layer」· 品类「**Agent 自主学习基础设施**」（2026-09-02 起，[决议](decisions/2026-09-02-agent-native-repositioning.md)）· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
 **术语与功能定义唯一权威源：[glossary.md](design/glossary.md)**。
 
 ## 文档地图（按你要干什么找）
@@ -12,8 +12,10 @@
 | **管理端点 / 审计账本 / 数据备份** | [design/admin-guide.md](design/admin-guide.md) · [design/deployment.md](design/deployment.md) |
 | **部署 / 三环境 / 升级回滚 / 发版** | ★[design/deployment.md](design/deployment.md)（§2 操作 · §3 环境变量 · §10 发布与升级） |
 | **后端/前端开发** | [AGENTS.md](../AGENTS.md)（权威入口）· [design/architecture.md](design/architecture.md) · [design/backend-architecture.md](design/backend-architecture.md) · [design/frontend-architecture.md](design/frontend-architecture.md) |
+| **新 Agent 接手 / 怎么开发、改哪里、避什么坑** | ★[design/agent-dev-paradigm.md](design/agent-dev-paradigm.md)（开发闭环 · DoD 四本账+两手册）· ★[design/maintenance-cheatsheet.md](design/maintenance-cheatsheet.md)（30 秒定位 · 变更配方 · 坑速查） |
 | **对协议 / 字段语义** | [protocols/api.md](protocols/api.md) · [protocols/message-envelope.md](protocols/message-envelope.md) · [design/glossary.md](design/glossary.md) |
-| **查进度 / 提案 / 验证** | [design/implementation-tasks.md](design/implementation-tasks.md) · `../openspec/changes/`（在册：audit-restore）· [design/validation.md](design/validation.md) |
+| **本地引擎（四命令 / MCP 九工具 / 管理界面）** | ★[design/local-engine.md](design/local-engine.md)（功能 canonical）· [UI 真源](design/management-ui-spec-v1.md) |
+| **查进度 / 提案 / 验证** | [design/implementation-tasks.md](design/implementation-tasks.md) · `../openspec/changes/`（**在册 7 个活跃**：user-domain-completion · host-matrix-alignment · participant-skill-cli-sync · skill-engine · audit-restore · human-auth-providers · ux-foundation）· [design/validation.md](design/validation.md) |
 | **查决策为什么这么做** | [decisions/](decisions/)（一事一文，最新：standardize-node-postgres） |
 
 ## 设计（活文档）
@@ -40,6 +42,11 @@
 | `design/admin-guide.md` | 管理员指南：admin 三端点 / 审计账本模型 / CLI / 数据备份还原 |
 | `design/user-manual.md` | ★用户使用手册：启动/四通道姿势/发布/检索/use/回流/管理员（只写已上线功能） |
 | `design/implementation-tasks.md` | ★开发实施任务清单：阶段零~四共 44 项（目标/模块/验收/人日/优先级/依赖/并行批次），含 S0 前置修红与关键路径图 |
+| `design/agent-dev-paradigm.md` | ★Agent 开发范式：五阶段闭环、动码四硬规、手册随行矩阵、双读者写作标准、PR 自查清单、多 Agent 并行约定 |
+| `design/management-ui-spec-v1.md` | ★本地 Web 管理界面设计规范 v1（UI 真源：三态 A/B/C + 组件 + 文案表 + tokens + 验收清单） |
+| `design/local-engine.md` | ★本地技能引擎 canonical：四命令 / MCP 九工具 / 引擎模块 / 交付三通道与接线矩阵 / 参数链 / 双指标 / 目录布局 / 测试与验收 |
+| `design/maintenance-cheatsheet.md` | ★维护速查表：30 秒目录定位、五张变更配方（端点/迁移/CLI/UI/admin）、硬不变量、坑速查（症状→原因→修法）、外部触点 |
+| `design/teamai-host-matrix.md` | ★TeamAI CLI（v0.22.0）调研 + 宿主矩阵对齐方案：三层能力拆解 · 9 宿主逐字路径事实表 · MCP 五格式族 · 三个坑（Hermes allowlist 双写 / OpenCode instructions glob / 不猜 MCP）· R1–R3 裁决（不采纳分发范式 · 抄宿主矩阵 Hermes 优先 · 反向可被订阅）· 提案 [host-matrix-alignment](openspec/changes/host-matrix-alignment/proposal.md) |
 
 ### 图表 design/diagrams/
 `architecture-panorama.html` · `minimal-loop-review.html` · **`runtime-architecture.html`（运行时架构 · 四通道同权）** · **`release-pipeline.html`（发布部署流水线 · lockstep 发版）** · `mockups/`（UI 设计稿 PNG ×54，已归档：2026-08-28 视觉推翻后不再是比对真源，仅作历史参考）
@@ -57,6 +64,7 @@
 | 接入与消费 | agent-access-host-agnostic · agent-onboarding-self-registration · agent-skill-distribution · skill-first-packaging · pull-based-consumption · **consumption-model-final（Use/Query/Follow 终稿）** · mcp-early-access · experience-anatomy-versioning |
 | 形态与商业 | overseas-deployment · web-ia-gates-badges · commercial-model-minimal（反馈积分/企业调用/私有部署） |
 | 工程与选型 | **2026-08-28-standardize-node-postgres（★现行运行时基线：Node ≥22.18 LTS + pnpm 10 + Postgres/node-postgres·无 ORM·`Db` 接口直写 SQL）** · **2026-08-28-lean-stack-adoption（瘦栈：禁成品库·许 headless+copy-in；Tailwind v4 + shadcn/Base UI）** · **2026-08-28-container-deployment（单服务起步·多阶段构建·三环境一套 compose·生产形态=单机 Docker Compose）** |
+| 本地技能引擎 | **2026-09-02-skill-envelope（技能内部形式定档 + 与线上信封 v0.2 映射）** · **2026-09-02-mcp-sdk-consolidation（官方 SDK + 唯一 server 九工具面 5+3+1，修订 mcp-early-access）** |
 
 ## 笔记与归档
 `notes/red-team-v0.2.md`（五案结案）· `notes/2026-08-28-pi-research.md`（pi 调研：盟友判定+借鉴清单）· `notes/2026-08-27-minimal-validation-path.md`（72 节输入源）· `notes/2026-08-28-implementation-plan-codex-v1.md`（历史 Codex 方案归档）

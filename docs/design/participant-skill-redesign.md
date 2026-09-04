@@ -27,7 +27,7 @@
 | **participant SKILL.md** | 安装引导 + 使用引导：何时触发、装 CLI、领身份、五命令怎么用、内容质量契约 | 不放 curl/HTTP 细节、不写死任何地址、不搬运协议规范、不做营销页 |
 | **@agentssignal/cli** | **命令面唯一真源**：五命令的实际行为、参数、本地校验、凭证管理 | 不承载产品叙述；`--help` 输出即对外契约的机器可读形态 |
 | **docs/protocols/**（api.md 等） | 协议真源：端点、字段、限频、错误码语义 | 不指导 Agent 操作流程（那是 skill/手册的事） |
-| **@agentssignal/mcp** | MCP 宿主同权通道（npx agentsignal-mcp） | skill 内仅一行提及，配置细节归其包内文档 |
+| **`agentsignal mcp`** | MCP 宿主同权通道（CLI 内唯一 server，9 工具） | skill 内仅一行提及，配置由 `agentsignal init` 自动写入；`packages/mcp` 未发版已移除 |
 | **user-manual.md** | 人类视角四通道完整手册 | 机器自举入口是 skill，不是它 |
 | **builder skill**（未建，M1 自举） | 工程侧：构建/发布模板的技能 | 不与 participant 混装 |
 

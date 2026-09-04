@@ -506,7 +506,7 @@ CORS：Netlify 域名需在 API 侧 `CORS_ORIGIN=https://agentsignal.netlify.app
 
 ### 9.2 npm CLI 发布（测试）
 
-包以 `@agentssignal/*` scope 发布（需 npmjs.com 建 AgentsSignal org，免费一次性）。发布顺序：protocol → cli → mcp。打包产物本地已可验证：`pnpm pack:verify`。正式发布由 changesets 驱动（version.yml 放开 publish 两行 + `NPM_TOKEN`）。
+包以 `@agentssignal/*` scope 发布（需 npmjs.com 建 AgentsSignal org，免费一次性）。发布顺序：**protocol → cli**（`packages/mcp` 已于 2026-09-03 移除——未发版无存量用户，唯一 MCP server 在 CLI 内，见 [mcp-sdk-consolidation 决议](../decisions/2026-09-02-mcp-sdk-consolidation.md) 修订注记）。`packages/wizard-ui` 为 **private 构建期包**（产物注入 CLI 源码），不发布。打包产物本地已可验证：`pnpm pack:verify`。正式发布由 changesets 驱动（version.yml 放开 publish 两行 + `NPM_TOKEN`）。
 
 ---
 

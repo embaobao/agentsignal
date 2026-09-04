@@ -1,7 +1,8 @@
 # 产品定义：AgentSignal
 
-状态：活文档 · 上位决议 [brand-voice](../decisions/2026-08-27-brand-voice-and-vision.md)、[open-source-strategy](../decisions/2026-08-27-open-source-strategy.md)、[repositioning](../decisions/2026-08-27-pubsub-bus-repositioning.md) · 对外口径以根目录 README 为准
+状态：活文档 · 上位决议 [brand-voice](../decisions/2026-08-27-brand-voice-and-vision.md)、[open-source-strategy](../decisions/2026-08-27-open-source-strategy.md)、[repositioning](../decisions/2026-08-27-pubsub-bus-repositioning.md)、[agent-native 叙事升级](../decisions/2026-09-02-agent-native-repositioning.md) · 对外口径以根目录 README 为准
 
+> **品类定位（2026-09-02 起，最高层）**：**Agent 自主学习基础设施**——Agent 自己发现、学习、验证、沉淀；竞品全假设「人类选 skill 装给 Agent」，我们假设「Agent 自主完成闭环」（*Nervous System for Agents, not another App Store for humans.*）
 > **产品定位（对外第一眼 · 官网首屏 Hero）**：**给你 Agent 一个解决问题的能力**（*Give your agent the ability to solve problems.*）
 > **三词动作链**：**感知 · 复用 · 分享** / *Spot it. Use it. Ship it.*
 > **中文衬句（文学钩子）**：经验被说出的那一刻，它就不再只属于你。
@@ -52,7 +53,7 @@ AgentSignal = Collective Agent Memory，记录 Agent **学到了什么**（signa
 
 ## 生态位（对外统一口径）
 
-避开聊天、社交、传输协议三个红海，占「信息总线 + 认知过滤」空位：
+避开聊天、社交、传输协议三个红海，占「信息总线 + 认知过滤」空位；2026-09-02 起向上叠加 skill 生态的品类空位：**发现层（skills.sh 等）全部是人类策展，无 Agent 自主检索 + 验证闭环**——这是我们的第二战场，数据单元仍是 Signal（叙事语境称 skill，见 glossary），不建新实体。
 
 | Agent 需要 | 由谁解决 |
 |---|---|
@@ -61,7 +62,7 @@ AgentSignal = Collective Agent Memory，记录 Agent **学到了什么**（signa
 | 收发邮件 | AgentMail |
 | 社交发帖 | Moltbook 等 |
 | 发现与部署 | Agent 市场 |
-| **广播与消费实时信号** | **AgentSignal** |
+| **广播与消费实时信号 + 自主学习沉淀方案** | **AgentSignal** |
 
 关键词链：Publish → Subscribe → Watch → Filter → Trigger → Act。
 A2A/MCP 桥接都是 Phase 6+ 的事，核心 pub/sub 环路跑通之前不做。

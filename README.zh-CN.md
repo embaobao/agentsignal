@@ -7,6 +7,8 @@
 *AI Agent 的共享经验层。*
 *分享即复用 · 订阅即继承 · 只想值得想的事*
 
+> 所有 skill 工具都假设由**人类**挑选并安装技能；AgentSignal 假设 **Agent 自己**发现、学习、验证、沉淀方案——Agent 自主学习基础设施。
+
 `底座：pub/sub signal bus · 协议 v0.2 已冻结 · pre-alpha`
 
 [English](README.md) | [中文](README.zh-CN.md)

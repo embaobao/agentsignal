@@ -2,7 +2,7 @@
 
 > **口径注记**：本文档命令面已随 [standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md) 统一为 **Node ≥22.18 + pnpm 10 + Postgres** 口径。
 
-> **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代早期临时运行时与内嵌存储方案），后端 review 加固与 MCP 五工具 server（packages/mcp）已落地。
+> **执行进度（2026-08-28 二次更新）**：**代码主体已全部开发并完成自动化验收**——`pnpm verify` 全绿（node:test 52 + vitest 26），三链路 e2e 21/21（真实 Postgres + Node 服务）。运行时已标准化为 **Node ≥22.18 + pnpm 10 + Postgres**（[standardize-node-postgres 决议](../decisions/2026-08-28-standardize-node-postgres.md)，取代早期临时运行时与内嵌存储方案），后端 review 加固与 MCP 五工具 server 已落地（原在 packages/mcp，2026-09-03 迁入 CLI 内 `agentsignal mcp` 并移除该包）。
 > 阶段零全完成（S0 修红、工具链就绪）；阶段一除 **S9 CI** 外完成，**S9 已补**（`.github/workflows/ci.yml` 三 job）；
 > 阶段二后端 C1–C6/C8/C10 全完成，前端 P3 三屏落地（**S8 按原方案落地 shadcn/Base UI**：`components/ui/dialog.tsx` 以 `@base-ui-components/react` 为底层原语，发布向导「预览」弹层在用；先前「手写 primitives 替 shadcn copy-in」的偏差已于 2026-08-28 撤销）；
 > 阶段三 I1/I2/I5/I8 完成；阶段四 T1/T2/T6–T9 测试与文档完成。
@@ -25,6 +25,84 @@
 > ③ **设计内延后（非阻塞）**：C9 GitHub OAuth（降级自注册）；C14 图纸标注层已随视觉推翻废弃；
 > ④ **需人工/环境**：D1/D5 视觉对稿（盟哥）；T3–T5 容器演练（需 Docker daemon，compose 六组合已静态校验）。
 > 代码与契约层面已具备交付条件；**余下动作依次为：补 P1 → 冲 M4 Testnet**。
+
+> ### 2026-09-02 账实对照（全仓四线盘查 · 免查账纪律入规前最后一次全盘）
+>
+> 起因：台账与代码漂移——本清单与 openspec tasks.md 大量未勾但功能已实施（Phase 1/2/5）、AGENTS.md 仍挂「身份模型待答」（实际 Q1–Q7 已于 2026-09-01 定档：1:N · 先注册后绑定 · 双层 /me · 5 agent 上限 · 结构化 verdict · 公开聚合 · 反馈需身份 · 超管=站长，**不再开放讨论**）。全仓盘查结论如下；**修复与收尾提案 → [openspec/changes/user-domain-completion](../../openspec/changes/user-domain-completion/proposal.md)**。
+>
+> | 线 | 状态 | 缺口（精确到落点） |
+> |---|---|---|
+> | **C · Phase 5 反馈+超管** | 主体已落：`feedback.ts`（verify 需身份+verdict）+ verify_logs（迁移 005）+ 超管两端点 | **P0 ①** `feedback.ts` `requireAdminBasic` 只验用户名、**未 bcrypt 验密码**（DELETE signal / archive topic 任意密码可过；对照 `admin.ts requireAdmin` 是完整校验）；**②** CLI `verify` 与 UI `useVerifySignal` 不发 verdict body（Phase 5 后实际 400）；**③** `_ui_ext` 未下发 verdict 聚合（SignalDetail 无「3 验证 · 2 成功」）；**④** 超管两端点零测试 |
+> | **A · Phase 3 creds** | 骨架在：better-auth（GitHub provider）+ `/auth/github` + 迁移 004 `agents.github_id` + `bindGithub/findAgentByGithub`（store 层）+ **/me 页已落库（ea669c3：身份卡+我的信号+编辑/隐藏+审计）** | better-auth user/session/account/verification 四表迁移缺（需 006）；session↔agents 桥接**零调用点**；claim（认领已有 agt_）无端点；`/agents/me/tokens` + rotate/revoke 无；CLI `login`/`token` 无；/me 页增量待补（token 管理区 + claim 入口，依赖前述端点）；netlify.toml 与 Function `config.path` 缺 `/api/*`、`/auth/*` 转发（OAuth 公网不可达，仅 compose 可用） |
+> | **B · 私有 topic + 引用式书签** | 未开工（reuse-boundary D2） | users/user_accounts/sessions 表、topics `visibility`+`owner_user_id`、`topic_bookmarks` 表与端点、注册自动建默认私域、公共发现面排除私有、信封 human 批注者字段协议修订（演进队列）——**全部依赖线 A** |
+> | **D · Phase 4 文档站+检索** | 部分：`--topic all` 服务端（store "all" 伪 slug）+ UI 全局检索已通；apps/docs 装配器（build-from-policy.mjs 417 行）可跑 | apps/docs 无渲染器/无 package.json（决议钦定 Docusaurus 3 未落地）；**`/docs` 路径被 Scalar API 参考占用**（server.ts `routePrefix:"/docs"` + netlify `/docs*`）——冲突待裁决；CLI `query --topic all` 未文档化；SKILL/首页互链未做 |
+>
+> 另：**视觉基准 v5.1（太空猫吉祥物定案 + `--color-paper` token 注册）方案已草成**，待站长确认 C1–C4 后落决议；对稿终审仍属 P2 人工项。
+>
+> **Phase 0 落地（2026-09-02 当日完成，pnpm verify 全绿）**：0.1 bcrypt 密码校验 · 0.2 feedback.test.ts（9 用例，真 PG 口径）· 0.3 CLI/UI verify 三选 verdict + SKILL lockstep 0.3.1 · 0.4 _ui_ext 详情下发 verdict 聚合（列表不下发，避免 N+1）· 0.5 `--color-paper` token 注册 · 0.6 GitHub 按钮文案改实况。**盘查新发现并已修（0.7）**：verify_logs.agent_id FK 使 admin Basic 代验插入即 500 → 迁移 006_verify_actor 放宽为 actor 字段（drop FK，expand-only）；006 编号已占用，Phase 1.1 顺延为 007_auth。
+>
+> **裁决与开工（2026-09-02 grill 定档）**：[user-domain-completion](../../openspec/changes/user-domain-completion/proposal.md) 已 **Approved**——`/docs` 归文档站（Scalar 迁 `/api-docs`）· 文档站渲染器 = Docusaurus 3（装配器降为内容管线）· claim = `/auth` 登录页粘 ags_ token 绑定 · CLI verify 缺省 `worked`（`--verdict` 可选）· **Phase 0 立即开工**（安全洞在公网暴露，不依赖其余裁决）；Phase 1 依序，Phase 2/3 可并行。「绑定（bind）/认领（claim）」已注册 glossary。
+>
+> **补录（同日站长报障 /auth 页）**：① GitHub 按钮文字不可见 = `text-paper` 未注册 token（黑底黑字）→ 修复入 Phase 0.5（`--color-paper: var(--bg)`）；② GitHub 链路不通 = 三层叠加：better-auth 四表迁移缺（Phase 1.1）+ Netlify `/api/*`、`/auth/*` 未声明落 SPA（Phase 1.7）+ Netlify 三 OAuth env 未配（站长仪表盘手加）——全部在既定主线；③ 按钮渲染与文案不符 → Phase 0.6。另：human-auth-providers 提案已立（Google OAuth + 邮箱 OTP，**排队主线后**），配套决议 [2026-09-02-human-auth-email-otp](../decisions/2026-09-02-human-auth-email-otp.md) 窄推翻「邮箱注册不做」；主线优先级 = 个人 Agent 创建与管理闭环（Phase 0→1，含 1.8 用户域创建 agent 出生即绑定）。
+> **纪律**：本节之后，进度同步走 AGENTS.md 文档治理 §10（账实同步），不再全仓重盘。
+
+> ### 2026-09-02 后续 · Phase 1 creds **WIP 暂停**（站长令）
+>
+> 状态：**代码保留为 WIP，暂停实施，待审完三痛点文档讨论后再动**。以下为如实落账，未跑通测试、未提交、未上公网——**不得读作已完成**。
+>
+> | 项 | 状态 | 落点 |
+> |---|---|---|
+> | 1.1 迁移 007_auth（better-auth 四表） | 代码已写·未跑 | `apps/api/src/db/migrations.ts`（`SCHEMA_VERSION = "007_auth"`，expand-only 幂等） |
+> | 1.2 session↔agents 桥接 | WIP | `apps/api/src/auth/bridge.ts`（新）· `GET /agents/me/session` |
+> | 1.3 claim 绑定/解绑 | WIP（后端）· UI 未做 | `POST/DELETE /agents/claim` in `apps/api/src/routes/user.ts` |
+> | 1.4 token 管理三端点 | WIP | `apps/api/src/routes/me.ts`（rotate 原行换 hash，id 不变；明文只返回一次） |
+> | 1.5 CLI login/token + SKILL lockstep | 未开工 | — |
+> | 1.6 /me 页增量（token 区 + claim 入口 + 新建 Agent） | 未开工 | — |
+> | 1.7 netlify.toml + Function config.path 转发 | 未开工 | 注意 `/auth` 是 UI SPA 路由，**只能转发 `/auth/github`** |
+> | 1.8 `POST /agents`（session 鉴权·出生即绑定·≤5） | WIP（后端）· UI 未做 | `apps/api/src/routes/user.ts` + `env.AGENTS_PER_USER_MAX`（默认 5） |
+>
+> 同批配套改动：`store.ts`（`github_id` + 七个新方法 + `AgentTokenRow`）· `env.ts` · `better-auth.ts`（透传 secret）· `server.ts`（装配）· `apps/api/test/userdomain.test.ts`（新建，**未跑通**）。
+>
+> **恢复时的第一件事**：跑通 `userdomain.test.ts`（口径是根 `pnpm test`，node:test；不要用 `exec tsx`，tsx 不在依赖）。
+>
+> **暂停原因（不改代码）**：本轮产出两份战略文档待站长审完讨论——[v2 agent-native 战略](../../docs/notes/2026-09-02-v2-strategy-agent-native.md)（已落 ADR [agent-native-repositioning](../decisions/2026-09-02-agent-native-repositioning.md)）与[三痛点解决方案](../notes/2026-09-02-three-pain-solution.md)（已附采纳/不采纳注记）。两份文档可能改写 Phase 2/3 排期，故主线代码不抢跑。
+
+> ### 2026-09-03 账实对照 · skill-engine（本地引擎）已落地
+>
+> **变更**：[skill-engine](../../openspec/changes/skill-engine/proposal.md)（站长令执行，Phase 1 + Phase 2 主体完成，2026-09-03）。改动面只限 `packages/cli`（引擎/四命令/wizard/mcp server）、`packages/protocol`（skill-schema）、`packages/wizard-ui`（构建期包）与 docs——**零触碰 apps/api / 007_auth WIP / Netlify**（隔离纪律）。任务勾选以该 change 的 `tasks.md` 为准（1.1–1.7 · 2.1–2.5 已勾）。
+>
+> | 块 | 状态 | 落点 |
+> |---|---|---|
+> | 协议（技能内部形式 + MCP 唯一 server 九工具） | 完成 | decisions `2026-09-02-skill-envelope` / `2026-09-02-mcp-sdk-consolidation` · glossary「技能（Skill·内部形式）」 · 设计规范 v1 归档 `docs/design/management-ui-spec-v1.md` |
+> | schema 真源 | 完成 | `packages/protocol/src/skill-schema.ts`（skill.json5 + config.json5，zod v4） |
+> | 引擎内部模块 | 完成 | `packages/cli/src/skills/`（config/store/retriever/layers/loader/verify/session/metrics/context）· 布局 `~/.agentsignal` |
+> | web 管理/向导 UI | 完成 | `packages/wizard-ui`（三态 + React Flow 路由图，单文件 HTML 693KB 零外部请求）→ 注入 `packages/cli/src/skills/wizard/html.ts` |
+> | init / mcp / status / uninstall | 完成 | `packages/cli/src/`（init.ts 重写 + mcp/server.ts + skills/status.ts + wiring/*）；MCP 工具面 9（5 平台 + 3 本地 + open_setup） |
+> | @agentssignal/mcp | **已整体移除（2026-09-03 站长指令）** | 未发版无存量用户 → 兼容壳不保留；仓库唯一 MCP server = `agentsignal mcp`（packages/mcp 目录删除，决议附修订注记） |
+> | 测试 | 完成 | cli test 全绿：skills-engine 20 · wizard 7 · mcp-tools 7 · platform-mirror 5 · init-e2e 3 · session 4 · skill-sync G1–G4 |
+> | 宿主覆盖矩阵 | 收窄声明 | Claude Code = hooks + MCP；Cursor/Gemini/Cline/Codex = MCP + rules 一行（hooks 位留 wiring/hosts.ts flags，宿主 hooks API 稳定后开放） |
+> | 文档随行 | 完成 | canonical [`design/local-engine.md`](local-engine.md)（功能唯一定义）· user-manual §1.5（四命令 · skills 概念零出现）· admin-guide §6（~/.agentsignal 布局）· deployment 发布顺序（protocol→cli，wizard-ui private 不发布）· maintenance-cheatsheet 配方 E · SKILL lockstep G1–G4 绿 |
+>
+> **遗留清理项（✅ 已销项 2026-09-03）**：`packages/mcp/src/tools.ts`、`packages/mcp/src/client.ts`、`packages/mcp/test/tools.test.ts` 旧实现残留已删除（站长指令「删除并验证」）；随后同日按站长指令**连兼容壳一并整体移除 packages/mcp**（未发版，无存量用户）——仓库唯一 MCP server = `agentsignal mcp`，复验全绿（CLI 53 用例 + G1–G4 护栏 + tsc/biome）。
+>
+> 账实同步按 AGENTS.md §10：本行之后进度只走 AGENTS.md「当前阶段/剩余」与各 change 的 tasks.md，不再全仓重盘。
+>
+> ### 2026-09-03 新登记缺口 · 宿主矩阵（[host-matrix-alignment](../../openspec/changes/host-matrix-alignment/proposal.md)，**proposed**）
+>
+> 起因：站长委托调研 [Tencent/teamai-cli](https://github.com/Tencent/teamai-cli) v0.22.0。调研底稿与裁决记录 → [`design/teamai-host-matrix.md`](teamai-host-matrix.md)。
+>
+> | 项 | 结论 | 落点 |
+> |---|---|---|
+> | **R1 是否采纳 TeamAI 分发范式** | **B — 不采纳** | git-native + OAuth + MR 评审假设同一信任域，会把「Hand your agent one URL」的 `join ≤5 min` 毁掉，直接砸 M4 北极星。与否决 Payload CMS 同类（范式错配） |
+> | **R2 是否抄宿主路径事实表** | **A — 采纳，Hermes 优先** | TeamAI `toolPaths` 覆盖 9 宿主（含 skills/rules/settings/agents/mcp 逐项路径）+ MCP 五格式族，被 1360 用例验证，现成权威参考 |
+> | **R3 是否可被 `teamai source` 订阅** | **A — 采纳（零成本渠道）** | 0.3 人日白拿一条分发出口；守住真源唯一 + G5 逐字节一致性即可 |
+> | **既有 5 宿主路径复核** | 全部正确 | cursor `.cursor/mcp.json` · codex `.codex/config.toml`(TOML) · gemini `.gemini/settings.json` · cline `.cline/mcp_settings.json` —— **缺口在「宿主漏了」，不在「路径错了」** |
+> | **🔴 Hermes 缺口** | **卡 M4 硬门槛** | `wiring/hosts.ts` 的 `HostId` 只有 claude-code/cursor/codex/cline/gemini，**没有 Hermes**；而决议 [2026-08-27-agent-skill-distribution](../decisions/2026-08-27-agent-skill-distribution.md) 定 Hermes 为一等测试对象，验收要求「≥2 宿主全环**必须含 Hermes**」——今天一条都跑不了 |
+> | 三个坑（调研真收益） | 记入 design.md | ① Hermes hook 需**双写** config.yaml `hooks.<event>[]` + `shell-hooks-allowlist.json`（只写前者不执行），rules 走 **SOUL.md** 块注入；② OpenCode rules 必须在 `opencode.json` 的 `instructions` glob 注册才生效，且 user 前缀 `~/.config/opencode/` ≠ project `<root>/.opencode/`；③ **不猜 MCP**（没把握的宿主只发 skill + rules 一行，宁可不写也不留垃圾配置） |
+> | 顺带发现（待裁） | hosts.ts 文件头注释提到 Trae，`HostId` 无 trae | 归属 Phase 2.4：补 trae 或删注释，站长裁 |
+> | 排期 | **P1.5** | 零触碰 apps/api 与 007_auth WIP 代码，可与 user-domain Phase 1 暂停期并行；Phase 1 Hermes → Phase 2 其余三宿主 → Phase 3 反向订阅 |
+>
+> **记录不排期**（本提案不做，备查）：friction 打分触发自动沉淀（TeamAI 用打断/重试次数评分，够阈值才提示沉淀，可治「publish 全靠 Agent 自觉」，但属新的行为契约 → 待 P1 清偿后另立提案）· 知识健康度 prune/writeback/stale（与 P1「recommended 列有读零写路径」同源）· 知识库 BM25/graph-boost · codebase AST 图 · analytics/dashboard（R1 已裁不采纳，不再讨论）。
 
 > 状态：**实施清单** · 2026-08-28 v1
 > 配套：[瘦栈实施方案](lean-stack-implementation-plan.md)（选型与细化）· [部署与运维手册](deployment.md)（容器化）· [backend-architecture](backend-architecture.md) · [frontend-architecture](frontend-architecture.md)

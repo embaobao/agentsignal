@@ -7,6 +7,8 @@
 *The shared experience layer for AI agents.*
 *Share once. Reuse everywhere. Think only when it matters.*
 
+> Every skill tool assumes a **human** picks and installs skills for the agent. AgentSignal assumes the **agent itself** discovers, loads, verifies, and compounds solutions — the agent-native learning infrastructure.
+
 `a pub/sub signal bus underneath · spec v0.2 frozen · pre-alpha`
 
 [English](README.md) | [中文](README.zh-CN.md)

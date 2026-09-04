@@ -15,3 +15,8 @@ coverage/
 sig_*
 # Netlify Function 打包产物（构建期生成）
 netlify/functions/api.mjs
+
+# ── 个人全局 skill 软链（npx skills 装到 ~/.agents/skills，本机软链引入，不入库）──
+# 只忽略软链；真实目录（如 openspec-* 项目级 skill）仍正常跟踪
+.codebuddy/skills/*
+!.codebuddy/skills/*/

@@ -19,10 +19,14 @@
 | **Origin** | —— | 载体核验声明 {kind, ref}；kinds: github/skill-file/text，演进队列 paper/url/dataset/agent/human/experiment | 同上 |
 | **Watch / Pull** | —— | 消费动作统称：默认为显式单次增量拉取（cursor 前进），常驻 daemon 仅存代码位；判定内核同一套 | [architecture](design/architecture.md) · [consumption-final](decisions/2026-08-27-consumption-model-final.md) |
 | **Agent Skill** | skill.md 链接思路 | **可安装、动态版本化、全模板内建**的宿主技能单元；双包制：packages/skills/{participant,builder}，/skills 为 participant 镜像 | [skill-first 决议](decisions/2026-08-27-skill-first-packaging.md) |
+| **Skill（叙事语境）** | —— | 对外叙事中「skill」= Signal(kind=solution) 的通俗称呼（品类定位「Agent 自主学习基础设施」），**不是新实体**；公开 skill = 公开 visibility 的 solution signal，`GET /skills` 为过滤视图，永不另立存储表 | [agent-native 叙事决议](decisions/2026-09-02-agent-native-repositioning.md) |
+| **技能（Skill · 内部形式）** | —— | 本地技能引擎的管理单元：skill.json5 + SKILL.md 二元组，schema 真源 `packages/protocol/src/skill-schema.ts`；**内部形式——不进用户命令面（四命令）、user-manual 与向导文案**；与「Agent Skill」（宿主侧）、「Skill（叙事语境）」（=solution signal）三分不混用 | [skill-envelope 决议](decisions/2026-09-02-skill-envelope.md) |
 | **五动作**（join/discover/subscribe/watch/publish） | —— | 概念心智模型；工具面收敛为 CLI 六命令 register/publish/query/use/verify + validate（本地校验）（[participant-skill-redesign](design/participant-skill-redesign.md) §二） | [onboarding](design/onboarding.md) |
 | **Use** | get/download | **一次性技能化获取**：solution → 本地 SKILL（source 溯源）→ 驻留宿主，此后与总线零交互 | [consumption-final](decisions/2026-08-27-consumption-model-final.md) |
 | **Follow** | 订阅（弱化） | 本地 config 声明的 space 偏好 + top N；服务端无状态；「实时」是用户自配触发频率的感知 | 同上 |
 | **Estimated Tokens Saved** | —— | Σ tokens_est × dropped_count；唯一被允许的成本价值叙事，区分 estimated/observed | [validation.md](design/validation.md) |
+| **绑定（Bind）** | —— | GitHub 用户 ↔ agent 的 1:N 关联动作（身份模型 Q1/Q2：agent 先自治注册，绑定解锁管理权；每用户 ≤5 agent） | [user-domain-completion 提案](../../openspec/changes/user-domain-completion/proposal.md) |
+| **认领（Claim）** | —— | 绑定在「agent 先于人类账号存在」场景的名字：粘贴已有 ags_ token 证明所有权完成绑定；入口 = `/auth` 登录页（2026-09-02 裁决 3） | [user-domain-completion 提案](../../openspec/changes/user-domain-completion/proposal.md) |
 
 ## 拼写禁令
 
@@ -42,7 +46,8 @@
 | 经验结构与版本（anatomy/versioning） | [experience.md](design/experience.md) | 即刻生效 |
 | Testnet 七日实验 | [validation.md](design/validation.md) Exp001 | M4 |
 | 稳定性与集成（三命令/引用/红线） | [stability.md](design/stability.md) | R1–R4 待裁 |
-| MCP 五工具镜像 | [mcp-early-access 决议](decisions/2026-08-27-mcp-early-access.md) | P2 末 |
+| MCP 五工具镜像 | [mcp-early-access 决议](decisions/2026-08-27-mcp-early-access.md)（工具面修订见 [mcp-sdk-consolidation](decisions/2026-09-02-mcp-sdk-consolidation.md)） | P2 末 |
+| 本地技能引擎（四命令 + MCP 九工具 + web 向导） | ★[local-engine.md](local-engine.md)（来源：[skill-engine 提案](../../openspec/changes/skill-engine/proposal.md) · UI 真源 [management-ui-spec-v1](management-ui-spec-v1.md)） | 2026-09-03 起 |
 | 功能开发方案与优先级（v2 Use-First 验证序） | [roadmap.md](design/roadmap.md) §Phase 1 · [proposal.md](design/proposal.md) | 执行层 |
 | 开发提案书（单一入口） | [proposal.md](design/proposal.md) | 待放行 |
 | 运行时 Node ≥22.18 + pnpm + Postgres 标准化 | [standardize-node-postgres 决议](decisions/2026-08-28-standardize-node-postgres.md) | 2026-08-28 起 |

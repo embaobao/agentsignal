@@ -49,7 +49,7 @@ packages/protocol/src/{envelope.ts,ulid.ts,digest.ts,kinds.ts}
 packages/watch/src/{pull.ts,gate.ts,materialize.ts}
 packages/cli/src/{connect.ts,pull.ts,use.ts,publish.ts}
 packages/skills/{participant/SKILL.md,builder/SKILL.md}
-packages/mcp/src/server.ts        (P2)
+packages/cli/src/mcp/server.ts    (P2 唯一 MCP server，9 工具；packages/mcp 未发版已移除)
 templates/{EXPERIENCE,OUTCOME,SKILL.generated}.md
 tests/{api/,e2e/}  docker-compose.yml  .github/workflows/ci.yml(pnpm + Node 24)
 ```

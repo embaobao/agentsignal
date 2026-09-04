@@ -4,6 +4,7 @@
 
 > **Give your agent a memory.**
 > *The shared experience layer for AI agents.*
+> **品类定位（2026-09-02 起）**：**Agent 自主学习基础设施**——Agent 自己发现、学习、验证、沉淀；竞品全假设「人类选 skill 装给 Agent」，我们假设「Agent 自主完成闭环」（[决议](docs/decisions/2026-09-02-agent-native-repositioning.md)）
 > **Slogan**：*Share once. Reuse everywhere. Think only when it matters.*（分享即复用 · 订阅即继承 · 只想值得想的事）
 > 技术定位（L1，协议语境专用）：**A pub/sub signal bus** —— 经验层底下的传输总线
 
@@ -46,19 +47,23 @@ watch 类进程要求：游标持久化（cursor=sig id）、at-least-once+按 i
 7. 内容资产目录：`solutions/ discussions/ templates/` 顶层各居其位。
 8. **测试随行纪律**：任何功能开发/重构必须同步维护测试并跑绿（node:test 单口径，UI 用 vitest），先测后合；无测试的代码视为未完成（DoD 既有条款的执行口径）。
 9. **CLI 命令面 ↔ participant SKILL 同步**：CLI 命令/参数/校验规则变更的 PR 必须同 PR 更新 `packages/skills/participant/SKILL.md`（metadata.version 与 CLI 同版本 lockstep），并跑绿护栏测试（G1 版本/G2 命令面双向一致见 `packages/cli/test/skill-sync.test.ts`，G3 /skills 托管一致见 e2e）；机制见 [participant-skill-redesign.md](docs/design/participant-skill-redesign.md) §5。
+10. **账实同步（免查账纪律）**：[implementation-tasks.md](docs/design/implementation-tasks.md) 是唯一进度台账。功能/修复落地的**同一 PR** 必须当场：勾选台账与对应 openspec change 的 tasks.md、把新发现的缺口写进台账、刷新本文件「当前阶段/剩余」节。台账与代码不一致 = **P0 流程缺陷**；严禁攒账最后补，严禁为核实进度发起全仓重盘式查账（2026-09-02 那次是最后一次，成本已付）。多 Agent 并行时各自只勾自己完成的项，遇到他人「开发中」标记只读不覆盖。
+11. **手册随行（双手册纪律）**：影响用户或 Agent 可感知行为的 PR 必须同步对应手册——用户面（UI/REST 行为/新命令效果）→ [user-manual](docs/design/user-manual.md)；Agent 面（接入/命令面/流程）→ participant SKILL（§9 lockstep）；管理面 → [admin-guide](docs/design/admin-guide.md)；部署面 → [deployment](docs/design/deployment.md)。手册只写**已上线**能力，与代码不一致 = P0 流程缺陷（同 §10 执行口径）。手册是对外 docs 资产的源头（分级见 [site-publishing-policy](docs/site-publishing-policy.md)），描述须人与 Agent 都能看懂。
 
 ## 工作流纪律
 
 每特性九步：说明问题→最小解→更新协议→写测试→实现→集成测试→度量→落盘 docs→才继续。DoD 八件套见 roadmap。实验一律预登记 [validation.md](docs/design/validation.md)，Result 必答五问。编译通过≠完成。
+**操作范式**：完整开发闭环、DoD「四本账 + 两手册」、多 Agent 并行约定见 [agent-dev-paradigm](docs/design/agent-dev-paradigm.md)；动码前先查 [maintenance-cheatsheet](docs/design/maintenance-cheatsheet.md)（30 秒定位 + 变更配方 + 坑速查）。
 
-当前阶段：**三链路（分享/检索/构建发布）已上线 npm（@agentssignal/* 0.2.0）并跑通三方云库**（Neon PG 18.6 实测：迁移自动、注册/发布/检索全通——deployment §9.1）。运行时已标准化 Node+pnpm+Postgres（2026-08-28 决议）；后端 review 加固完成；MCP 五工具 server 已落地；audit-restore 1B-1（账本+快照+admin 端点）完成。Netlify 在线验证环境待站长配两个环境变量（DATABASE_URL=Neon 串 · SELF_REGISTER_ENABLED=1）后重部署即通。**Payload CMS 已结案否决**（结论落于 standardize-node-postgres 决议 D5）。
+当前阶段：**三链路已上线 npm（@agentssignal/* 0.3.0 lockstep）并公网全通**（agentsignal.netlify.app + Neon PG，deployment §9.1）；ux-foundation Phase 0–2 + 5 主体已实施（2026-09-02 账实对照确认）。**本地技能引擎（[skill-engine](openspec/changes/skill-engine/proposal.md)，2026-09-03 落地 Phase 1 + Phase 2 主体）**：用户面四个命令 init（一条命令接入：向导→接线→完成）/ mcp / status / uninstall；MCP 唯一 server = `agentsignal mcp`，工具面 9 = 5 平台 + 3 本地 + open_setup（[mcp-sdk-consolidation](docs/decisions/2026-09-02-mcp-sdk-consolidation.md)）；本地管理界面 = 单文件 HTML 零外部请求（真源 [management-ui-spec-v1](docs/design/management-ui-spec-v1.md)）；「技能（内部形式）」不进用户命令面/文案（[skill-envelope](docs/decisions/2026-09-02-skill-envelope.md)）；`@agentsignal/mcp` 兼容壳已随包整体移除（未发版无存量用户，见决议修订注记）。零触碰 apps/api。**Payload CMS 已结案否决**（standardize-node-postgres 决议 D5）。身份模型 Q1–Q7 + 超管已于 2026-09-01 定档（1:N · 先注册后绑定 · 双层 /me · 5 agent 上限 · 结构化 verdict · 公开聚合 · 反馈需身份 · 超管=站长），**不再开放讨论**。
 
-剩余（2026-08-31 复核，同日销项更新）：
+剩余（2026-09-02 账实对照更新；盘查明细见 [台账对照节](docs/design/implementation-tasks.md)）：
 
-- ~~**P0 阻塞**：`pnpm verify` 红灯~~ **已修**：根 devDependencies 已加 `fastify`，`pnpm check` 绿 + `pnpm test` 全过（实测销项）。
-- ~~**P1 功能缺口**：运营后台~~ **已闭环（2026-08-31 销项）**：`PATCH /admin/signals/:id/curate` 策展写路径（recommended/stats_tag + 审计落账）已随 audit-restore 1B-1 落地并有测试；D5 承诺的轻量方案 ADR 已立（[lightweight-admin-console 决议](docs/decisions/2026-08-31-lightweight-admin-console.md)）。1B-2（还原+裁决+双签）仍开放，属 audit-restore 既有排期。
-- **P1 用户域与文档站（reuse-boundary 决议开工中）**：Topic 治理端点（GET/PATCH/DELETE `/admin/topics*`，软删下架）✅ 2026-08-31；待做 = Better Auth 人类账号 + OAuth 绑定 → 私有 topic + 引用式书签 → apps/docs 公开站（Docusaurus + Netlify，分级规范 `docs/site-publishing-policy.md`）。CMS/低代码平台（Payload/Strapi/NocoBase/NocoDB）全部再否决，勿重议（复审条件见 payload-cms-evaluation §七）。
-- **P2 人工/环境**：D1/D5 视觉对稿（需盟哥）· T3–T5 容器演练（需 Docker daemon）· C9 GitHub OAuth（设计内延后，降级自注册）。
+- **P0 修复包（✅ 已完成 2026-09-02 当日，pnpm verify 全绿）**：requireAdminBasic 补 bcrypt · feedback.test.ts 9 用例 · CLI/UI verify 三选 verdict（SKILL lockstep 0.3.1）· _ui_ext 详情下发 verdict 聚合 · `--color-paper` 注册 · GitHub 按钮文案对齐；另修 0.7（verify_logs.agent_id FK 致 admin 代验 500 → 迁移 006_verify_actor，**007 起为 Phase 1 迁移编号**）→ [user-domain-completion 提案](openspec/changes/user-domain-completion/proposal.md) Phase 0。
+- **P1 用户域收尾（[user-domain-completion 提案](openspec/changes/user-domain-completion/proposal.md) 四阶段 · 已批准 2026-09-02）**：**主线优先（站长令 2026-09-02）：先完成个人 Agent 创建与管理闭环 = Phase 0 修复包 → Phase 1 creds**（better-auth 四表迁移 007_auth + session↔agents 桥接 + claim 流【=/auth 粘 token 绑定】+ token 管理 + **1.8 用户域创建 agent【出生即绑定·≤5】** + /me 页增量 + Netlify `/api/*`、`/auth/github` 转发【注意：`/auth` 是 UI SPA 路由，禁止整段 `/auth/*` 转发】）→ 私有 topic + 引用式书签（依赖 creds）→ apps/docs 公开站（已定：文档站取 `/docs`，Scalar 迁 `/api-docs`）。排队其后：[human-auth-providers 提案](openspec/changes/human-auth-providers/proposal.md)（Google OAuth + 邮箱 OTP，Draft；配套决议 [human-auth-email-otp](docs/decisions/2026-09-02-human-auth-email-otp.md) 窄推翻「邮箱注册不做」，密码仍禁）。CMS/低代码平台（Payload/Strapi/NocoBase/NocoDB）全部再否决，勿重议（复审条件见 payload-cms-evaluation §七）。
+  - **⚠️ Phase 1 现状态：WIP 暂停（站长令 2026-09-02：保留为 WIP，待审完文档讨论后再动）**。后端四块（007_auth 迁移 / bridge + `/agents/me/session` / claim 端点 / token 三端点 / `POST /agents`）代码已落盘，**测试未跑通、未提交、未上公网**；CLI 1.5 · UI 1.6 · Netlify 1.7 · /me 页入口 1.8 均未开工。恢复第一件事：跑通 `apps/api/test/userdomain.test.ts`（口径根 `pnpm test`，node:test；勿用 `exec tsx`，tsx 不在依赖）。明细见 [openspec tasks.md Phase 1](openspec/changes/user-domain-completion/tasks.md) 与 [台账 WIP 节](docs/design/implementation-tasks.md)。
+  - **暂停原因**：两份战略文档待站长审完讨论——[v2 agent-native 战略](docs/notes/2026-09-02-v2-strategy-agent-native.md)（已落 ADR [agent-native-repositioning](docs/decisions/2026-09-02-agent-native-repositioning.md)）· [三痛点解决方案](docs/notes/2026-09-02-three-pain-solution.md)（已附采纳/不采纳注记）。二者可能改写 Phase 2/3 排期，主线代码不抢跑。
+- **P2 人工/环境**：视觉基准 v5.1 确认 + 八屏终审（太空猫吉祥物已定案，方案草成待确认）· T3–T5 容器演练（需 Docker daemon）· Netlify 三 OAuth 变量（BETTER_AUTH_SECRET/GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET）仪表盘手加 · 1B-2（还原+裁决+双签，audit-restore 既有排期）。
 
 任务台账 [implementation-tasks.md](docs/design/implementation-tasks.md)，里程碑状态见 roadmap。
 
@@ -94,4 +99,4 @@ pnpm --filter @agentsignal/mcp dev   # 本地起 MCP stdio server（调试）
 
 ## 顶层目录全集
 
-`apps/(api ui) packages/(protocol cli audit mcp skills/participant) skills/ openspec/ solutions/ discussions/ templates/ docs/ tests/ scripts/` + 根级门面（README×2/LICENSE/CLAUDE.md）+ 根级部署件（Dockerfile · Caddyfile · docker-compose*.yml · .github/ · openapi.json）。**根级 `skills/`**：skills.sh（`npx skills add`）分发镜像——`skills/agentsignal-participant/SKILL.md` 与 canonical（packages/skills/participant）逐字节一致（G4 护栏），只改 canonical 再复制。UI 设计稿 PNG 资产在 `docs/design/diagrams/mockups/`。规划未建：packages/(sdk watch) · skills/builder。新增须先改 AGENTS.md 登记。
+`apps/(api ui) packages/(protocol cli audit skills/participant wizard-ui) skills/ openspec/ solutions/ discussions/ templates/ docs/ tests/ scripts/` + 根级门面（README×2/LICENSE/CLAUDE.md）+ 根级部署件（Dockerfile · Caddyfile · docker-compose*.yml · .github/ · openapi.json）。**根级 `skills/`**：skills.sh（`npx skills add`）分发镜像——`skills/agentsignal-participant/SKILL.md` 与 canonical（packages/skills/participant）逐字节一致（G4 护栏），只改 canonical 再复制。UI 设计稿 PNG 资产在 `docs/design/diagrams/mockups/`。`packages/mcp` 已移除（唯一 MCP server = CLI 内 `agentsignal mcp`）。新增 `packages/wizard-ui`（构建期包：单文件 HTML 产物注入 `packages/cli/src/skills/wizard/html.ts`）。规划未建：packages/(sdk watch) · skills/builder。新增须先改 AGENTS.md 登记。
