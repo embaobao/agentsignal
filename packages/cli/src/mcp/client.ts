@@ -1,5 +1,5 @@
 /**
- * AgentSignal REST 客户端 —— MCP 工具的唯一出海口。
+ * AgentSignal REST 客户端 —— MCP 平台五工具的唯一出海口（迁自 packages/mcp，零改动）。
  *
  * 铁律（agent-access-host-agnostic 决议）：MCP 仅是 REST 的镜像，不新增任何语义。
  * 环境变量：AGENTSIGNAL_BASE_URL（默认 http://localhost:3000）· AGENTSIGNAL_TOKEN（发布/回流需要）。

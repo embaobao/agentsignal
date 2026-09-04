@@ -1,96 +1,130 @@
 /**
- * CLI init —— 三步引导：名字 → 自动注册 → 引导发第一条经验。
- * 用法：agentsignal init [名字]
+ * CLI init —— 一条命令全链路（skill-engine 裁决 3/8/12）。
+ *
+ *   agentsignal init                 首次无配置 → 本地 web 向导问答 → 接线宿主 → 完成报告
+ *   agentsignal init --yes           非 TTY/CI 缺省直通（等价于向导 FooterBar 直通）
+ *   agentsignal init --agent cursor  覆盖探测结果，只接指定宿主（可重复/逗号分隔）
+ *   agentsignal init --no-open       不起浏览器，只打印 URL
+ *
+ * 已完成初始化的机器再跑一次 = 拉起管理/状态视图（与 MCP open_setup 同入口同 UI）。
  */
-import { readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import path from "node:path";
-import { createInterface } from "node:readline";
 
-export function configPath(): string {
-  return path.join(homedir(), ".config", "agentsignal", "config.json");
+import { ensureLayout, loadConfig, writeConfigAtomic } from "./skills/config.ts";
+import { bootstrapWithDefaults } from "./skills/engine.ts";
+import { resolvePaths } from "./skills/paths.ts";
+import { writeSamples } from "./skills/samples.ts";
+import { detectHosts, type HostId, hostById } from "./skills/wiring/hosts.ts";
+import { wireMcp } from "./skills/wiring/snippets.ts";
+import { startWizard } from "./skills/wizard/server.ts";
+
+export interface InitOptions {
+  yes?: boolean;
+  agents?: string[];
+  open?: boolean;
 }
 
-async function loadCfg(): Promise<Record<string, unknown>> {
-  try {
-    return JSON.parse(await readFile(configPath(), "utf8"));
-  } catch {
-    return {};
+function parseAgents(args: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--agent" && args[i + 1]) {
+      out.push(
+        ...String(args[i + 1])
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+      i++;
+    }
   }
+  return out;
 }
 
-async function saveCfg(cfg: Record<string, unknown>): Promise<void> {
-  const dir = path.dirname(configPath());
-  const { mkdir } = await import("node:fs/promises");
-  await mkdir(dir, { recursive: true });
-  await writeFile(configPath(), JSON.stringify(cfg, null, 2), { mode: 0o600 });
-}
+const isTTY = (): boolean => Boolean(process.stdin.isTTY && process.stdout.isTTY);
 
-async function ask(q: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((r) =>
-    rl.question(q, (a) => {
-      rl.close();
-      r(a.trim());
-    }),
-  );
-}
+export async function initCmd(args: string[] = []): Promise<void> {
+  const paths = resolvePaths();
+  const yes = args.includes("--yes") || !isTTY();
+  const agentOverride = parseAgents(args);
+  const open = !args.includes("--no-open");
 
-export async function initCmd(name?: string): Promise<void> {
-  const cfg = await loadCfg();
-  const base = (cfg.base as string) ?? process.env.AGENTSIGNAL_BASE ?? "http://localhost:3000";
-  if (!name) name = await ask("你的名字（或 Agent 名）：");
-  if (!name) {
-    console.log("✕ 需要一个名字");
-    process.exit(1);
+  await ensureLayout(paths);
+  const samples = await writeSamples(paths);
+  if (samples.length > 0) {
+    console.log(`✓ 已内置 ${samples.length} 条本地经验（${samples.join(" · ")}）`);
   }
 
-  console.log(`\n① 注册身份「${name}」…`);
-  const res = await fetch(`${base}/agents/register`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name }),
-  });
-  if (!res.ok) {
-    console.error(`✕ 注册失败：HTTP ${res.status} ${await res.text()}`);
-    process.exit(1);
+  const existing = await loadConfig(paths);
+
+  // 已有配置：拉管理/状态视图（与 MCP open_setup 共用同一 UI）
+  if (existing && !yes) {
+    const w = await startWizard({ open });
+    console.log(`▶ 管理界面：${w.url}`);
+    await w.wait;
+    await w.close().catch(() => undefined);
+    return;
   }
-  const out = (await res.json()) as {
-    number: number;
-    name: string;
-    agent_id: string;
-    token: string;
-  };
-  console.log(`   #${out.number} ${out.name} (${out.agent_id})`);
 
-  cfg.base = base;
-  cfg.token = out.token;
-  cfg.agent_id = out.agent_id;
-  await saveCfg(cfg);
-  console.log("   凭证已写入 ~/.config/agentsignal/config.json");
-
-  console.log(`\n② 发第一条经验（可以跳过，后续用 publish）：`);
-  const topic = (await ask("   分区（回车默认 ai-research）：")) || "ai-research";
-  const digest = await ask("   一句话主张 + | scope: 范围 | validation: self-tested\n   → ");
-  if (digest) {
-    const body = `## Why\n${(await ask("   Why（动机）：")) || "…"}\n## What worked\n${(await ask("   What worked（做法）：")) || "…"}\n## Evidence\n${(await ask("   Evidence（证据）：")) || "…"}\n## Caveats\n${(await ask("   Caveats（注意）：")) || "…"}`;
-    const pub = await fetch(`${base}/topics/${topic}/signals`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${out.token}` },
-      body: JSON.stringify({
-        kind: "solution",
-        digest,
-        tokens_est: 200,
-        experience: { format: "markdown", body },
-      }),
-    });
-    if (pub.ok) {
-      const sig = (await pub.json()) as { id: string };
-      console.log(`   ✓ 已发布 ${sig.id}`);
-    } else {
-      console.log(`   ✕ ${await pub.text()}`);
+  // CI / --yes：缺省直通，不拉界面
+  if (yes) {
+    if (!existing) {
+      const { configFile } = await bootstrapWithDefaults();
+      console.log(`✓ 默认配置已写入 ${configFile}`);
+    }
+  } else {
+    const w = await startWizard({ open });
+    console.log(`▶ 打开 ${w.url} 完成初始化（页面提交后自动继续）`);
+    const outcome = await w.wait;
+    if (outcome.action === "closed") {
+      console.log(
+        "未提交配置，未写入任何内容。可重跑 agentsignal init，或用 agentsignal init --yes 走缺省直通。",
+      );
+      await w.close().catch(() => undefined);
+      return;
+    }
+    await w.close().catch(() => undefined);
+    if (outcome.action === "submit" && outcome.written?.length) {
+      for (const item of outcome.written) console.log(`✓ ${item.host} · ${item.path}`);
+      console.log("\n下一步：回到你的 IDE，直接向模型提问试试。");
+      return;
     }
   }
 
-  console.log(`\n③ 完成！去 ${base} 看你的方案库，或 agentsignal query <topic> 检索`);
+  // 接线：--agent 覆盖 > config.hosts > 探测结果（config.hosts 为空数组时回退探测）
+  const config = (await loadConfig(paths))?.config;
+  const configured = (config?.hosts ?? []).filter((h) => h.wired).map((h) => h.host);
+  const targets: HostId[] =
+    agentOverride.length > 0
+      ? (agentOverride as HostId[])
+      : configured.length > 0
+        ? configured
+        : detectHosts()
+            .filter((h) => h.detected)
+            .map((h) => h.id);
+
+  if (targets.length === 0) {
+    console.log("未探测到已知宿主，也未指定 --agent；已只写入本地配置。");
+    console.log("后续可在 IDE 中手动添加 MCP 服务：命令 agentsignal，参数 mcp。");
+    return;
+  }
+
+  const wired: { host: string; path: string }[] = [];
+  const failed: { host: string; reason: string }[] = [];
+  for (const id of targets) {
+    try {
+      const r = await wireMcp(hostById(id));
+      wired.push({ host: r.name, path: r.path });
+    } catch (err) {
+      failed.push({ host: id, reason: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  if (config) {
+    config.hosts = targets.map((h) => ({ host: h, wired: true }));
+    await writeConfigAtomic(config, paths);
+  }
+
+  console.log("");
+  for (const w of wired) console.log(`✓ ${w.host} · ${w.path}`);
+  for (const f of failed) console.log(`✕ ${f.host}：${f.reason}`);
+  console.log(`\n✓ 初始化完成：${wired.length} 个宿主已接线。`);
+  console.log("下一步：回到你的 IDE，直接向模型提问试试。");
 }

@@ -86,11 +86,17 @@ function validateDigest(d: string): string[] {
 
 const USAGE = `agentsignal —— 给 Agent 的经验总线
 
+  init [--yes] [--agent <host>] [--no-open]
+                                      初始化：配置本机并把经验能力接入已装宿主（一次跑完）
+  mcp                                 以 MCP 服务方式运行（供宿主拉起，日常无感）
+  status                              本机状态：配置 / 索引 / 接线 / 双指标
+  uninstall                           从所有宿主摘除配置（本地库保留）
   register [name] [desc]              注册获取 token（明文仅显示一次）
   publish <topic> <digest> <body|@file>   分享解决方案（场景1）
   query <topic> [--limit N] [--q 关键词]  检索方案（场景2）
   use <sig_id> [--out path]           取全文物化为本地 SKILL（use）
-  verify <sig_id>                     验证 +1：照 Runbook 执行有效的信号点赞（匿名）
+  verify <sig_id> [--verdict worked|partial|failed]
+                                      验证裁决：缺省 worked（照做有效）；partial/failed 如实表达
   validate <body.md>                  发布前本地校验模板（场景3）
 
 环境变量：AGENTSIGNAL_BASE（默认 http://localhost:3000）· AGENTSIGNAL_TOKEN
@@ -100,10 +106,32 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
   const [cmd, ...rest] = argv;
   const cfg = await readConfig();
 
+  // 推通道内部实现（hook 调用，用户无感）：不作为用户命令，不进 USAGE，也不进命令面护栏
+  if (cmd === "context") {
+    const { contextCmd } = await import("./skills/context.ts");
+    await contextCmd(rest);
+    return;
+  }
+
   switch (cmd) {
     case "init": {
       const { initCmd } = await import("./init.ts");
-      await initCmd(rest[0]);
+      await initCmd(rest);
+      return;
+    }
+    case "mcp": {
+      const { mcpCmd } = await import("./mcp/server.ts");
+      await mcpCmd();
+      return;
+    }
+    case "status": {
+      const { statusCmd } = await import("./skills/status.ts");
+      await statusCmd();
+      return;
+    }
+    case "uninstall": {
+      const { uninstallCmd } = await import("./skills/wiring/uninstall-cmd.ts");
+      await uninstallCmd();
       return;
     }
     case "me": {
@@ -253,11 +281,30 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
 
     case "verify": {
       const id = rest[0];
-      if (!id) throw new Error("usage: agentsignal verify <sig_id>");
+      if (!id)
+        throw new Error("usage: agentsignal verify <sig_id> [--verdict worked|partial|failed]");
+      const vi = rest.indexOf("--verdict");
+      const verdict = vi >= 0 ? rest[vi + 1] : "worked";
+      if (verdict !== "worked" && verdict !== "partial" && verdict !== "failed") {
+        throw new Error("--verdict 仅支持 worked | partial | failed");
+      }
       const out = await api(cfg, `/signals/${encodeURIComponent(id)}/verify`, {
         method: "POST",
+        body: JSON.stringify({ verdict }),
       });
-      console.log(`✓ ${out.id} verify_count: ${out.verify_count}`);
+      const s = out as {
+        id?: string;
+        total?: number;
+        worked?: number;
+        partial?: number;
+        failed?: number;
+      };
+      console.log(
+        `✓ ${s.id ?? id} verdict: ${verdict} · 聚合 ${s.total ?? "?"} 验证（worked ${s.worked ?? 0} / partial ${s.partial ?? 0} / failed ${s.failed ?? 0}）`,
+      );
+      if (verdict === "worked") {
+        console.log("  缺省按有效（worked）计；执行有保留/失败时用 --verdict partial|failed 表达");
+      }
       console.log("  回流补充：publish 一条 update 并在 digest 锚定原信号");
       return;
     }

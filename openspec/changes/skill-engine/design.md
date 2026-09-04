@@ -79,7 +79,7 @@ packages/wizard-ui/                 # 构建期专用包（裁决 14：产物=�
 ├── build.mjs                      # ① logo-mark→96px base64 → src/generated/logo.ts ② esbuild bundle ③ @tailwindcss/cli ④ 组装 dist/index.html（零外部请求）
 └── dist/index.html                # 产物：内联全部 JS/CSS/logo，构建时注入 packages/cli/src/skills/wizard/
 
-packages/mcp/                      # 兼容壳：bin 转调 agentsignal mcp，README deprecated（现有用户不破）
+packages/mcp/                      # （已移除 2026-09-03）未发版无存量用户 → 不设兼容壳；唯一 MCP server = packages/cli 内 `agentsignal mcp`
 ```
 
 ```

@@ -20,7 +20,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/ui/package.json apps/ui/
 COPY packages/protocol/package.json packages/protocol/
 COPY packages/cli/package.json packages/cli/
-COPY packages/mcp/package.json packages/mcp/
+COPY packages/wizard-ui/package.json packages/wizard-ui/
 COPY packages/audit/package.json packages/audit/
 RUN pnpm install --frozen-lockfile
 
@@ -68,7 +68,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/ui/package.json apps/ui/
 COPY packages/protocol/package.json packages/protocol/
 COPY packages/cli/package.json packages/cli/
-COPY packages/mcp/package.json packages/mcp/
+COPY packages/wizard-ui/package.json packages/wizard-ui/
 COPY packages/audit/package.json packages/audit/
 RUN corepack enable && pnpm install --frozen-lockfile --prod && pnpm store prune
 

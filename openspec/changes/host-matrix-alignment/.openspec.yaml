@@ -1,0 +1,18 @@
+id: host-matrix-alignment
+status: proposed
+created_at: 2026-09-03
+owner: project
+tags: [wiring, host, hermes, workbuddy, dsh, opencode, teamai, guardrail]
+summary: |
+  宿主矩阵对齐 TeamAI：抄其 9 宿主路径事实表与三个接入坑，不抄其 git-native/MR 分发范式（信任域错配）。
+  补齐 Hermes（M4 北极星硬门槛，当前注册表里根本没有）、WorkBuddy、dsh、OpenCode 四宿主；
+  写入「不猜 MCP」纪律；顺带做可被 teamai source 订阅的派生布局 + G5 逐字节一致性护栏。
+  协议零变化、零触碰 apps/api，排期 P1.5，可与 user-domain Phase 1 暂停期并行。
+upstream_docs:
+  - docs/design/teamai-host-matrix.md                        # 完整调研 + 路径事实表 + R1–R3 裁决
+  - docs/decisions/2026-08-27-agent-skill-distribution.md    # Hermes 一等测试对象的来源决议
+  - docs/design/local-engine.md                              # skill-engine 宿主接线 canonical
+depends_on:
+  - skill-engine            # wiring/hosts.ts 与 AGENTSIGNAL_HOME 夹具由 skill-engine Phase 1–2 交付
+blocked_by: []
+supersedes: []

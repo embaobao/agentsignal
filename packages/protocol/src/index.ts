@@ -9,6 +9,7 @@
 
 export * from "./errors.ts";
 export * from "./schemas.ts";
+export * from "./skill-schema.ts";
 // 注：网络形态（信封/请求/响应）以 schemas.ts 的 zod 真源为准；
 // types.ts 只导出领域类型，不提供客户端构建器（服务端字段一律服务端填充）。
 export type {

@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**/*.ts", "**/*.json", "!**/data", "!**/.turbo"]
+    "includes": [
+      "**/*.ts",
+      "**/*.json",
+      "!**/data",
+      "!**/.turbo",
+      "!packages/cli/src/skills/wizard/html.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -49,9 +55,11 @@
       "includes": [
         "apps/api/src/index.ts",
         "packages/cli/src/index.ts",
-        "packages/mcp/src/index.ts",
-        "packages/audit/src/cli.ts",
-        "packages/cli/src/init.ts"
+        "packages/cli/src/init.ts",
+        "packages/cli/src/skills/status.ts",
+        "packages/cli/src/skills/wiring/uninstall-cmd.ts",
+        "packages/cli/src/mcp/server.ts",
+        "packages/audit/src/cli.ts"
       ],
       "linter": {
         "rules": {

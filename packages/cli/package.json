@@ -1,13 +1,20 @@
 {
   "name": "@agentssignal/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "type": "module",
   "bin": {
     "agentsignal": "./dist/index.js"
   },
   "dependencies": {
-    "@agentssignal/protocol": "workspace:*"
+    "@agentssignal/protocol": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@orama/orama": "^3.1.18",
+    "@orama/stopwords": "^3.1.18",
+    "@orama/tokenizers": "^3.1.18",
+    "json5": "^2.2.3",
+    "mustache": "^4.2.0",
+    "zod": "^4.4.3"
   },
   "scripts": {
     "dev": "node src/index.ts",
@@ -30,5 +37,8 @@
       "types": "./src/index.ts",
       "default": "./dist/index.js"
     }
+  },
+  "devDependencies": {
+    "@types/mustache": "^4.2.6"
   }
 }

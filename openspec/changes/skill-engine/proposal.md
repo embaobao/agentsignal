@@ -21,11 +21,11 @@ v4.1 的机制成立，但概念与流程体验都过度。收敛后的版本：
 | # | 裁决点 | 结果 |
 |---|---|---|
 | 1 | 检索引擎 | **Orama**：BM25 + typo tolerance；中文用 `@orama/tokenizers` mandarin 分词（Intl.Segmenter）+ `@orama/stopwords/chinese`。向量检索留 schema 位，MVP 不启用 |
-| 2 | MCP 形态 | **官方 `@modelcontextprotocol/sdk`，唯一 MCP server = `agentsignal mcp`**；packages/mcp 五工具 run 逻辑迁入 `packages/cli/src/mcp/`，`@agentssignal/mcp` 降级兼容壳 bin |
+| 2 | MCP 形态 | **官方 `@modelcontextprotocol/sdk`，唯一 MCP server = `agentsignal mcp`**；packages/mcp 五工具 run 逻辑迁入 `packages/cli/src/mcp/`，`@agentssignal/mcp` 兼容壳（**2026-09-03 站长令：未发版 → 不设兼容壳，packages/mcp 整体移除**） |
 | 3 | 验证顺序 | **Phase 1 = `agentsignal init` 一条命令全链路**（向导 → 配置 → MCP 自动集成 → 宿主可用）→ Phase 2 = 体验收尾（推通道/卸载/指标/文档）→ Phase 3 = 服务端发布机制（另立提案） |
 | 4 | 本地配置根 | **`~/.agentsignal/`**（config / skills / sessions / index 全覆盖） |
 | 5 | 用户域 | **暂缓**：不做登录/token 鉴权；verify 先本地记录 |
-| 6 | 隔离纪律 | **不影响现在项目**：零触碰 apps/api / 007_auth WIP / Netlify 部署面；改动面限 packages/cli、packages/mcp（兼容壳）、packages/protocol（新增 schema） |
+| 6 | 隔离纪律 | **不影响现在项目**：零触碰 apps/api / 007_auth WIP / Netlify 部署面；改动面限 packages/cli（含唯一 MCP server）、packages/protocol（新增 schema）、packages/wizard-ui（构建期）；packages/mcp 已移除 |
 | 7 | 交付层三通道 | **① 拉 = MCP · ② 推 = hook 输出（`skills context` 内部实现，用户无感）· ③ 兜底 = 宿主 rules 一行提示**。API payload 拼装器不做（自建 harness 另案） |
 | 8 | 接线自动化 | **init 内置**：自动探测已装宿主 → 写入 mcpServers/hook/rules 片段 → 用户零手工配置；`agentsignal uninstall` 全量摘除 |
 | 9 | 指标口径 | status/统计区分「吞吐节省」与「残留占用」双指标；token 估算声明 bytes/4；「任务完成滑出」不承诺（CodeGraph 残留 +80% 为据） |
@@ -54,7 +54,7 @@ v4.1 的机制成立，但概念与流程体验都过度。收敛后的版本：
 | | `packages/cli/src/skills/` | 引擎内部模块（retriever / layers / loader / verify / wizard / wiring） |
 | | `packages/cli/src/mcp/` | MCP server + 9 工具（迁自 packages/mcp） |
 | | `packages/wizard-ui/`（构建期包） | React + Base UI + Tailwind + React Flow 源码 → esbuild/@tailwindcss/cli 打成**单文件 HTML**，产物注入 `packages/cli/src/skills/wizard/`；运行期零依赖由构建管线保证 |
-| | `packages/mcp/` | 兼容壳 bin（转调 `agentsignal mcp`，deprecated） |
+| | ~~`packages/mcp/`~~ | **已移除**（未发版无存量用户；唯一 MCP server = `agentsignal mcp`） |
 
 **记忆口诀：用户记四个命令，模型记九个工具，其余全是内部实现。**
 
@@ -69,7 +69,7 @@ v4.1 的机制成立，但概念与流程体验都过度。收敛后的版本：
 | 1.3 | 引擎内部模块 | `packages/cli/src/skills/`：config 加载（zod fail-fast）· store（扫描 + Orama 索引）· retriever（Orama mandarin + trigger 主路径并联）· layers（四态 + max_tokens 仲裁）· loader（mustache + 依赖预检 + 参数四来源）· verify（本地 metrics）。全部 node:test 单测，中文双路径用例 |
 | 1.4 | web 配置/管理 UI（设计规范 v1 全量实现） | 独立构建包 `packages/wizard-ui/`（裁决 14/15）：**三态全实现**——A 初始化向导（3 步 + FooterBar 默认直通 + SubmitOverlay + 完成页）/ B 管理视图（配置摘要 + **React Flow 路由图接线** + 本地库 + 双指标 + 危险区 DangerDialog + 卸载完成页）/ C 配置损坏（自动修复 / 备份后重新初始化）；**双入口共用同一 UI**：CLI `init` 拉起、MCP `open_setup` 工具拉起；构建管线：logo-mark 96px→base64 → esbuild bundle tsx → @tailwindcss/cli 编译 css → 组装**单文件 index.html（零外部请求）** → 产物进 `packages/cli/src/skills/wizard/` 由 server.ts 直出；CI fallback `--yes` 缺省直通；规范 §8 验收清单自查 |
 | 1.5 | `agentsignal init` | 向导入口 + 示例技能 2–3 个落盘 + `wiring/`：探测已装宿主（Claude Code/Cursor/Codex/Cline/Gemini…）→ 写 mcpServers（`agentsignal mcp`）+ hook/rules 片段按能力选 → 完成报告 |
-| 1.6 | `agentsignal mcp` | SDK `McpServer` + `StdioServerTransport`；9 工具（5 平台迁入 run 逻辑不动 + 3 技能共享引擎单例 + open_setup 拉起管理界面）；**状态机**（BOOTING/WAITING_CONFIG/READY/CALLING/DEGRADED/SHUTTING_DOWN，无 config 拉向导不退出）+ 调用管线（zod 校验→单例处理→统一错误码→Trace）+ 多宿主并发口径（索引 tmp+rename 原子写），详见 design §4.8；工具描述写成行为引导；`@agentssignal/mcp` 兼容壳 |
+| 1.6 | `agentsignal mcp` | SDK `McpServer` + `StdioServerTransport`；9 工具（5 平台迁入 run 逻辑不动 + 3 技能共享引擎单例 + open_setup 拉起管理界面）；**状态机**（BOOTING/WAITING_CONFIG/READY/CALLING/DEGRADED/SHUTTING_DOWN，无 config 拉向导不退出）+ 调用管线（zod 校验→单例处理→统一错误码→Trace）+ 多宿主并发口径（索引 tmp+rename 原子写），详见 design §4.8；工具描述写成行为引导；`@agentssignal/mcp` 兼容壳（2026-09-03 起改为整体移除，不保留） |
 | 1.7 | 端到端验证 | 全新目录跑 `agentsignal init` → web 向导完成 → Claude Code 配置已写入 → 连接 MCP tools list 9 工具（含 open_setup） → search_skills（「登录 认证」中文命中）→ load_skill_detail（缺 JWT_SECRET 返回结构化清单）→ 补 env 重试得渲染全文 → verify_skill 落 metrics |
 
 ### Phase 2 · 体验收尾（约 1.5 人日，依赖 Phase 1 全绿）
@@ -79,8 +79,8 @@ v4.1 的机制成立，但概念与流程体验都过度。收敛后的版本：
 | 2.1 | `agentsignal status` | 配置/索引/接线状态 + RTK/CodeGraph 共存检测 + 吞吐/残留双指标（bytes/4 声明） |
 | 2.2 | 推通道 + 兜底 | hook 输出实现（L1/L2 正文 + L3 简表，预算内截断）随接线写入 Claude Code UserPromptSubmit 等片段；无 hooks 宿主 rules 一行；宿主覆盖矩阵验证 |
 | 2.3 | Session + Trace | `sessions/<id>.json`（调用链/lazy/verify）· TTL 30min · graceful shutdown · tee 兜底；**只记录不审计** |
-| 2.4 | `agentsignal uninstall` | 全量摘除：宿主 MCP 配置/hooks/rules/兼容壳；`~/.agentsignal` 数据保留 |
-| 2.5 | 文档随行 | user-manual 只写四命令（**skills 概念零出现**）· admin-guide（~/.agentsignal 布局与 config 产物说明）· SKILL lockstep · @agentssignal/mcp 弃用说明 |
+| 2.4 | `agentsignal uninstall` | 全量摘除：宿主 MCP 配置/hooks/rules；`~/.agentsignal` 数据保留（无兼容壳可摘） |
+| 2.5 | 文档随行 | user-manual 只写四命令（**skills 概念零出现**）· admin-guide（~/.agentsignal 布局与 config 产物说明）· SKILL lockstep · 唯一 MCP server 说明（packages/mcp 已移除） |
 
 ### Phase 3 · 服务端发布机制（完整验证后另立提案）
 

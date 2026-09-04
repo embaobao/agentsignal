@@ -119,7 +119,12 @@ var UiExtSchema = z2.object({
   last_verified_at: z2.number().nullable(),
   views: z2.number().int(),
   stats_tag: z2.array(z2.string()),
-  digest_valid: z2.boolean()
+  digest_valid: z2.boolean(),
+  /** verdict 聚合（仅详情接口下发；列表接口逐条查询会 N+1，不下发） */
+  verify_total: z2.number().int().optional(),
+  verify_worked: z2.number().int().optional(),
+  verify_partial: z2.number().int().optional(),
+  verify_failed: z2.number().int().optional()
 });
 var SignalFullSchema = EnvelopeSchema.extend({
   experience: ExperienceSchema.nullable(),
@@ -176,6 +181,131 @@ var ReadySchema = z2.object({
   driver: z2.enum(["pglite", "pg"])
 });
 
+// src/skill-schema.ts
+import { z as z3 } from "zod";
+var skillStatuses = ["incubating", "solidified", "archived"];
+var autoLoadModes = ["true", "detect_stack", "trigger_match", "false"];
+var triggerFields = ["task", "stack", "domain", "keyword"];
+var triggerOperators = ["contains_any", "includes", "equals"];
+var parameterTypes = ["string", "number", "boolean", "duration"];
+var SKILL_ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
+var builtinLayerIds = ["base", "domain", "task", "session"];
+var LAYER_MAX_TOKENS_CEILING = 8192;
+var TriggerRuleSchema = z3.object({
+  field: z3.enum(triggerFields),
+  operator: z3.enum(triggerOperators),
+  values: z3.array(z3.string().min(1)).min(1),
+  weight: z3.number().min(0).max(1).default(1)
+});
+var SkillParametersSchema = z3.record(
+  z3.string(),
+  z3.object({
+    type: z3.enum(parameterTypes),
+    description: z3.string().optional(),
+    default: z3.union([z3.string(), z3.number(), z3.boolean()]).optional(),
+    required: z3.boolean().default(false),
+    options: z3.array(z3.string()).optional()
+  })
+);
+var SkillDependenciesSchema = z3.object({
+  /** 环境变量名（存在性预检，不读值） */
+  env: z3.array(z3.string()).default([]),
+  /** 可执行文件（PATH 预检） */
+  bins: z3.array(z3.string()).default([]),
+  /** 包名声明（仅提示，不做安装） */
+  packages: z3.array(z3.string()).default([])
+}).default({ env: [], bins: [], packages: [] });
+var SkillProvenanceSchema = z3.object({
+  /** 源 sig_<ulid>（订阅 kind=solution 落盘时写入） */
+  sig_id: z3.string().optional(),
+  digest: z3.string().optional(),
+  origin: z3.object({ kind: z3.string(), ref: z3.string(), path: z3.string().optional() }).optional(),
+  published_at: z3.string().optional()
+});
+var SkillLifecycleSchema = z3.object({
+  status: z3.enum(skillStatuses).default("incubating"),
+  provenance: SkillProvenanceSchema.optional(),
+  metrics: z3.object({
+    use_count: z3.number().int().min(0).default(0),
+    worked: z3.number().int().min(0).default(0),
+    partial: z3.number().int().min(0).default(0),
+    failed: z3.number().int().min(0).default(0)
+  }).default({ use_count: 0, worked: 0, partial: 0, failed: 0 })
+}).default({ status: "incubating", metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 } });
+var SkillFrontmatterSchema = z3.object({
+  // === 必收六字段 ===
+  id: z3.string().regex(SKILL_ID_PATTERN, "id \u987B\u4E3A\u5C0F\u5199 slug\uFF08[a-z][a-z0-9_-]*\uFF09"),
+  name: z3.string().min(1),
+  description: z3.string().min(1),
+  /** 业务域；含 "common" 表示全域可见 */
+  domains: z3.array(z3.string().min(1)).min(1),
+  /** 归属分层 id（须存在于 config.layers） */
+  layers: z3.array(z3.string().min(1)).min(1),
+  /** 触发规则：检索主路径（weighted 求和过 match_threshold） */
+  triggers: z3.array(TriggerRuleSchema),
+  // === AgentSignal 扩展（optional 安全默认）===
+  /** keywords：trigger 缺省时的 fallback 规则源 */
+  keywords: z3.array(z3.string()).default([]),
+  version: z3.string().default("0.1.0"),
+  dependencies: SkillDependenciesSchema,
+  /** mustache 参数声明（四来源链解析） */
+  parameters: SkillParametersSchema.default({}),
+  /** verify_target：verify_skill 的可核验目标清单 */
+  verify_target: z3.array(z3.string()).default([]),
+  /** 正文引用（正文存储在同级 SKILL.md） */
+  content: z3.object({
+    format: z3.string().default("markdown"),
+    path: z3.string().default("./SKILL.md"),
+    tokens_est: z3.number().int().min(0).optional()
+  }).default({ format: "markdown", path: "./SKILL.md" }),
+  lifecycle: SkillLifecycleSchema
+});
+var ConfigLayerSchema = z3.object({
+  id: z3.string().min(1),
+  name: z3.string().min(1),
+  description: z3.string().optional(),
+  auto_load: z3.enum(autoLoadModes),
+  max_tokens: z3.number().int().min(0).max(LAYER_MAX_TOKENS_CEILING),
+  /** trigger_match 层的过阈值 */
+  match_threshold: z3.number().min(0).max(1).default(0.8),
+  /** detect_stack 层的栈规则组（MVP 只内置 Next.js+TS） */
+  stack_rules: z3.array(
+    z3.object({
+      name: z3.string().min(1),
+      /** 全部命中才加载该组 */
+      match: z3.array(
+        z3.object({
+          file: z3.string().min(1),
+          exists: z3.boolean().optional(),
+          contains: z3.string().optional()
+        })
+      )
+    })
+  ).default([])
+});
+var HostBindingSchema = z3.object({
+  /** 宿主标识：claude-code | cursor | codex | cline | gemini */
+  host: z3.enum(["claude-code", "cursor", "codex", "cline", "gemini"]),
+  wired: z3.boolean().default(false),
+  /** 实际写入的配置文件绝对路径 */
+  config_path: z3.string().optional()
+});
+var ConfigSchema = z3.object({
+  version: z3.string().default("1.0.0"),
+  domains: z3.object({
+    /** 当前激活域；空 = 通用 */
+    current: z3.string().default("common"),
+    available: z3.array(z3.string().min(1)).default(["common"])
+  }).default({ current: "common", available: ["common"] }),
+  /** 分层：数组即顺序，即优先级，即加载链 */
+  layers: z3.array(ConfigLayerSchema).min(1),
+  hosts: z3.array(HostBindingSchema).default([]),
+  arbitration: z3.object({
+    strategy: z3.enum(["lru"]).default("lru"),
+    fallback: z3.enum(["compress"]).default("compress")
+  }).default({ strategy: "lru", fallback: "compress" })
+});
+
 // src/ulid.ts
 var CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 var TIME_CHARS = 10;
@@ -213,6 +343,8 @@ export {
   ApiErrorSchema,
   AppError,
   BODY_MAX,
+  ConfigLayerSchema,
+  ConfigSchema,
   DEFAULT_STATUS,
   DIGEST_MAX,
   DIGEST_MIN,
@@ -220,27 +352,42 @@ export {
   ExperienceSchema,
   FrontpageStatsSchema,
   HealthSchema,
+  HostBindingSchema,
   IncludeQuerySchema,
+  LAYER_MAX_TOKENS_CEILING,
   ListQuerySchema,
   OriginSchema,
   PublishRequestSchema,
   ReadySchema,
   RegisterRequestSchema,
   RegisterResponseSchema,
+  SKILL_ID_PATTERN,
   SignalFullSchema,
   SignalKindSchema,
   SignalListSchema,
+  SkillDependenciesSchema,
+  SkillFrontmatterSchema,
+  SkillLifecycleSchema,
+  SkillParametersSchema,
+  SkillProvenanceSchema,
   TOKENS_EST_MAX,
   TopicSchema,
+  TriggerRuleSchema,
   UiExtSchema,
   ValidateResponseSchema,
   ValidationLevelSchema,
   apiError,
+  autoLoadModes,
+  builtinLayerIds,
   errorCodes,
   includeValues,
   isPrefixed,
+  parameterTypes,
   prefixed,
   signalKinds,
+  skillStatuses,
+  triggerFields,
+  triggerOperators,
   ulid,
   validationLevels
 };
