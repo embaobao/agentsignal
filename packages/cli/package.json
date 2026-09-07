@@ -14,7 +14,7 @@
     "@orama/tokenizers": "^3.1.18",
     "json5": "^2.2.3",
     "mustache": "^4.2.0",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "scripts": {
     "dev": "node src/index.ts",
