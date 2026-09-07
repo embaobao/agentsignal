@@ -14,7 +14,7 @@ import { AppError, apiError, prefixed } from "@agentssignal/protocol";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { Auth } from "../auth/better-auth.ts";
-import { getSessionContext } from "../auth/bridge.ts";
+import { getSessionContext, type SessionContext } from "../auth/bridge.ts";
 import type { Db } from "../db/client.ts";
 import type { Env } from "../env.ts";
 import type { IStore } from "../store/store.ts";
@@ -65,7 +65,7 @@ export function registerUserAgentRoutes(
       },
     },
     async (req, reply) => {
-      let ctx;
+      let ctx: SessionContext;
       try {
         ctx = await requireSession(req, auth, store);
       } catch (err) {
@@ -110,7 +110,7 @@ export function registerUserAgentRoutes(
     "/agents/claim",
     { schema: { body: z.object({ token: z.string().regex(/^ags_\S+$/, "须为 ags_ token") }) } },
     async (req, reply) => {
-      let ctx;
+      let ctx: SessionContext;
       try {
         ctx = await requireSession(req, auth, store);
       } catch (err) {
@@ -149,7 +149,7 @@ export function registerUserAgentRoutes(
     "/agents/claim",
     { schema: { body: z.object({ agent_id: z.string().min(1) }) } },
     async (req, reply) => {
-      let ctx;
+      let ctx: SessionContext;
       try {
         ctx = await requireSession(req, auth, store);
       } catch (err) {

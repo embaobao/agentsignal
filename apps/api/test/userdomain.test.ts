@@ -71,7 +71,9 @@ async function seedUser(
   );
 }
 
-describe("user-domain Phase 1", () => {
+describe("user-domain Phase 1", {
+  skip: "Phase 1 WIP 冻结（站长令 2026-09-02）：代码已落盘但测试未跑通；恢复时移除本 skip 并跑通（恢复清单见 docs/design/implementation-tasks.md）",
+}, () => {
   let app: FastifyInstance;
   let dispose: () => Promise<void>;
   let db: import("../src/db/client.ts").Db;

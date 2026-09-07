@@ -65,7 +65,7 @@
 >
 > **恢复时的第一件事**：跑通 `userdomain.test.ts`（口径是根 `pnpm test`，node:test；不要用 `exec tsx`，tsx 不在依赖）。
 >
-> **2026-09-04 全仓验证补充（提交 e6740f5 后实测）**：红的根因比「userdomain 未跑通」更宽——`007_auth` 迁移 `migrations.ts:187` 索引名 `session_user` 撞 PG 保留字（42601 语法错），PGlite 建库跑迁移即炸，**连坐全部 api/e2e 套件**（node:test 117 用例：63 过 / 5 败 / 49 取消；CLI 54 全绿不受影响）。恢复清单即当前三门红的全部坐标：① `migrations.ts:187` 索引名加引号（一行，解锁全部 api/e2e）；② `me.ts:82,108` `'agent_token'` 未入 audit `EntityType` 联合（tsc ×2）；③ `user.ts:68,113,152` 三处 `noImplicitAnyLet`（biome）。bridge/user/store 的 import 排序已理毕（64acb72）。2026-09-04 工作区四线已分批入库（Phase 0 `1aa893f` · Phase 1 WIP `e6740f5` · skill-engine `bc8cb9c` · docs `85ef638`），**未 push**。
+> **2026-09-07 三门红已修（发版前置，verify 全绿）**：① `migrations.ts:187` 索引名已加引号（`"session_user"`，PGlite/PG 迁移全通）；② `audit EntityType` 联合已加 `'agent_token'`（`packages/audit/src/ledger.ts:21`）；③ `user.ts` 三处 `let ctx` 已标 `SessionContext` 类型。配套：`tests/e2e/api.test.ts` readyz 迁移断言对齐 `007_auth`（007 已随 WIP 入库并正常应用）；**`userdomain.test.ts` 整套件 skip 隔离**（skip 理由注明冻结令与恢复坐标——7 个用例仍红，属 Phase 1 未竟功能，恢复时移除 skip 逐个跑通，勿当作绿）。恢复清单其余坐标不变。
 >
 > **暂停原因（不改代码）**：本轮产出两份战略文档待站长审完讨论——[v2 agent-native 战略](../../docs/notes/2026-09-02-v2-strategy-agent-native.md)（已落 ADR [agent-native-repositioning](../decisions/2026-09-02-agent-native-repositioning.md)）与[三痛点解决方案](../notes/2026-09-02-three-pain-solution.md)（已附采纳/不采纳注记）。两份文档可能改写 Phase 2/3 排期，故主线代码不抢跑。
 

@@ -11,7 +11,7 @@
 | `apps/api/src/server.ts` | Fastify 装配：插件/静态/Scalar(`/docs`)/路由注册 | 新路由前缀要同步 Netlify（§四坑 1） |
 | `apps/api/src/env.ts` | zod 环境变量校验，缺失 fail-fast | OAuth 三变量 optional（fail-soft） |
 | `apps/api/src/db/client.ts` | `Db` 极小接口（query/exec/close） | 无 ORM，SQL 直写 |
-| `apps/api/src/db/migrations.ts` | 幂等迁移 + `SCHEMA_VERSION`（现 005_feedback） | 加迁移见配方 B；曾跳号，新增前先看尾号 |
+| `apps/api/src/db/migrations.ts` | 幂等迁移 + `SCHEMA_VERSION`（现 007_auth） | 加迁移见配方 B；曾跳号，新增前先看尾号 |
 | `apps/api/src/store/store.ts` | `IStore` 接口 + PgStore 全部 SQL | 软删排除写 `FROM_JOIN` 末尾 WHERE（§四坑 8） |
 | `apps/api/src/routes/agents.ts` | `POST /agents/register`（自注册，默认关） | — |
 | `apps/api/src/routes/signals.ts` | 读端点六件套 + publish + `GET /topics` | `_ui_ext` 在 detail 组装 |

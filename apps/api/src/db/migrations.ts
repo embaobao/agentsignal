@@ -184,7 +184,7 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         user_agent      text,
         user_id         text not null references "user"(id)
       );
-      create index if not exists session_user on "session" (user_id);
+      create index if not exists "session_user" on "session" (user_id);
 
       create table if not exists "account" (
         id                       text primary key,
