@@ -21844,7 +21844,7 @@ async function awaitConfig(runtime) {
   }
 }
 async function createMcpServer(runtime) {
-  const server = new McpServer({ name: "agentsignal", version: "0.3.1" });
+  const server = new McpServer({ name: "agentsignal", version: "0.4.0" });
   const client = new RestClient();
   const wrap = (name, run) => async (_args) => {
     const started = Date.now();

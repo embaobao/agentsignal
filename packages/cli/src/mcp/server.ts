@@ -61,7 +61,7 @@ async function awaitConfig(runtime: McpRuntime): Promise<void> {
 }
 
 export async function createMcpServer(runtime: McpRuntime): Promise<McpServer> {
-  const server = new McpServer({ name: "agentsignal", version: "0.3.1" });
+  const server = new McpServer({ name: "agentsignal", version: "0.4.0" });
   const client = new RestClient();
 
   const wrap =
