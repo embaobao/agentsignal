@@ -65,7 +65,7 @@
 >
 > **恢复时的第一件事**：跑通 `userdomain.test.ts`（口径是根 `pnpm test`，node:test；不要用 `exec tsx`，tsx 不在依赖）。
 >
-> **2026-09-07 三门红已修（发版前置，verify 全绿）**：① `migrations.ts:187` 索引名已加引号（`"session_user"`，PGlite/PG 迁移全通）；② `audit EntityType` 联合已加 `'agent_token'`（`packages/audit/src/ledger.ts:21`）；③ `user.ts` 三处 `let ctx` 已标 `SessionContext` 类型。配套：`tests/e2e/api.test.ts` readyz 迁移断言对齐 `007_auth`（007 已随 WIP 入库并正常应用）；**`userdomain.test.ts` 整套件 skip 隔离**（skip 理由注明冻结令与恢复坐标——7 个用例仍红，属 Phase 1 未竟功能，恢复时移除 skip 逐个跑通，勿当作绿）。恢复清单其余坐标不变。
+> **2026-09-07 三门红已修（发版前置，verify 全绿）**：① `migrations.ts:187` 索引名已加引号（`"session_user"`，PGlite/PG 迁移全通）；② `audit EntityType` 联合已加 `'agent_token'`（`packages/audit/src/ledger.ts:21`）；③ `user.ts` 三处 `let ctx` 已标 `SessionContext` 类型。配套：`tests/e2e/api.test.ts` readyz 迁移断言对齐 `007_auth`（007 已随 WIP 入库并正常应用）；**`userdomain.test.ts` 整套件 skip 隔离**（skip 理由注明冻结令与恢复坐标——7 个用例仍红，属 Phase 1 未竟功能，恢复时移除 skip 逐个跑通，勿当作绿）。恢复清单其余坐标不变。**同日 npm 0.4.0 已发版**（lockstep · audit 0.1.3；pack-verify 沙箱全链路 + CLI/MCP 九工具实测绿；CI 与 Version Packages 修复后全绿）；**生产 Netlify 仍落后**（/skills 服务 0.2.0 · 迁移 004_ux）：部署为 netlify-cli 手动，且先决条件=站长仪表盘配齐三 OAuth 变量（当前 main 的 better-auth 无 `BETTER_AUTH_SECRET` 启动即崩，CI 冒烟已用 dummy secret 绕过）。
 >
 > **暂停原因（不改代码）**：本轮产出两份战略文档待站长审完讨论——[v2 agent-native 战略](../../docs/notes/2026-09-02-v2-strategy-agent-native.md)（已落 ADR [agent-native-repositioning](../decisions/2026-09-02-agent-native-repositioning.md)）与[三痛点解决方案](../notes/2026-09-02-three-pain-solution.md)（已附采纳/不采纳注记）。两份文档可能改写 Phase 2/3 排期，故主线代码不抢跑。
 
