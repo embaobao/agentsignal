@@ -106,6 +106,7 @@ jobs:
         run: |
           docker run --rm -e LOG_LEVEL=info \
             -e DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/agentsignal \
+            -e BETTER_AUTH_SECRET=ci-smoke-dummy-secret \
             --add-host=host.docker.internal:host-gateway \
             -p 3999:3000 -d --name as-docker agentsignal-api:ci
           for i in $(seq 1 30); do
