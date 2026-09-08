@@ -128,7 +128,13 @@ ${js}
   if (external) {
     throw new Error("产物出现外部请求，违反零外部请求约束（规范 §8）");
   }
-  if (/skills/i.test(html.replaceAll(/search_skills|load_skill_detail|verify_skill/g, ""))) {
+  // 扫描口径与 wizard.test.ts「无 skills 字样」测试对齐：剥 MCP 工具名与 config 字段名
+  // （均为标识符非用户可见文案，\b 词边界也不会命中测试正则）
+  const stripped = html.replaceAll(
+    /search_skills|load_skill_detail|verify_skill|max_skills|skill_count/g,
+    "",
+  );
+  if (/skills/i.test(stripped)) {
     process.stdout.write("⚠ 产物中检测到 skills 字样（若为用户可见文案，违反规范红线）\n");
   }
 

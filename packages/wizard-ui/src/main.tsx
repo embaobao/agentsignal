@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { G } from "./copy.ts";
 import { Header } from "./ui.tsx";
 import { Wizard, type HostOption, type StackOption } from "./wizard.tsx";
-import { Manage, type HostState } from "./manage.tsx";
+import { Manage, type HostState, type LibraryItem, type SubscriptionRow } from "./manage.tsx";
 import { Corrupt } from "./corrupt.tsx";
 
 interface StateResponse {
@@ -19,6 +19,8 @@ interface StateResponse {
   metrics: { throughput_saved: number; residual: number };
   layout: { root: string };
   options: { domains: string[]; stacks: StackOption[] };
+  library: LibraryItem[];
+  sync: { subscriptions: SubscriptionRow[]; max_skills: number; base_url: string | null } | null;
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -123,6 +125,8 @@ function App(): ReactNode {
             stats={data.stats}
             metrics={data.metrics}
             root={data.layout.root}
+            sync={data.sync}
+            library={data.library}
             onRerun={() => setForce("wizard")}
             onWire={(hosts) =>
               api<{ ok: boolean; failed?: { host: string; reason: string }[] }>("/api/wire", {
@@ -130,12 +134,39 @@ function App(): ReactNode {
                 body: JSON.stringify({ hosts }),
               })
             }
-            onUninstall={() =>
-              api<{ ok: boolean; failed?: { host: string; reason: string }[]; dataKept: string }>(
+            onUninstall={async () => {
+              const r = await api<{ ok: boolean; failed?: { host: string; reason: string }[]; dataKept: string }>(
                 "/api/uninstall",
                 { method: "POST" },
+              );
+              return r;
+            }}
+            onSubAdd={(topic) =>
+              api<{ ok: boolean; reason?: string }>("/api/subscriptions/add", {
+                method: "POST",
+                body: JSON.stringify({ topic }),
+              })
+            }
+            onSubRemove={(topic) =>
+              api<{ ok: boolean; reason?: string }>("/api/subscriptions/remove", {
+                method: "POST",
+                body: JSON.stringify({ topic }),
+              })
+            }
+            onSync={(topic) =>
+              api<{ ok: boolean; reason?: string; report?: { installed: number; skipped: number } }>(
+                "/api/sync",
+                { method: "POST", body: JSON.stringify({ topic }) },
               )
             }
+            onLibraryDelete={async (id) => {
+              const r = await api<{ ok: boolean; reason?: string }>("/api/library/delete", {
+                method: "POST",
+                body: JSON.stringify({ id }),
+              });
+              if (r.ok) setData(await api<StateResponse>("/api/state"));
+              return r;
+            }}
           />
         ) : null}
       </main>

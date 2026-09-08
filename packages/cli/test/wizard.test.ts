@@ -7,6 +7,8 @@
  */
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -148,4 +150,123 @@ test("server：/api/uninstall 全量摘除且保留数据目录", async () => {
     assert.equal(res.ok, true);
     assert.equal(res.dataKept, root);
   });
+});
+
+/* ── P2.3 订阅 / 同步 / 经验库端点（dynamic-skill-management）───────────────── */
+
+test("订阅区端点：state 带 sync/library · 增删订阅 · 同步回环平台落库 · 库移除", async () => {
+  const SIG = "sig_01wizardsync0000000000000000";
+  const platform = createServer((req, res) => {
+    const u = req.url ?? "";
+    if (u.startsWith(`/topics/ai-research/signals`)) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          topic_id: "tp_1",
+          signals: [
+            {
+              id: SIG,
+              kind: "solution",
+              topic: "ai-research",
+              digest: "向导同步端到端 | scope: e2e | validation: self-tested",
+              created_at: "2026-09-09T00:00:00.000Z",
+            },
+          ],
+          next_cursor: null,
+          tokens_saved_est: 0,
+        }),
+      );
+      return;
+    }
+    if (u.startsWith(`/signals/${SIG}`)) {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          id: SIG,
+          kind: "solution",
+          topic: "ai-research",
+          digest: "向导同步端到端 | scope: e2e | validation: self-tested",
+          created_at: "2026-09-09T00:00:00.000Z",
+          experience: {
+            format: "markdown",
+            body: "## Why\nw\n\n## What worked\n1. s\n\n## Evidence\ne\n\n## Caveats\nc\n",
+          },
+        }),
+      );
+      return;
+    }
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end("{}");
+  });
+  await new Promise<void>((r) => platform.listen(0, "127.0.0.1", r));
+  const platformBase = `http://127.0.0.1:${(platform.address() as AddressInfo).port}`;
+  const savedBase = process.env.AGENTSIGNAL_BASE;
+  process.env.AGENTSIGNAL_BASE = platformBase;
+  await writeConfigAtomic(defaultConfig());
+  try {
+    await withServer(async (base) => {
+      // state：manage 态带 sync + library
+      const state = (await (await fetch(`${base}/api/state`)).json()) as {
+        state: string;
+        library: { id: string; status: string }[];
+        sync: { subscriptions: { topic: string }[]; max_skills: number; base_url: string | null };
+      };
+      assert.equal(state.state, "manage");
+      assert.ok(Array.isArray(state.library));
+      assert.equal(state.sync.max_skills, 200);
+      assert.equal(state.sync.base_url, platformBase, "env 优先读平台站点");
+
+      // 添加订阅（重复添加 400）
+      const post = async (path: string, body: unknown) =>
+        await (
+          await fetch(`${base}${path}`, { method: "POST", body: JSON.stringify(body) })
+        ).json();
+      assert.equal(
+        ((await post("/api/subscriptions/add", { topic: "ai-research" })) as { ok: boolean }).ok,
+        true,
+      );
+      const dup = (await post("/api/subscriptions/add", { topic: "ai-research" })) as {
+        ok: boolean;
+      };
+      assert.equal(dup.ok, false);
+
+      // 同步：回环平台 → 落库 → 游标持久化
+      const syncRes = (await post("/api/sync", { topic: "ai-research" })) as {
+        ok: boolean;
+        report?: { installed: number; cursor: string | null };
+      };
+      assert.equal(syncRes.ok, true);
+      assert.equal(syncRes.report?.installed, 1);
+
+      // state.library 出现 active 条目（带平台来源）
+      const state2 = (await (await fetch(`${base}/api/state`)).json()) as {
+        library: { id: string; status: string; source: { topic: string | null } | null }[];
+        sync: { subscriptions: { topic: string; cursor?: string }[] };
+      };
+      const item = state2.library.find((l) => l.id === SIG);
+      assert.ok(item, "同步后经验应出现在库列表");
+      assert.equal(item.status, "active");
+      assert.equal(item.source?.topic, "ai-research");
+      assert.equal(state2.sync.subscriptions[0]?.cursor, SIG, "游标持久化");
+
+      // 库移除（物理删）+ 订阅移除
+      assert.equal(((await post("/api/library/delete", { id: SIG })) as { ok: boolean }).ok, true);
+      const miss = (await post("/api/library/delete", { id: SIG })) as { ok: boolean };
+      assert.equal(miss.ok, false);
+      assert.equal(
+        ((await post("/api/subscriptions/remove", { topic: "ai-research" })) as { ok: boolean }).ok,
+        true,
+      );
+      const state3 = (await (await fetch(`${base}/api/state`)).json()) as {
+        library: { id: string }[];
+        sync: { subscriptions: { topic: string }[] };
+      };
+      assert.ok(!state3.library.some((l) => l.id === SIG), "移除后库中不得残留");
+      assert.equal(state3.sync.subscriptions.length, 0);
+    });
+  } finally {
+    if (savedBase === undefined) delete process.env.AGENTSIGNAL_BASE;
+    else process.env.AGENTSIGNAL_BASE = savedBase;
+    platform.close();
+  }
 });

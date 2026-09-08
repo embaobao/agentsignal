@@ -12,3 +12,4 @@
 | 2026-09-09 04:05 | fcace2a | P1.3 | done | init-e2e 增段 5/5：回环平台 use --install 全链（落库→检索命中→吞吐非零→mirror off 零网络→卸载保留）；CLI 76 + verify 4/4 全绿——P1 全完成 |
 | 2026-09-09 05:06 | 4e8ea20 | P2.1 | done | sync.ts 游标同步器 5 用例（两页拉全/update 跳过/幂等重放/429 退避/阈值过滤/CONFIG_MISSING）；游标兜底读持久化断点；CLI 81 + verify 4/4 全绿 |
 | 2026-09-09 06:04 | dfd0e31 | P2.2 | done | sync 测试矩阵补强至 10 用例（断点续传/隐藏信号/429 打满/body retry_after/缺正文）；隔离 root 防污染；CLI 86 + verify 4/4 全绿 |
+| 2026-09-09 07:07 | ec8373a | P2.3 | done | 管理界面订阅区全链：服务端 4 端点 + UI 订阅面板/库列表 + 产物重注入（零外部请求/禁词绿）；wizard 8 用例含端点回环平台同步；CLI 87 + verify 4/4 全绿 |

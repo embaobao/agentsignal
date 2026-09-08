@@ -5,7 +5,7 @@
  * → 重建本地索引（本地库小，全量重建即落库后最低风险的索引刷新路径）。
  * 纯本地路径零网络——网络发生在 index.ts use 分支，此处只收已取回的信号对象。
  */
-import { mkdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
 import { type AgentSignalPaths, resolvePaths } from "./paths.ts";
@@ -39,4 +39,21 @@ export async function installSignal(
   const { skills } = await scanSkills(p);
   await saveIndex(await buildIndex(skills), p);
   return { dir, count: skills.length };
+}
+
+/** 物理移除单个技能目录 + 索引重建（管理界面「确认后移除」用；返回是否确实存在过） */
+export async function deleteSkill(id: string, paths?: AgentSignalPaths): Promise<boolean> {
+  const p = paths ?? resolvePaths();
+  if (!/^[a-z][a-z0-9_-]*$/.test(id)) return false; // 目录名白名单，防路径穿越
+  const dir = path.join(p.skillsDir, id);
+  let existed = false;
+  try {
+    existed = (await stat(dir)).isDirectory();
+  } catch {
+    return false;
+  }
+  await rm(dir, { recursive: true, force: true });
+  const { skills } = await scanSkills(p);
+  await saveIndex(await buildIndex(skills), p);
+  return existed;
 }

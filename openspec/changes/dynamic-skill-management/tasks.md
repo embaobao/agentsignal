@@ -21,9 +21,8 @@
 
 - [x] 2.1 `packages/cli/src/skills/sync.ts`：游标分页（`GET /topics/:t/signals?cursor=&limit=`）→ 过滤（kind=solution · min_validation 阈值缺省 none）→ 逐条 `include=experience` 拉全文 → transcode → upsert（同 sig_id 幂等覆盖）→ 游标推进（cursor=sig id 持久化进 subscriptions 段，原子写 tmp+rename）；429 按 retry_after 退避重试；结构化日志 — 2026-09-09 完成（游标解析：显式入参优先兜底持久化断点，config 即订阅状态源；update 不拉详情；末页游标退回本页最后一条 sig id；429 同页重试 sleep 注入零真实等待；CONFIG_MISSING 结构化报错；sync.test.ts 5 用例绿）
 - [x] 2.2 `test/sync.test.ts`（fake fetch，零外部依赖）：幂等（同游标重放零重复落盘）· 断点续传（中断后从持久化游标续）· 429 退避 · 过滤阈值 · 隐藏信号跳过 — 2026-09-09 完成（10 用例：新增断点续传两趟不重拉 / 详情 404 隐藏跳过游标照常推进 / 缺正文 skipped / 429 打满 RATE_LIMITED / retry_after 走 body 无 header；落库断言类用例独立 root 防同文件污染）
-- [ ] 2.3 管理界面 B 视图「订阅」区：订阅管理（增删 topic）· 同步按钮（触发 + 进度回报）· 本地库列表（来源 topic / synced_at / 状态 active|outdated|revoked / 最近 verify · 删除=确认后物理删）；wizard-ui 构建产物重注入 html.ts；零外部请求 + 无 skills 禁词断言保持绿；开放问题 1/3 在本期前落裁决
+- [x] 2.3 管理界面 B 视图「订阅」区：订阅管理（增删 topic）· 同步按钮（触发 + 进度回报）· 本地库列表（来源 topic / synced_at / 状态 active|outdated|revoked / 最近 verify · 删除=确认后物理删）；wizard-ui 构建产物重注入 html.ts；零外部请求 + 无 skills 禁词断言保持绿；开放问题 1/3 在本期前落裁决 — 2026-09-09 完成（服务端 4 端点 subscriptions/add·remove · sync（readPlatformCredentials 取站点，env 优先）· library/delete（目录名白名单防穿越）+ buildState 增 sync/library 块；UI 新 S 文案块 + 订阅面板（容量 n/max · 游标态 · 同步按钮一次性回报）+ 库列表（平台/本地态 · 来源 · 验证聚 · 两击确认物理删）；产物重注入 697.7KB 零外部请求；构建期禁词扫描口径与测试对齐（剥 max_skills/skill_count 标识符）；开放问题按提案建议值执行未裁决）；wizard.test.ts 8 用例绿（新增端点全链：增删/重复 400/同步落库/游标持久化/库移除）
 - [ ] 2.4 `status` 增体检行：「订阅 N topic · 落后 M 条待同步」（仅统计不自动同步）；init-e2e 断言
-
 ## Phase 3 · 生命周期治理（约 1 人日）
 
 - [ ] 3.1 更新链：sync 时对 update 信号解析 digest 锚定（`anchor: sig_x`）→ 命中本地技能则标 `outdated` + 更新正文经 layers 作附加层注入（不覆盖原 Runbook）；`test/lifecycle.test.ts` 锚定链用例

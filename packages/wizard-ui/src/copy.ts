@@ -95,6 +95,30 @@ export const D = {
     `全部宿主配置已摘除，本地库文件保留在 ${dir}，可手动删除。服务已关闭，可以直接关闭此标签页。`,
 } as const;
 
+/** dynamic-skill-management P2.3：订阅 / 同步 / 经验库（同样不得出现 skills 字样） */
+export const S = {
+  section: "订阅",
+  sectionDesc: "订阅平台的经验分区，本机按需拉取其中的新经验（手动触发，无后台进程）。",
+  addPlaceholder: "输入分区名（topic），如 ai-research",
+  addBtn: "添加订阅",
+  remove: "移除",
+  empty: "还没有订阅。添加平台分区后，可一键把其中的经验拉到本机。",
+  syncBtn: "同步",
+  syncing: "同步中…",
+  never: "从未同步",
+  cursor: (c: string) => `已同步至 ${c}`,
+  syncDone: (installed: number, skipped: number) =>
+    `同步完成：装入 ${installed} 条，跳过 ${skipped} 条。`,
+  baseMissing: "未配置来源站点：先在本机设置 AGENTSIGNAL_BASE 或完成注册领取身份。",
+  capacity: (n: number, max: number) => `容量 ${n}/${max} 条`,
+  libraryStatusPlatform: "平台",
+  libraryStatusLocal: "本地",
+  libraryRemove: "移除",
+  libraryRemoveConfirm: "确认移除",
+  libraryRemoved: "已移除该条经验",
+  libraryVerify: (w: number, p: number, f: number) => `验证 ${w}✓ / ${p}~ / ${f}✗`,
+} as const;
+
 export const C = {
   title: "配置文件无法解析",
   desc: "配置文件可能被外部修改损坏。可以尝试自动修复，或备份后重新初始化。",

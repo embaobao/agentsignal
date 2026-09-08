@@ -26,9 +26,12 @@ import {
   loadConfig,
   writeConfigAtomic,
 } from "../config.ts";
+import { deleteSkill } from "../install.ts";
 import { readMetrics } from "../metrics.ts";
+import { readPlatformCredentials } from "../mirror.ts";
 import { type AgentSignalPaths, resolvePaths } from "../paths.ts";
 import { scanSkills } from "../store.ts";
+import { syncSubscription } from "../sync.ts";
 import { detectHosts, type HostId, hostById, hostDefs } from "../wiring/hosts.ts";
 import { hostStatus, unwireMcp, type WireResult, wireMcp } from "../wiring/snippets.ts";
 import { uninstallAll } from "../wiring/uninstall.ts";
@@ -273,6 +276,80 @@ export async function startWizard(
           json(res, { ok: true });
           return;
         }
+        /* ── dynamic-skill-management P2.3：订阅 / 同步 / 经验库 ── */
+        if (req.method === "POST" && url.pathname === "/api/subscriptions/add") {
+          const body = await readBody(req);
+          const topic = String(body.topic ?? "").trim();
+          if (!topic) {
+            json(res, { ok: false, reason: "分区名不能为空" }, 400);
+            return;
+          }
+          const loaded = await loadConfig(paths);
+          if (!loaded) {
+            json(res, { ok: false, reason: "配置不存在，请先初始化" }, 400);
+            return;
+          }
+          if (loaded.config.sync.subscriptions.some((s) => s.topic === topic)) {
+            json(res, { ok: false, reason: "该订阅已存在" }, 400);
+            return;
+          }
+          const mv = String(body.min_validation ?? "none");
+          loaded.config.sync.subscriptions.push({
+            topic,
+            min_validation: mv === "self-tested" || mv === "battle-tested" ? mv : "none",
+          });
+          await writeConfigAtomic(loaded.config, paths);
+          json(res, { ok: true });
+          return;
+        }
+        if (req.method === "POST" && url.pathname === "/api/subscriptions/remove") {
+          const body = await readBody(req);
+          const topic = String(body.topic ?? "").trim();
+          const loaded = await loadConfig(paths);
+          if (!loaded) {
+            json(res, { ok: false, reason: "配置不存在" }, 400);
+            return;
+          }
+          loaded.config.sync.subscriptions = loaded.config.sync.subscriptions.filter(
+            (s) => s.topic !== topic,
+          );
+          await writeConfigAtomic(loaded.config, paths);
+          json(res, { ok: true });
+          return;
+        }
+        // 按需 pull 一次（无常驻进程）；进度以结果报告一次性回报
+        if (req.method === "POST" && url.pathname === "/api/sync") {
+          const body = await readBody(req);
+          const topic = String(body.topic ?? "").trim();
+          const loaded = await loadConfig(paths);
+          const entry = loaded?.config.sync.subscriptions.find((s) => s.topic === topic);
+          if (!entry) {
+            json(res, { ok: false, reason: "订阅不存在" }, 404);
+            return;
+          }
+          const { base: base_url } = await readPlatformCredentials();
+          if (!base_url) {
+            json(res, {
+              ok: false,
+              reason: "未配置来源站点：先在本机设置 AGENTSIGNAL_BASE，或完成 register",
+            });
+            return;
+          }
+          const report = await syncSubscription(entry, { baseUrl: base_url, paths });
+          json(res, { ok: true, report });
+          return;
+        }
+        if (req.method === "POST" && url.pathname === "/api/library/delete") {
+          const body = await readBody(req);
+          const id = String(body.id ?? "").trim();
+          const existed = await deleteSkill(id, paths);
+          json(
+            res,
+            existed ? { ok: true } : { ok: false, reason: "条目不存在" },
+            existed ? 200 : 404,
+          );
+          return;
+        }
         json(res, { error: "not found" }, 404);
       } catch (err) {
         json(res, { error: err instanceof Error ? err.message : String(err) }, 500);
@@ -345,6 +422,33 @@ async function buildState(paths: AgentSignalPaths) {
   } catch {
     index_rebuilt_at = null;
   }
+  // dynamic-skill-management P2.3：订阅 + 经验库（来源/状态/裁决聚合）
+  const library = skills.map((s) => ({
+    id: s.id,
+    name: s.name,
+    bytes: s.bodyBytes,
+    status: (s.lifecycle.provenance?.sig_id ? "active" : "local") as "active" | "local",
+    source: s.lifecycle.provenance
+      ? {
+          topic: s.lifecycle.provenance.topic ?? null,
+          validation: s.lifecycle.provenance.validation ?? null,
+          synced_at: s.lifecycle.provenance.synced_at ?? null,
+        }
+      : null,
+    verify: s.lifecycle.metrics,
+  }));
+  let sync: {
+    subscriptions: EngineConfig["sync"]["subscriptions"];
+    max_skills: number;
+    base_url: string | null;
+  } | null = null;
+  if (config) {
+    sync = {
+      subscriptions: config.sync.subscriptions,
+      max_skills: config.sync.max_skills,
+      base_url: (await readPlatformCredentials()).base ?? null,
+    };
+  }
   return {
     state,
     corrupt,
@@ -359,5 +463,7 @@ async function buildState(paths: AgentSignalPaths) {
     metrics: await readMetrics(paths),
     layout: { root: paths.root },
     options: { domains: DEFAULT_DOMAINS, stacks: STACK_OPTIONS },
+    library,
+    sync,
   };
 }
