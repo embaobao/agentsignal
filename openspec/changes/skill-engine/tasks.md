@@ -22,9 +22,9 @@
 - [x] 2.4 `agentsignal uninstall`：全量摘除宿主 MCP 配置/hooks/rules（`~/.agentsignal` 数据保留）+ 摘除不残留断言 — 2026-09-03 完成（init-e2e「摘除不残留」断言绿；兼容壳条目随包移除不再涉及）
 - [x] 2.5 文档随行：user-manual **只写四命令（init/mcp/status/uninstall），skills 概念零出现** · admin-guide（~/.agentsignal 布局与 config 产物说明）· SKILL lockstep（G1–G3）· @agentssignal/mcp 弃用说明 · 指标口径说明 — 2026-09-03 完成（canonical [local-engine.md](../../docs/design/local-engine.md) · user-manual §1.5 四命令 skills 零出现 · admin-guide §6 · deployment 发布顺序 · maintenance-cheatsheet 配方 E / 目录定位 · SKILL lockstep G1–G4 · 唯一 MCP server 说明）
 
-## Phase 3 · 服务端发布机制（Phase 1–2 验收后另立提案，本提案不排期）
+## Phase 3 · 服务端发布机制（已另立提案，本 change 不实施）
 
-- [ ] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— Phase 1–2 验收后另立提案
+- [ ] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— **已另立 → [dynamic-skill-management](../dynamic-skill-management/proposal.md)（2026-09-08 Approved：订阅落库 × 回流闭环；publish 回平台复用既有平台命令，用户域 creds 仍归 user-domain-completion）**
 
 ## 验收（Phase 1–2 完成后）
 
