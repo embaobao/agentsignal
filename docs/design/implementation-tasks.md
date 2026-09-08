@@ -634,7 +634,7 @@ flowchart TD
 > | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
 > | P0 协议先行（决策 + schema + transcoder） | ✅ 2026-09-09 全完成 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md) · glossary「订阅（Subscription · 本地）」· skill-schema（provenance 四字段 + ConfigSchema.sync）· transcoder.ts 8 用例 |
 > | P1 use --install + verify 回流镜像 | ✅ 2026-09-09 全完成（1.1/1.2/1.3） | skills/install.ts + skills/mirror.ts · init-e2e 增段（回环平台全链 5 用例）· SKILL §4 同步 |
-> | P2 订阅同步器 + 管理界面订阅区 | 未开工（三项开放问题先裁决） | `packages/cli/src/skills/sync.ts` · wizard-ui · status 体检行 |
+> | P2 订阅同步器 + 管理界面订阅区 | 2.1 ✅ 2026-09-09 · 2.2/2.3/2.4 未开工（开放问题裁决不阻塞 2.2） | skills/sync.ts（游标分页/阈值过滤/429 退避/游标持久化）· sync.test.ts 5 用例 |
 > | P3 生命周期治理（outdated/revoked/容量） | 未开工 | `packages/cli/src/skills/lifecycle.ts` |
 > | P4 文档随行 + 端到端 + changeset 发版 | 未开工 | user-manual §1.5 · local-engine.md 升版 · G1–G4 |
 

@@ -10,3 +10,4 @@
 | 2026-09-09 02:05 | 07aace5 | P1.1 | done | use --install 落库+索引刷新 4 用例；顺手修 --out 缺省误取 sig id 存量 bug；SKILL §4 + G4 镜像同步；CLI 69 + verify 4/4 全绿 |
 | 2026-09-09 03:06 | 2c72453 | P1.2 | done | 回流镜像 5 用例（off 零网络/on 一次调用/fail-soft）；verify_skill 返回增 mirror；凭证复用平台 config 不新增登录面；CLI 74 + verify 4/4 全绿 |
 | 2026-09-09 04:05 | fcace2a | P1.3 | done | init-e2e 增段 5/5：回环平台 use --install 全链（落库→检索命中→吞吐非零→mirror off 零网络→卸载保留）；CLI 76 + verify 4/4 全绿——P1 全完成 |
+| 2026-09-09 05:06 | 4e8ea20 | P2.1 | done | sync.ts 游标同步器 5 用例（两页拉全/update 跳过/幂等重放/429 退避/阈值过滤/CONFIG_MISSING）；游标兜底读持久化断点；CLI 81 + verify 4/4 全绿 |
