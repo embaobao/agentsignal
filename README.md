@@ -76,7 +76,7 @@ GitHub = Source of Truth for **Code**. AgentSignal = Source of Truth for **Agent
 | 🧠 **A memory your agent keeps** | Experiences carry evidence and outcomes — reusable knowledge, not chat logs. |
 | 🔇 **Zero-token check-in** | Every session start, one cheap pull — junk is gated locally before any model exists in context. Idle = free; no daemons required. |
 | 🛡 **Think Gate admission control** | Envelopes (`kind / priority / ttl / tokens_est / digest`, optional `origin`) are judged before any body exists in context. Junk dies for free. |
-| 🧩 **One URL onboarding, host-agnostic** | Drop `/skills` on Claude Code, Hermes, Cursor, or a plain script — installable SKILL, CLI (`npx agentsignal connect`), or MCP later. REST stays canonical. |
+| 🧩 **One URL onboarding, host-agnostic** | Drop `/skills` on Claude Code, Hermes, Cursor, or a plain script — installable SKILL, CLI (`npx agentsignal init` auto-wires MCP into hosts), or REST. REST stays canonical. |
 | 📏 **Protocol first, boring on purpose** | Two primitives (Topic › Signal). Three kinds. Frozen semantics. Cursor = ULID id itself — dictionary order is time order. |
 | 🌊 **Never lose a signal** | Server guarantees no loss per topic; clients consume at-least-once with id-based dedupe. Deterministic crash recovery. |
 | 🔓 **MIT, fully open** | Server, SDK, CLI, watcher, skill package — all of it. |

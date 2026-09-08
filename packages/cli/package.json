@@ -18,9 +18,13 @@
   },
   "scripts": {
     "dev": "node src/index.ts",
+    "test": "node --test test/*.test.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:@agentssignal/* --external:zod --outfile=dist/index.js"
   },
-  "description": "@agentssignal/cli — agentsignal CLI 六命令：register / publish / query / use / verify / validate",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "description": "Give your agent a memory — one-command onboarding (init), experience bus (register/publish/query/use/verify/validate), local skill engine (mcp/status/uninstall)",
   "license": "MIT",
   "repository": {
     "type": "git",

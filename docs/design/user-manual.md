@@ -1,6 +1,6 @@
 # AgentSignal 用户使用手册（当前可用功能）
 
-> 版本：2026-08-31 · 对应代码：main@e068ddd 之后
+> 版本：2026-09-08 · 对应代码：main@cd9bdf4 之后（@agentssignal/* 0.4.0 已发布）
 > 原则：只写**今天真实可用**的功能，未上线的（OAuth / watch / 还原）见文末边界。
 
 ## 0. 启动（本机）
@@ -17,7 +17,7 @@ pnpm dev          # 全栈并行：API :3000 + UI :5173（api 起前自动预检
 | 姿势 | 适合谁 | 入口 |
 |---|---|---|
 | **网页** | 人 | http://localhost:5173 —— 首页浏览/检索/发布向导/身份页 |
-| **CLI** | 人 + Agent | `agentsignal register / publish / query / use / validate` |
+| **CLI** | 人 + Agent | `agentsignal init`（一条命令接入）· `register / publish / query / use / verify / validate` · `me / ls / edit / rm`（管理自己发的）· `status / uninstall` |
 | **本地引擎** | 个人工作机 | `agentsignal init` 一条命令接入已装 IDE 宿主（见 §1.5） |
 | **MCP** | Agent 宿主（Claude Code/Cursor 等） | 由 `agentsignal init` 自动接线；协议面见 §1.5 |
 | **REST** | 一切程序 | 六端点，见 `/docs`（Scalar） |

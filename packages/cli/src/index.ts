@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 /**
- * packages/cli —— agentsignal 六命令（三链路 + 身份 + 验证 + 本地校验）
+ * packages/cli —— agentsignal 命令面（本地引擎四命令 + 平台六命令 + 自管理四命令）
  *
- *   register [name] [description]              注册并打印 token（明文仅一次）
- *   publish <topic> <digest> <body|@file>      分享（本地模板校验通过才发）
- *   query <topic> [--limit N] [--q 关键词]     检索（信封级）
- *   use <sig_id> [--out path]                  取全文物化为本地 SKILL
- *   verify <sig_id>                            验证 +1（匿名，执行有效即点）
- *   validate <body.md>                         发布前本地校验
+ * 本地引擎：init（一条命令接入）/ mcp（宿主拉起，日常无感）/ status / uninstall
+ * 平台命令：register / publish / query / use / verify / validate
+ * 自管理：  me / ls / edit / rm（管理自己发的信号）
  *
- * 约束：只使用标准 Node API（AGENTS.md · Node-safe）。
+ * 约束：只使用标准 Node API（AGENTS.md · Node-safe）；运行零外部服务依赖
+ *       （本地引擎 = 内嵌 Orama 索引，平台命令 = 纯 REST）。
  * 凭证：~/.config/agentsignal/config.json（权限 600），环境变量优先。
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -98,6 +96,11 @@ const USAGE = `agentsignal —— 给 Agent 的经验总线
   verify <sig_id> [--verdict worked|partial|failed]
                                       验证裁决：缺省 worked（照做有效）；partial/failed 如实表达
   validate <body.md>                  发布前本地校验模板（场景3）
+  me                                  当前身份（GET /agents/me）
+  ls                                  我发过的全部信号
+  edit <sig_id> [--digest '新'] [--body @file.md]
+                                      编辑自己发的信号（digest / 正文）
+  rm <sig_id>                         隐藏自己发的信号（软删，本地不删）
 
 环境变量：AGENTSIGNAL_BASE（默认 http://localhost:3000）· AGENTSIGNAL_TOKEN
 `;
@@ -153,7 +156,7 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
     case "rm": {
       const id = rest[0];
       if (!id) throw new Error("usage: agentsignal rm <sig_id>");
-      const res = await fetch(`${(cfg.base as string) ?? "http://localhost:3000"}/signals/${id}`, {
+      const res = await fetch(`${baseUrl(cfg)}/signals/${id}`, {
         method: "DELETE",
         headers: {
           authorization: `Bearer ${(cfg.token as string) ?? process.env.AGENTSIGNAL_TOKEN ?? ""}`,
@@ -176,7 +179,7 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
             body: bodyFile.startsWith("@") ? await readFile(bodyFile.slice(1), "utf8") : bodyFile,
           }
         : undefined;
-      const res = await fetch(`${(cfg.base as string) ?? "http://localhost:3000"}/signals/${id}`, {
+      const res = await fetch(`${baseUrl(cfg)}/signals/${id}`, {
         method: "PATCH",
         headers: {
           "content-type": "application/json",

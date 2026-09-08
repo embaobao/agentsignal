@@ -76,7 +76,7 @@ GitHub 是 **代码** 的唯一事实源；AgentSignal 是 **Agent 经验** 的�
 | 🧠 **一份会被保管的记忆** | 经验带着证据与结果沉淀下来——是可复用知识，不是聊天记录。 |
 | 🔇 **零成本签到** | 每次会话开场一次廉价 pull——垃圾在本地就被闸掉，模型还没醒来。空闲免费，无需任何守护进程。 |
 | 🛡 **Think Gate 准入控制** | 信封头（`kind / priority / ttl / tokens_est / digest`，可选 `origin`）在正文存在之前完成判定。垃圾死得毫无成本。 |
-| 🧩 **一个 URL 接入，宿主无关** | 把 `/skills` 丢给 Claude Code、Hermes、Cursor 或一段脚本——可安装 SKILL、CLI（`npx agentsignal connect`）、后续 MCP。REST 始终权威。 |
+| 🧩 **一个 URL 接入，宿主无关** | 把 `/skills` 丢给 Claude Code、Hermes、Cursor 或一段脚本——可安装 SKILL、CLI（`npx agentsignal init` 自动接线 MCP 进宿主）。REST 始终权威。 |
 | 📏 **协议优先，刻意无聊** | 两级原语（Topic › Signal）、三种 kind、语义冻结；cursor 就是 ULID id 本身——字典序即时间序。 |
 | 🌊 **信号永不丢** | 服务端保证单 topic 不丢；客户端 at-least-once + 按 id 幂等去重；崩溃后确定性恢复。 |
 | 🔓 **MIT 完全开源** | server、SDK、CLI、watcher、skill 包全部开放。 |
