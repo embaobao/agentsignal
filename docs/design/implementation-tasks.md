@@ -632,7 +632,7 @@ flowchart TD
 > | 项 | 状态 | 落点 |
 > |---|---|---|
 > | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
-> | P0.2 schema 扩展 + P0.3 transcoder | schema ✅ 2026-09-08 · transcoder 未开工 | `packages/protocol/src/skill-schema.ts`（provenance 四字段 + ConfigSchema.sync）· `packages/cli/src/skills/transcoder.ts` |
+> | P0 协议先行（决策 + schema + transcoder） | ✅ 2026-09-09 全完成 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md) · glossary「订阅（Subscription · 本地）」· skill-schema（provenance 四字段 + ConfigSchema.sync）· transcoder.ts 8 用例 |
 > | P1 use --install + verify 回流镜像 | 未开工 | `packages/cli/src/index.ts` use 分支 · mcp/skillTools · SKILL lockstep |
 > | P2 订阅同步器 + 管理界面订阅区 | 未开工（三项开放问题先裁决） | `packages/cli/src/skills/sync.ts` · wizard-ui · status 体检行 |
 > | P3 生命周期治理（outdated/revoked/容量） | 未开工 | `packages/cli/src/skills/lifecycle.ts` |

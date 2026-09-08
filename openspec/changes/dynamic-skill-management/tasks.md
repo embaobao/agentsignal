@@ -9,7 +9,7 @@
 
 - [x] 0.1 decision 文档 `docs/decisions/2026-09-08-dynamic-skill-management.md`：信封(solution)→技能内部形式映射表（digest 三段式↔frontmatter 六字段 · 四节正文↔SKILL.md）· provenance 字段语义 · 更新链/失效语义 · 「订阅=pull 按需非 watch 常驻」重申 · 开放问题三项登记；glossary 增「订阅（subscription · 本地）」行 + canonical 指针 — 2026-09-08 完成（provenance 现位 sig_id/digest/origin/published_at 上扩 base_url/topic/validation/synced_at；glossary 与 Follow 划界）
 - [x] 0.2 `packages/protocol/src/skill-schema.ts` 扩展：`provenance`（base_url/topic/sig_id/kind/validation/synced_at，optional 安全默认）+ `SubscriptionsSchema`（topic/cursor/min_validation?，config.json5 新段）；旧 config/旧技能零破坏断言（向后兼容用例） — 2026-09-08 完成（validationLevels 复用 schemas.ts 真源显式再导出消歧；新增 SyncStateSchema（subscriptions/mirror_verify=false/max_skills=200）挂 ConfigSchema.sync 安全默认；schema-subscription.test.ts 7 用例红→绿，含经 config 加载器的 dist 全链回环）
-- [ ] 0.3 `packages/cli/src/skills/transcoder.ts` TDD：纯函数信封→技能二元组；用例覆盖中文 digest/正文 · validation 三档 · kind≠solution 拒转 · update（非 solution）锚定提取；快照测试落 `test/transcoder.test.ts`
+- [x] 0.3 `packages/cli/src/skills/transcoder.ts` TDD：纯函数信封→技能二元组；用例覆盖中文 digest/正文 · validation 三档 · kind≠solution 拒转 · update（非 solution）锚定提取；快照测试落 `test/transcoder.test.ts` — 2026-09-09 完成（8 用例红→绿：中文 golden 全量快照 · 缺段回退 common/none · scope 多域切分 · update 锚定提取 extractAnchorSigId · 转出物过 schema；tokens_est bytes÷4 口径）
 
 ## Phase 1 · 单条装载 + 回流（最小闭环，零新命令，约 1 人日）
 
