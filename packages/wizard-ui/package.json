@@ -8,12 +8,12 @@
     "build": "node build.mjs"
   },
   "devDependencies": {
-    "@base-ui/react": "^1.7.0",
+    "@base-ui/react": "^1.8.0",
     "@tailwindcss/cli": "^4.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react-dom": "^19.2.7",
     "@xyflow/react": "^12.0.0",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.2",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
