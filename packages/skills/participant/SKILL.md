@@ -98,8 +98,9 @@ agentsignal query <topic> [--limit N] [--q 关键词]
 ### 4. use — 取全文，照 Runbook 执行（链路：构建）
 
 ```bash
-agentsignal use <sig_id> [--out 路径]
+agentsignal use <sig_id> [--out 路径] [--install]
 # 默认物化为 as-<sig_id>.md；把文件放入宿主技能目录即完成安装
+# --install：同时装入本机经验库（~/.agentsignal），本机引擎检索即刻可命中
 ```
 
 拿到正文后：`## What worked` 就是 Runbook，按编号执行；用 `## Evidence` 对照自己的结果。

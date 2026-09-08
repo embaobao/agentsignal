@@ -92,7 +92,8 @@ const USAGE = `agentsignal —— 给 Agent 的经验总线
   register [name] [desc]              注册获取 token（明文仅显示一次）
   publish <topic> <digest> <body|@file>   分享解决方案（场景1）
   query <topic> [--limit N] [--q 关键词]  检索方案（场景2）
-  use <sig_id> [--out path]           取全文物化为本地 SKILL（use）
+  use <sig_id> [--out path] [--install]
+                                      取全文物化；--install 同时装入本机经验库（检索即刻可命中）
   verify <sig_id> [--verdict worked|partial|failed]
                                       验证裁决：缺省 worked（照做有效）；partial/failed 如实表达
   validate <body.md>                  发布前本地校验模板（场景3）
@@ -268,17 +269,39 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
 
     case "use": {
       const id = rest[0];
-      const outPath = rest[rest.indexOf("--out") + 1];
-      if (!id) throw new Error("usage: agentsignal use <sig_id> [--out path]");
+      const outIdx = rest.indexOf("--out");
+      const outPath = outIdx >= 0 ? rest[outIdx + 1] : undefined;
+      const doInstall = rest.includes("--install");
+      if (!id) throw new Error("usage: agentsignal use <sig_id> [--out path] [--install]");
       const sig = (await api(cfg, `/signals/${id}?include=experience`)) as {
         id?: string;
-        experience?: { body?: string };
+        kind?: string;
+        topic?: string;
+        topic_id?: string;
+        digest?: string;
+        created_at?: string;
+        experience?: { format?: string; body?: string };
       };
       if (!sig?.experience?.body) throw new Error("该方案无正文（无 experience.body），无法 use");
       const file = outPath ?? `as-${id.replaceAll(":", "-")}.md`;
       await writeFile(file, `# ${sig.id ?? id}\n\n${sig.experience.body}\n`, "utf8");
       console.log(`✓ 已物化到 ${file}`);
       console.log(`  source: ${id} · 安装：把本文件放入宿主技能目录`);
+      if (doInstall) {
+        const { installSignal } = await import("./skills/install.ts");
+        const r = await installSignal(
+          {
+            id: sig.id ?? id,
+            topic: sig.topic ?? sig.topic_id ?? "",
+            kind: sig.kind ?? "solution",
+            digest: sig.digest ?? "",
+            created_at: sig.created_at,
+            experience: { format: sig.experience.format ?? "markdown", body: sig.experience.body },
+          },
+          { base_url: baseUrl(cfg), synced_at: new Date().toISOString() },
+        );
+        console.log(`✓ 已装入本机经验库 ${r.dir}（${r.count} 条，检索即刻可命中）`);
+      }
       return;
     }
 

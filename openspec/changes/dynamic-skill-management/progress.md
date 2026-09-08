@@ -7,3 +7,4 @@
 | 2026-09-08 23:05 | 5d5a845 | P0.1 | done | 决议 2026-09-08-dynamic-skill-management.md + glossary「订阅（Subscription · 本地）」；verify 门禁全绿（db 用完即收） |
 | 2026-09-09 00:08 | ce2b6e5 | P0.2 | done | schema 扩展红→绿 7 用例（provenance 四字段 + SyncStateSchema；validationLevels 复用 schemas.ts 真源）；CLI 57 + verify 4/4 全绿 |
 | 2026-09-09 01:05 | 3bf2554 | P0.3 | done | transcoder 红→绿 8 用例（中文 golden/三档映射/缺段回退/锚定提取/schema 合法）；CLI 65 + verify 4/4 全绿 |
+| 2026-09-09 02:05 | 07aace5 | P1.1 | done | use --install 落库+索引刷新 4 用例；顺手修 --out 缺省误取 sig id 存量 bug；SKILL §4 + G4 镜像同步；CLI 69 + verify 4/4 全绿 |
