@@ -220,7 +220,14 @@ var SkillProvenanceSchema = z3.object({
   sig_id: z3.string().optional(),
   digest: z3.string().optional(),
   origin: z3.object({ kind: z3.string(), ref: z3.string(), path: z3.string().optional() }).optional(),
-  published_at: z3.string().optional()
+  published_at: z3.string().optional(),
+  // === 2026-09-08 dynamic-skill-management 扩展（订阅落库溯源全录，全部 optional）===
+  /** 技能来源站点（回流镜像 verify 时据此回传） */
+  base_url: z3.string().optional(),
+  topic: z3.string().optional(),
+  validation: z3.enum(validationLevels).optional(),
+  /** 最近一次同步时间（ISO 8601） */
+  synced_at: z3.string().optional()
 });
 var SkillLifecycleSchema = z3.object({
   status: z3.enum(skillStatuses).default("incubating"),
@@ -259,6 +266,20 @@ var SkillFrontmatterSchema = z3.object({
     tokens_est: z3.number().int().min(0).optional()
   }).default({ format: "markdown", path: "./SKILL.md" }),
   lifecycle: SkillLifecycleSchema
+});
+var SubscriptionSchema = z3.object({
+  topic: z3.string().min(1),
+  /** 游标（sig_<ulid>）；缺省 = 从头同步 */
+  cursor: z3.string().optional(),
+  /** 同步过滤阈值：validation 低于阈值的 solution 不落库 */
+  min_validation: z3.enum(validationLevels).default("none")
+});
+var SyncStateSchema = z3.object({
+  subscriptions: z3.array(SubscriptionSchema).default([]),
+  /** verify_skill 本地裁决后自动镜像平台 verify（默认 false，手动优先——决议裁决 4） */
+  mirror_verify: z3.boolean().default(false),
+  /** 本地技能库容量上限（超限只告警 + 管理界面列清理候选，不自动删） */
+  max_skills: z3.number().int().min(1).default(200)
 });
 var ConfigLayerSchema = z3.object({
   id: z3.string().min(1),
@@ -303,7 +324,9 @@ var ConfigSchema = z3.object({
   arbitration: z3.object({
     strategy: z3.enum(["lru"]).default("lru"),
     fallback: z3.enum(["compress"]).default("compress")
-  }).default({ strategy: "lru", fallback: "compress" })
+  }).default({ strategy: "lru", fallback: "compress" }),
+  /** 订阅落库 × 回流闭环（dynamic-skill-management；缺省安全默认） */
+  sync: SyncStateSchema.default({ subscriptions: [], mirror_verify: false, max_skills: 200 })
 });
 
 // src/ulid.ts
@@ -370,6 +393,8 @@ export {
   SkillLifecycleSchema,
   SkillParametersSchema,
   SkillProvenanceSchema,
+  SubscriptionSchema,
+  SyncStateSchema,
   TOKENS_EST_MAX,
   TopicSchema,
   TriggerRuleSchema,

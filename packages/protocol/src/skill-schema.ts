@@ -10,11 +10,18 @@
  *   - zod v4：不使用 transform+pipe（unknown 输入下类型不收敛），解析逻辑归引擎层；
  *   - 必收字段 = Frontmatter 六字段：id / name / description / domains / layers / triggers；
  *   - 其余 AgentSignal 扩展全部 optional 且带安全默认（.default），引擎读取永不判空；
- *   - lifecycle.provenance 仅留位不填充（Phase 3 订阅落盘时写入，零迁移）。
+ *   - lifecycle.provenance：sig_id/digest/origin/published_at 为 skill-envelope 裁决 4 留位；
+ *     2026-09-08 起订阅落库填充并扩展 base_url/topic/validation/synced_at
+ *     （[dynamic-skill-management 决议](../../../docs/decisions/2026-09-08-dynamic-skill-management.md) 裁决 2）。
  */
+
 import { z } from "zod";
+import { ValidationLevelSchema, validationLevels } from "./schemas.ts";
 
 /* ------------------------------- 枚举与常量 ------------------------------- */
+
+/** validation 三档：真源在 schemas.ts（线上信封 v0.2 同词表），此处显式再导出消桶文件歧义 */
+export { ValidationLevelSchema, validationLevels };
 
 /** 技能生命周期状态（Zep 机制：孵化 → 沉淀 → 归档） */
 export const skillStatuses = ["incubating", "solidified", "archived"] as const;
@@ -79,6 +86,13 @@ export const SkillProvenanceSchema = z.object({
   digest: z.string().optional(),
   origin: z.object({ kind: z.string(), ref: z.string(), path: z.string().optional() }).optional(),
   published_at: z.string().optional(),
+  // === 2026-09-08 dynamic-skill-management 扩展（订阅落库溯源全录，全部 optional）===
+  /** 技能来源站点（回流镜像 verify 时据此回传） */
+  base_url: z.string().optional(),
+  topic: z.string().optional(),
+  validation: z.enum(validationLevels).optional(),
+  /** 最近一次同步时间（ISO 8601） */
+  synced_at: z.string().optional(),
 });
 
 export const SkillLifecycleSchema = z
@@ -127,6 +141,26 @@ export const SkillFrontmatterSchema = z.object({
     })
     .default({ format: "markdown", path: "./SKILL.md" }),
   lifecycle: SkillLifecycleSchema,
+});
+
+/* ------------------------------- 订阅（dynamic-skill-management） ------------------------------- */
+
+/** 单条订阅：pull 式同步的最小声明（无常驻进程，游标 = 最后同步的 sig id） */
+export const SubscriptionSchema = z.object({
+  topic: z.string().min(1),
+  /** 游标（sig_<ulid>）；缺省 = 从头同步 */
+  cursor: z.string().optional(),
+  /** 同步过滤阈值：validation 低于阈值的 solution 不落库 */
+  min_validation: z.enum(validationLevels).default("none"),
+});
+
+/** config.json5 sync 段：订阅 + 回流镜像开关 + 容量上限（安全默认，旧 config 零破坏） */
+export const SyncStateSchema = z.object({
+  subscriptions: z.array(SubscriptionSchema).default([]),
+  /** verify_skill 本地裁决后自动镜像平台 verify（默认 false，手动优先——决议裁决 4） */
+  mirror_verify: z.boolean().default(false),
+  /** 本地技能库容量上限（超限只告警 + 管理界面列清理候选，不自动删） */
+  max_skills: z.number().int().min(1).default(200),
 });
 
 /* ------------------------------- config.json5 ------------------------------- */
@@ -186,6 +220,8 @@ export const ConfigSchema = z.object({
       fallback: z.enum(["compress"]).default("compress"),
     })
     .default({ strategy: "lru", fallback: "compress" }),
+  /** 订阅落库 × 回流闭环（dynamic-skill-management；缺省安全默认） */
+  sync: SyncStateSchema.default({ subscriptions: [], mirror_verify: false, max_skills: 200 }),
 });
 
 /* ------------------------------- 类型导出 ------------------------------- */
@@ -196,3 +232,5 @@ export type SkillParameters = z.infer<typeof SkillParametersSchema>;
 export type ConfigLayer = z.infer<typeof ConfigLayerSchema>;
 export type HostBinding = z.infer<typeof HostBindingSchema>;
 export type EngineConfig = z.infer<typeof ConfigSchema>;
+export type Subscription = z.infer<typeof SubscriptionSchema>;
+export type SyncState = z.infer<typeof SyncStateSchema>;
