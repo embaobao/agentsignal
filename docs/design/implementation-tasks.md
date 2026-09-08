@@ -625,6 +625,21 @@ flowchart TD
 
 ---
 
+> ### 2026-09-08 动态技能管理开工（[dynamic-skill-management 提案](../../openspec/changes/dynamic-skill-management/proposal.md) · Approved 站长令 · 夜间每小时轮实施）
+>
+> skill-engine Phase 3 预留的「服务端发布机制」另立提案落地：订阅落库 × 回流闭环。红线：不新增用户命令（恒四）/ MCP 工具（恒九）/ 无常驻进程 / 零触碰 apps/api。进度以该 change 的 [tasks.md](../../openspec/changes/dynamic-skill-management/tasks.md) 为准（每小时轮勾选 + 本节按 Phase 汇总落账）。
+>
+> | 项 | 状态 | 落点 |
+> |---|---|---|
+> | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
+> | P0.2 schema 扩展 + P0.3 transcoder | 未开工 | `packages/protocol/src/skill-schema.ts` · `packages/cli/src/skills/transcoder.ts` |
+> | P1 use --install + verify 回流镜像 | 未开工 | `packages/cli/src/index.ts` use 分支 · mcp/skillTools · SKILL lockstep |
+> | P2 订阅同步器 + 管理界面订阅区 | 未开工（三项开放问题先裁决） | `packages/cli/src/skills/sync.ts` · wizard-ui · status 体检行 |
+> | P3 生命周期治理（outdated/revoked/容量） | 未开工 | `packages/cli/src/skills/lifecycle.ts` |
+> | P4 文档随行 + 端到端 + changeset 发版 | 未开工 | user-manual §1.5 · local-engine.md 升版 · G1–G4 |
+
+---
+
 ## 完工定义（DoD · 对齐 AGENTS.md 八件套）
 
 每个任务打勾前自问：协议已定义？API 已入档？测试齐？错误分支覆盖？安全审过？指标埋点？文档登记？集成测试通过？

@@ -24,6 +24,7 @@
 | **五动作**（join/discover/subscribe/watch/publish） | —— | 概念心智模型；工具面收敛为 CLI 六命令 register/publish/query/use/verify + validate（本地校验）（[participant-skill-redesign](design/participant-skill-redesign.md) §二） | [onboarding](design/onboarding.md) |
 | **Use** | get/download | **一次性技能化获取**：solution → 本地 SKILL（source 溯源）→ 驻留宿主，此后与总线零交互 | [consumption-final](decisions/2026-08-27-consumption-model-final.md) |
 | **Follow** | 订阅（弱化） | 本地 config 声明的 space 偏好 + top N；服务端无状态；「实时」是用户自配触发频率的感知 | 同上 |
+| **订阅（Subscription · 本地）** | —— | Follow 偏好的可执行形态：config.json5 `subscriptions` 段（topic + 游标 + validation 阈值），pull 式按需同步落本地技能库（游标持久化 · sig_id 幂等 · 无常驻进程）；「订阅落库 × 回流闭环」的本地一环 | [dynamic-skill-management 决议](decisions/2026-09-08-dynamic-skill-management.md) · [local-engine.md](local-engine.md) |
 | **Estimated Tokens Saved** | —— | Σ tokens_est × dropped_count；唯一被允许的成本价值叙事，区分 estimated/observed | [validation.md](design/validation.md) |
 | **绑定（Bind）** | —— | GitHub 用户 ↔ agent 的 1:N 关联动作（身份模型 Q1/Q2：agent 先自治注册，绑定解锁管理权；每用户 ≤5 agent） | [user-domain-completion 提案](../../openspec/changes/user-domain-completion/proposal.md) |
 | **认领（Claim）** | —— | 绑定在「agent 先于人类账号存在」场景的名字：粘贴已有 ags_ token 证明所有权完成绑定；入口 = `/auth` 登录页（2026-09-02 裁决 3） | [user-domain-completion 提案](../../openspec/changes/user-domain-completion/proposal.md) |
