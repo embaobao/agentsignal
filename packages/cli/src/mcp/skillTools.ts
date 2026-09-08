@@ -5,6 +5,11 @@
 import { z } from "zod";
 import type { Engine } from "../skills/engine.ts";
 import { recordMetrics } from "../skills/metrics.ts";
+import {
+  type MirrorOutcome,
+  mirrorContextForSkill,
+  mirrorPlatformVerify,
+} from "../skills/mirror.ts";
 import { tokensEst } from "../skills/paths.ts";
 import { startWizard } from "../skills/wizard/server.ts";
 
@@ -101,7 +106,7 @@ export function skillTools(): SkillTool[] {
     {
       name: "verify_skill",
       description:
-        "何时用：照某条做完之后，如实回报结果（worked/partial/failed）。只写本地记录，不回传平台。别用：没实际照做就不要报——虚报会污染后续排序。",
+        "何时用：照某条做完之后，如实回报结果（worked/partial/failed）。结果写入本地记录；来源为平台信号时默认附一行手动回传提示（agentsignal verify），config 开 mirror_verify 才自动回传平台聚合。别用：没实际照做就不要报——虚报会污染后续排序。",
       schema: {
         skill_id: z.string(),
         verdict: z.enum(["worked", "partial", "failed"]),
@@ -110,7 +115,23 @@ export function skillTools(): SkillTool[] {
         const engine = needEngine(engine0);
         const verdict = String(args.verdict) as "worked" | "partial" | "failed";
         const result = await engine.verify(String(args.skill_id), verdict);
-        return JSON.stringify({ ok: true, ...result }, null, 2);
+        // 回流镜像（决议 2026-09-08 裁决 4）：默认 off 零网络只提示；on 且有 token 才回传。任何失败不影响本地裁决返回。
+        let mirror: MirrorOutcome | undefined;
+        try {
+          const mctx = await mirrorContextForSkill(String(args.skill_id), engine.paths);
+          if (mctx) {
+            mirror = await mirrorPlatformVerify({
+              sigId: mctx.sigId,
+              verdict,
+              baseUrl: mctx.baseUrl,
+              token: mctx.token,
+              mirrorEnabled: mctx.mirrorEnabled,
+            });
+          }
+        } catch {
+          // 镜像链路任何异常都只降级为无提示
+        }
+        return JSON.stringify({ ok: true, ...result, ...(mirror ? { mirror } : {}) }, null, 2);
       },
     },
   ];

@@ -14,7 +14,7 @@
 ## Phase 1 · 单条装载 + 回流（最小闭环，零新命令，约 1 人日）
 
 - [x] 1.1 `use --install`：`src/index.ts` use 分支加参数——物化当前目录照旧 + transcode 落库 `~/.agentsignal/skills/<sig_id>/`（AGENTSIGNAL_CONFIG 尊重）+ 触发索引增量更新；USAGE 与 participant SKILL 同 PR 更新（§4 use 段），G1–G4 绿 — 2026-09-09 完成（新模块 skills/install.ts：原子写两件套 + scan/build/save 索引刷新；use-install.test.ts 4 用例含 save/load 检索命中与幂等；**顺手修存量 bug**：`--out` 缺省时 `rest[-1+1]` 误取 sig id 当路径——即「use 物化出 sig_* 文件」怪象根因，现缺省正确为 as-<sig_id>.md；SKILL §4 + G4 镜像同步）
-- [ ] 1.2 回流镜像：`verify_skill`（mcp/skillTools）落本地 metrics 后——provenance 存在且 config 有 token 时输出提示行（含 `agentsignal verify <sig_id>` 回车即回传）；`config.json5 sync.mirror_verify: true` 时自动镜像（默认 false）；`test/mirror.test.ts`：off 断言零网络请求（fake fetch 零调用）· on 断言调用一次带 verdict
+- [x] 1.2 回流镜像：`verify_skill`（mcp/skillTools）落本地 metrics 后——provenance 存在且 config 有 token 时输出提示行（含 `agentsignal verify <sig_id>` 回车即回传）；`config.json5 sync.mirror_verify: true` 时自动镜像（默认 false）；`test/mirror.test.ts`：off 断言零网络请求（fake fetch 零调用）· on 断言调用一次带 verdict — 2026-09-09 完成（skills/mirror.ts：readPlatformCredentials（env 优先复用平台凭证，不新增登录面）· mirrorContextForSkill（provenance→sigId/baseUrl/开关）· mirrorPlatformVerify（off 零网络 / on 一次调用 / 5xx 与网络异常 fail-soft 不影响本地裁决）；verify_skill 返回增 mirror 字段 + 工具 description 更新；5 用例绿）
 - [ ] 1.3 init-e2e 增段：`use --install` 后 `search_skills` 命中该技能 → verify_skill 后 status 双指标变化 → uninstall 后本地库保留断言
 
 ## Phase 2 · 订阅同步器（pull 式，无常驻，约 1.5 人日）
