@@ -271,3 +271,172 @@ test("config 缺失：结构化报错 CONFIG_MISSING", async () => {
     await rm(emptyRoot, { recursive: true, force: true });
   }
 });
+
+/* ── P2.2 测试矩阵补强（断点续传 / 隐藏信号 / 429 边界 / 缺正文）───────────── */
+
+/** 独立 root（库内容隔离）：落库断言类用例各用全新目录，防同文件用例间污染 */
+async function useFreshRoot(): Promise<string> {
+  const dir = await mkdtemp(path.join(tmpdir(), "as-sync-iso-"));
+  process.env.AGENTSIGNAL_CONFIG = dir;
+  return dir;
+}
+
+test("断点续传：首页成功后中断，重启后从持久化游标续传，不重拉首页", async () => {
+  const iso = await useFreshRoot();
+  try {
+    await writeConfigWithSub();
+    // 第一趟：首页成功（A 落库、游标落盘 C）→ 第二页 500 中断
+    const failing: Route[] = [
+      {
+        url: (b) => `${b}/topics/${TOPIC}/signals?limit=20`,
+        status: 200,
+        body: pageFs([envelope(A, "solution", "方案 A | scope: web | validation: none")], C),
+      },
+      { url: (b) => `${b}/topics/${TOPIC}/signals?limit=20&cursor=${C}`, status: 500 },
+      {
+        url: (b) => `${b}/signals/${A}?include=experience`,
+        status: 200,
+        body: {
+          ...envelope(A, "solution", "方案 A | scope: web | validation: none"),
+          experience: { format: "markdown", body: bodyOf("A") },
+        },
+      },
+    ];
+    await assert.rejects(
+      () => syncSubscription({ topic: TOPIC }, opts({ fetchImpl: makeFetch(failing) })),
+      (err: unknown) => (err as { code?: string }).code === "HTTP_ERROR",
+    );
+    const mid = await loadConfig();
+    assert.equal(mid?.config.sync.subscriptions[0]?.cursor, C, "中断前游标应已持久化");
+
+    // 第二趟（等价新进程）：从持久化游标 C 续传，只处理 D
+    const log2: string[] = [];
+    const healthy: Route[] = [
+      {
+        url: (b) => `${b}/topics/${TOPIC}/signals?limit=20&cursor=${C}`,
+        status: 200,
+        body: pageFs(
+          [envelope(D, "solution", "方案 D | scope: web | validation: battle-tested")],
+          null,
+        ),
+      },
+      {
+        url: (b) => `${b}/signals/${D}?include=experience`,
+        status: 200,
+        body: {
+          ...envelope(D, "solution", "方案 D | scope: web | validation: battle-tested"),
+          experience: { format: "markdown", body: bodyOf("D") },
+        },
+      },
+    ];
+    const report = await syncSubscription(
+      { topic: TOPIC },
+      opts({ fetchImpl: makeFetch(healthy, log2) }),
+    );
+    assert.equal(report.scanned, 1, "续传只扫断点之后的信号");
+    assert.ok(!log2.some((l) => l.includes(`/signals/${A}?`)), "续传不得重拉首页信号");
+    const { skills } = await scanSkills();
+    assert.deepEqual(skills.map((s) => s.id).sort(), [A, D].sort());
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("隐藏信号跳过：详情 404 不落库、计 skipped、游标照常推进", async () => {
+  const iso = await useFreshRoot();
+  try {
+    await writeConfigWithSub();
+    const routes: Route[] = [
+      {
+        url: (b) => `${b}/topics/${TOPIC}/signals?limit=20`,
+        status: 200,
+        body: pageFs(
+          [
+            envelope(A, "solution", "方案 A | scope: web | validation: none"),
+            envelope(D, "solution", "方案 D | scope: web | validation: none"),
+          ],
+          null,
+        ),
+      },
+      { url: (b) => `${b}/signals/${A}?include=experience`, status: 404 },
+      {
+        url: (b) => `${b}/signals/${D}?include=experience`,
+        status: 200,
+        body: {
+          ...envelope(D, "solution", "方案 D | scope: web | validation: none"),
+          experience: { format: "markdown", body: bodyOf("D") },
+        },
+      },
+    ];
+    const report = await syncSubscription({ topic: TOPIC }, opts({ fetchImpl: makeFetch(routes) }));
+    assert.deepEqual(
+      { scanned: report.scanned, installed: report.installed, skipped: report.skipped },
+      { scanned: 2, installed: 1, skipped: 1 },
+    );
+    const { skills } = await scanSkills();
+    assert.ok(!skills.some((s) => s.id === A), "隐藏信号不得落库");
+    assert.equal(report.cursor, D, "游标照常推进到本页末尾");
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("详情缺正文（experience 缺失）：skipped 不落库", async () => {
+  const iso = await useFreshRoot();
+  try {
+    await writeConfigWithSub();
+    const routes: Route[] = [
+      {
+        url: (b) => `${b}/topics/${TOPIC}/signals?limit=20`,
+        status: 200,
+        body: pageFs([envelope(A, "solution", "方案 A | scope: web | validation: none")], null),
+      },
+      {
+        url: (b) => `${b}/signals/${A}?include=experience`,
+        status: 200,
+        body: envelope(A, "solution", "方案 A"),
+      },
+    ];
+    const report = await syncSubscription({ topic: TOPIC }, opts({ fetchImpl: makeFetch(routes) }));
+    assert.equal(report.installed, 0);
+    assert.equal(report.skipped, 1);
+    const { skills } = await scanSkills();
+    assert.equal(skills.length, 0);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("429 打满重试上限 → RATE_LIMITED 结构化报错", async () => {
+  await writeConfigWithSub();
+  sleeps.length = 0;
+  const fetchImpl = (async () => new Response("{}", { status: 429 })) as typeof fetch;
+  await assert.rejects(
+    () => syncSubscription({ topic: TOPIC }, opts({ fetchImpl, maxRetries: 1 })),
+    (err: unknown) => (err as { code?: string }).code === "RATE_LIMITED",
+  );
+  assert.deepEqual(sleeps.length, 1, "maxRetries=1 → 首次 429 退避一次后放弃");
+});
+
+test("retry_after 缺 header 时从 body.error.retry_after 读取", async () => {
+  await writeConfigWithSub();
+  sleeps.length = 0;
+  const listUrl = `${BASE}/topics/${TOPIC}/signals?limit=20`;
+  let hits = 0;
+  const fetchImpl = (async (input: string | URL) => {
+    if (String(input) === listUrl) {
+      hits++;
+      if (hits === 1) {
+        return new Response(JSON.stringify({ error: { code: "rate_limited", retry_after: 3 } }), {
+          status: 429,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify(pageFs([], null)), { status: 200 });
+    }
+    return new Response("{}", { status: 404 });
+  }) as typeof fetch;
+  const report = await syncSubscription({ topic: TOPIC }, opts({ fetchImpl }));
+  assert.deepEqual(sleeps, [3000], "body.retry_after=3 → 退避 3s");
+  assert.equal(report.done, true);
+});
