@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import JSON5 from "json5";
+import { defaultConfig, writeConfigAtomic } from "../src/skills/config.ts";
 import { resolvePaths } from "../src/skills/paths.ts";
 
 const CLI = path.resolve(import.meta.dirname, "../src/index.ts");
@@ -132,6 +133,47 @@ import { createEngine } from "../src/skills/engine.ts";
 const SIG_E2E = "sig_01e2einstalltest00000000000000";
 const E2E_BODY =
   "## Why\n固定分块切断语义\n\n## What worked\n1. 按标题分块\n\n## Evidence\n命中率 +18%\n\n## Caveats\n纯代码不适用\n";
+
+test("status 订阅体检：落后统计（在线）与离线 fail-soft（dynamic-skill-management）", async () => {
+  // 带订阅的 config（仅统计，不自动同步）
+  const cfg = defaultConfig();
+  cfg.sync.subscriptions = [{ topic: "ai-research", min_validation: "none" }];
+  await writeConfigAtomic(cfg, resolvePaths(root));
+
+  // 回环平台：游标后一条待同步
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        topic_id: "tp_1",
+        signals: [
+          {
+            id: "sig_01pendingprobe00000000000000",
+            kind: "solution",
+            topic: "ai-research",
+            digest: "待同步 | scope: e2e | validation: none",
+          },
+        ],
+        next_cursor: null,
+        tokens_saved_est: 0,
+      }),
+    );
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const { code, out } = await runCli(["status"], { ...env(), AGENTSIGNAL_BASE: base });
+    assert.equal(code, 0, out);
+    assert.match(out, /订阅：1 个分区 · 落后 1 条待同步（按需拉取，不自动同步）/);
+  } finally {
+    server.close();
+  }
+
+  // 离线（env() = localhost:9 无人监听）：体检行 fail-soft，退出码仍 0
+  const off = await runCli(["status"], env());
+  assert.equal(off.code, 0, off.out);
+  assert.match(off.out, /订阅：1 个分区 · 落后统计失败/);
+});
 
 test("use --install 全链：子进程取回环平台信号落库 → 检索命中 → 物化文件落 cwd", async () => {
   const server = createServer((req, res) => {

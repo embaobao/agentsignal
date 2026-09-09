@@ -634,7 +634,7 @@ flowchart TD
 > | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
 > | P0 协议先行（决策 + schema + transcoder） | ✅ 2026-09-09 全完成 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md) · glossary「订阅（Subscription · 本地）」· skill-schema（provenance 四字段 + ConfigSchema.sync）· transcoder.ts 8 用例 |
 > | P1 use --install + verify 回流镜像 | ✅ 2026-09-09 全完成（1.1/1.2/1.3） | skills/install.ts + skills/mirror.ts · init-e2e 增段（回环平台全链 5 用例）· SKILL §4 同步 |
-> | P2 订阅同步器 + 管理界面订阅区 | 2.1 ✅ 2.2 ✅ 2.3 ✅ 2026-09-09 · 2.4 未开工 | skills/sync.ts（10 用例）· wizard 服务端 4 端点 + buildState sync/library · wizard-ui 订阅面板 + 库列表（产物重注入 697.7KB）· 开放问题按建议值执行待裁决 |
+> | P2 订阅同步器 + 管理界面订阅区 | ✅ 2026-09-09 全完成（2.1–2.4） | skills/sync.ts（探针/同步器，10 用例）· wizard 4 端点 + 订阅面板/库列表（产物重注入）· status 订阅体检行（init-e2e 6 用例）· 开放问题按建议值执行待裁决 |
 > | P3 生命周期治理（outdated/revoked/容量） | 未开工 | `packages/cli/src/skills/lifecycle.ts` |
 > | P4 文档随行 + 端到端 + changeset 发版 | 未开工 | user-manual §1.5 · local-engine.md 升版 · G1–G4 |
 

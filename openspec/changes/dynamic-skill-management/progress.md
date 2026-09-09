@@ -13,3 +13,4 @@
 | 2026-09-09 05:06 | 4e8ea20 | P2.1 | done | sync.ts 游标同步器 5 用例（两页拉全/update 跳过/幂等重放/429 退避/阈值过滤/CONFIG_MISSING）；游标兜底读持久化断点；CLI 81 + verify 4/4 全绿 |
 | 2026-09-09 06:04 | dfd0e31 | P2.2 | done | sync 测试矩阵补强至 10 用例（断点续传/隐藏信号/429 打满/body retry_after/缺正文）；隔离 root 防污染；CLI 86 + verify 4/4 全绿 |
 | 2026-09-09 07:07 | ec8373a | P2.3 | done | 管理界面订阅区全链：服务端 4 端点 + UI 订阅面板/库列表 + 产物重注入（零外部请求/禁词绿）；wizard 8 用例含端点回环平台同步；CLI 87 + verify 4/4 全绿 |
+| 2026-09-09 08:03 | 2ae987a | P2.4 | done | status 订阅体检行（probePending 一页探针/离线 fail-soft 退出码 0）；init-e2e 6 用例绿；CLI 88 + verify 4/4 全绿——P2 全完成 |

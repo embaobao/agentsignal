@@ -9,8 +9,10 @@ import path from "node:path";
 import { CONFIG_INVALID, ConfigError, loadConfig } from "./config.ts";
 import { createEngine } from "./engine.ts";
 import { readMetrics } from "./metrics.ts";
+import { readPlatformCredentials } from "./mirror.ts";
 import { resolvePaths } from "./paths.ts";
 import { scanSkills } from "./store.ts";
+import { probePending } from "./sync.ts";
 import { detectHosts, hostById } from "./wiring/hosts.ts";
 import { hostStatus } from "./wiring/snippets.ts";
 
@@ -128,6 +130,40 @@ export async function statusCmd(): Promise<void> {
     console.log(
       `  ${mark.padEnd(12)} ${host.name}${host.detected ? "（已探测）" : ""} · ${st.path}`,
     );
+  }
+
+  // ③½ 订阅体检（dynamic-skill-management P2.4：仅统计不自动同步）
+  try {
+    const loaded = await loadConfig(paths);
+    const subs = loaded?.config.sync.subscriptions ?? [];
+    if (subs.length > 0) {
+      const { base } = await readPlatformCredentials();
+      if (!base) {
+        console.log(
+          `订阅：${subs.length} 个分区 · 落后统计需要来源站点（AGENTSIGNAL_BASE 或 register）`,
+        );
+      } else {
+        let total = 0;
+        let more = false;
+        let failed = 0;
+        for (const sub of subs) {
+          try {
+            const probe = await probePending(sub, { baseUrl: base });
+            total += probe.pending;
+            more = more || probe.more;
+          } catch {
+            failed++;
+          }
+        }
+        const detail =
+          failed === subs.length
+            ? "落后统计失败（无法连接来源站点）"
+            : `落后 ${total.toLocaleString("en-US")}${more ? "+" : ""} 条待同步${failed > 0 ? ` · ${failed} 个分区统计失败` : ""}`;
+        console.log(`订阅：${subs.length} 个分区 · ${detail}（按需拉取，不自动同步）`);
+      }
+    }
+  } catch {
+    // config 异常已在 ① 报告，此处静默
   }
 
   // ④ 双指标（bytes/4 口径）

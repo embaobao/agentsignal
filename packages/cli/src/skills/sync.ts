@@ -110,6 +110,28 @@ async function fetchWithRetry(
   }
 }
 
+export interface PendingProbe {
+  topic: string;
+  /** 探针页内的待同步条数（信封级） */
+  pending: number;
+  /** 还有下一页（pending 应视为下限） */
+  more: boolean;
+}
+
+/** 单订阅落后探测（status 体检用，仅统计不同步）：一页信封级探针，next_cursor 非空记下限 */
+export async function probePending(
+  sub: { topic: string; cursor?: string },
+  opts: { baseUrl: string; fetchImpl?: typeof fetch; pageSize?: number },
+): Promise<PendingProbe> {
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  const pageSize = opts.pageSize ?? 50;
+  const url = `${opts.baseUrl}/topics/${encodeURIComponent(sub.topic)}/signals?limit=${pageSize}${sub.cursor ? `&cursor=${encodeURIComponent(sub.cursor)}` : ""}`;
+  const res = await fetchImpl(url);
+  if (!res.ok) throw new SyncError("HTTP_ERROR", `落后统计失败 ${res.status}`, res.status);
+  const page = (await res.json()) as ListPage;
+  return { topic: sub.topic, pending: page.signals?.length ?? 0, more: page.next_cursor !== null };
+}
+
 export async function syncSubscription(
   sub: { topic: string; cursor?: string; min_validation?: ValidationLevel },
   opts: SyncOptions,
