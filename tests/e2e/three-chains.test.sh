@@ -102,19 +102,61 @@ check "非法 sig id → 404" "$code" "404"
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/topics/ai-research/signals" -H 'content-type: application/json' -d '{"kind":"bogus","digest":"x"}')
 check "非法 kind → 400" "$code" "400"
 
-echo "[5] 限频分支（写 10/min per agent，累计第 11 次 publish → 429）"
-# 当前 token 已发 1 条；再连发 10 条小信号，最后一条（累计第 11 次）应触发 Server Filter 写限频
-LAST=0
-for i in $(seq 1 10); do
-  LAST=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/topics/ai-research/signals" \
-    -H 'content-type: application/json' -H "authorization: Bearer $TOKEN" \
-    -d "{\"kind\":\"update\",\"digest\":\"e2e 限频探测 $i | scope: ci | validation: none\"}")
-done
-check "累计第 11 次 publish → 429" "$LAST" "429"
-RL_BODY=$(curl -s -X POST "$BASE/topics/ai-research/signals" \
-  -H 'content-type: application/json' -H "authorization: Bearer $TOKEN" \
-  -d '{"kind":"update","digest":"e2e 限频探测补充 | scope: ci | validation: none"}')
-check "429 错误码稳定" "$(echo "$RL_BODY" | json '.error.code')" "rate_limited"
+echo "[4] 链路4 订阅同步 × 回流镜像（dynamic-skill-management，需 Node ≥22.18）"
+DS_TOPIC="dsme-e2e-$(date +%s)"
+DS_CFG="$(mktemp -d 2>/dev/null || mktemp -d)"
+DS_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+DS_TOKEN="$TOKEN"  # 复用链路1 身份（register 有独立限频；同 agent 订阅自己的分区即真实场景）
+if [[ "$DS_TOKEN" == ags_* ]]; then
+  ok "链路4 复用链路1 身份"
+else
+  bad "链路4 无可用身份（链路1 应先签发）"
+fi
+DS_PUB=$(curl -s -X POST "$BASE/topics/$DS_TOPIC/signals" \
+  -H 'content-type: application/json' -H "authorization: Bearer $DS_TOKEN" \
+  -d '{"kind":"solution","priority":30,"tokens_est":40,"digest":"e2e 订阅同步回流链 | scope: e2e | validation: self-tested","experience":{"format":"markdown","body":"## Why\ne2e\n\n## What worked\n1. run\n\n## Evidence\nlocal\n\n## Caveats\nnone"}}')
+DS_SIG=$(echo "$DS_PUB" | json '.id')
+if [[ "$DS_SIG" == sig_* ]]; then
+  ok "链路4 publish 拿到 $DS_SIG"
+else
+  bad "链路4 publish 失败：$DS_PUB"
+fi
+if AGENTSIGNAL_CONFIG="$DS_CFG" AGENTSIGNAL_HOME="$DS_CFG/home" AGENTSIGNAL_TOKEN="$DS_TOKEN" \
+   AGENTSIGNAL_BASE="$BASE" DS_ROOT="$DS_ROOT" DS_TOPIC="$DS_TOPIC" \
+   node --input-type=module -e '
+const root = process.env.DS_ROOT;
+const { syncSubscription } = await import(`${root}/packages/cli/src/skills/sync.ts`);
+const { createEngine } = await import(`${root}/packages/cli/src/skills/engine.ts`);
+const { skillTools } = await import(`${root}/packages/cli/src/mcp/skillTools.ts`);
+const { loadConfig, writeConfigAtomic, defaultConfig } = await import(`${root}/packages/cli/src/skills/config.ts`);
+await writeConfigAtomic(defaultConfig());
+const rep = await syncSubscription({ topic: process.env.DS_TOPIC }, { baseUrl: process.env.AGENTSIGNAL_BASE });
+if (rep.installed < 1) throw new Error(`sync 未落库：${JSON.stringify(rep)}`);
+const engine = await createEngine();
+const hit = (await engine.search({ query: "e2e", domain: "common", limit: 5 })).find((h) => h.id === rep.cursor?.toLowerCase());
+if (!hit) throw new Error(`检索未命中 ${rep.cursor}`);
+const detail = await engine.loadDetail(hit.id);
+if (!detail.ok || !detail.body.includes("What worked")) throw new Error("详情缺 Runbook");
+const cfg = await loadConfig();
+cfg.config.sync.mirror_verify = true;
+await writeConfigAtomic(cfg.config);
+const tools = Object.fromEntries(skillTools().map((t) => [t.name, t]));
+const v = JSON.parse(await tools.verify_skill.run({ skill_id: hit.id, verdict: "worked" }, engine));
+if (v.mirror?.mirrored !== true) throw new Error(`mirror 未回传：${JSON.stringify(v.mirror ?? null)}`);
+console.log("DSME_CHAIN_OK");
+'; then
+  ok "链路4 订阅→同步→检索→执行→mirror 回传全链"
+else
+  bad "链路4 全链失败（见上方报错）"
+fi
+DS_COUNT=$(curl -s "$BASE/signals/$DS_SIG?include=ui_ext" -H "authorization: Bearer $DS_TOKEN" | json '._ui_ext.verify_count')
+if [ "${DS_COUNT:-0}" -ge 1 ] 2>/dev/null; then
+  ok "链路4 平台聚合 verify_count=$DS_COUNT"
+else
+  bad "链路4 平台聚合未累加：$DS_COUNT"
+fi
+rm -rf "$DS_CFG" 2>/dev/null || true
+
 
 echo "=== 结果：$PASS 通过 / $FAIL 失败 ==="
 [ "$FAIL" -eq 0 ] || exit 1

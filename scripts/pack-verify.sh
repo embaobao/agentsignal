@@ -16,18 +16,32 @@ mkdir -p "$PACK_DIR"
 step() { printf "\n\033[1;32m[%s]\033[0m %s\n" "$1" "$2"; }
 
 step "1/5" "打包（pnpm pack：workspace:* → 实版本）"
-( cd "$ROOT/packages/protocol" && pnpm pack --pack-destination "$PACK_DIR" >/dev/null )
-( cd "$ROOT/packages/cli" && pnpm pack --pack-destination "$PACK_DIR" >/dev/null )
+( cd "$ROOT/packages/protocol" && pnpm pack --pack-destination "$PACK_DIR" >&2 )
+( cd "$ROOT/packages/cli" && pnpm pack --pack-destination "$PACK_DIR" >&2 )
 PRO_TGZ="$PACK_DIR/agentsignal-protocol-$(
   node -e "console.log(require('$ROOT/packages/protocol/package.json').version)").tgz"
 CLI_TGZ="$PACK_DIR/agentsignal-cli-$(
   node -e "console.log(require('$ROOT/packages/cli/package.json').version)").tgz"
-ls -la "$PRO_TGZ" "$CLI_TGZ"
-
+# pnpm v10 pack 产物可见性怪异（精确路径 ls/-f 偶发 ENOENT，glob 与后续 npm install 均可见）：
+# 以 glob 探测 + 沙箱安装为真验收
+# pnpm v10 pack 落盘可见性有延迟（实测最长 30s+），轮询等待；条件上下文避免 set -e 误杀
+PRO_GLOB=""
+CLI_GLOB=""
+for _ in $(seq 1 60); do
+  PRO_GLOB="$(ls "$PACK_DIR"/agentsignal-protocol-*.tgz 2>/dev/null | tail -1 || true)"
+  CLI_GLOB="$(ls "$PACK_DIR"/agentsignal-cli-*.tgz 2>/dev/null | tail -1 || true)"
+  if [ -n "$PRO_GLOB" ] && [ -n "$CLI_GLOB" ]; then break; fi
+  sleep 1
+done
+if [ -z "$PRO_GLOB" ] || [ -z "$CLI_GLOB" ]; then
+  echo "pack 产物缺失（glob 探测为空）" >&2
+  ls -la "$PACK_DIR" >&2 || true
+  exit 1
+fi
 step "2/5" "沙箱安装（npm install 两个 tgz）"
 SANDBOX="$(mkdtemp -d 2>/dev/null || mktemp -d)"
 echo "{\"name\":\"sandbox\",\"private\":true}" > "$SANDBOX/package.json"
-( cd "$SANDBOX" && npm install --no-audit --no-fund "$PRO_TGZ" "$CLI_TGZ" >/dev/null 2>&1 ) \
+( cd "$SANDBOX" && npm install --no-audit --no-fund "$PRO_GLOB" "$CLI_GLOB" >/dev/null 2>&1 ) \
   || { echo "npm install 失败"; exit 1; }
 [ -x "$SANDBOX/node_modules/.bin/agentsignal" ] || { echo "bin 未安装"; exit 1; }
 echo "sandbox: $SANDBOX"
