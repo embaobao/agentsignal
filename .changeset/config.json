@@ -1,12 +1,16 @@
 {
   "$schema": "https://unpkg.com/@changesets/config/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "embaobao/agentsignal" }],
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "embaobao/agentsignal"
+    }
+  ],
   "commit": false,
   "fixed": [
     [
       "@agentssignal/api",
       "@agentssignal/cli",
-      "@agentssignal/mcp",
       "@agentssignal/protocol",
       "@agentssignal/ui"
     ]

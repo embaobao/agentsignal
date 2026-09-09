@@ -8064,7 +8064,7 @@ async function readPlatformCredentials() {
 }
 async function mirrorContextForSkill(skillId, paths) {
   const { skills } = await scanSkills(paths);
-  const prov = skills.find((s) => s.id === skillId)?.lifecycle.provenance;
+  const prov = skills.find((s) => s.id === skillId.toLowerCase())?.lifecycle.provenance;
   if (!prov?.sig_id || !prov.base_url) return null;
   let mirrorEnabled = false;
   try {
