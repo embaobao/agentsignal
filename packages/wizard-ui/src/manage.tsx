@@ -45,10 +45,19 @@ export interface LibraryItem {
   id: string;
   name: string;
   bytes: number;
-  status: "active" | "local";
+  /** 平台技能 = 真实 sync_state（active/outdated/revoked）；本地手造 = local */
+  status: "active" | "outdated" | "revoked" | "local";
   source: { topic: string | null; validation: string | null; synced_at: string | null } | null;
   verify: { use_count: number; worked: number; partial: number; failed: number };
 }
+
+/** 状态 → 文案与圆点着色（对齐路由图 dot-success/dot-warning/dot-neutral 惯例） */
+const LIBRARY_STATUS: Record<LibraryItem["status"], { label: string; dot: string }> = {
+  active: { label: S.libraryStatusPlatform, dot: "dot-success" },
+  outdated: { label: S.libraryStatusOutdated, dot: "dot-warning" },
+  revoked: { label: S.libraryStatusRevoked, dot: "dot-neutral" },
+  local: { label: S.libraryStatusLocal, dot: "dot-neutral" },
+};
 
 export interface ManageProps {
   config: { domains?: { current?: string; available?: string[] }; layers?: { id: string; name: string }[] };
@@ -368,7 +377,11 @@ export function Manage(props: ManageProps): ReactNode {
                   <span className="summary-value">{item.name}</span>
                   <span className="field-note mono">{item.id}</span>
                   <span className="field-note">
-                    {item.status === "active" ? S.libraryStatusPlatform : S.libraryStatusLocal}
+                    <i
+                      className={`dot ${LIBRARY_STATUS[item.status].dot}`}
+                      aria-hidden="true"
+                    />{" "}
+                    {LIBRARY_STATUS[item.status].label}
                     {item.source?.topic ? ` · ${item.source.topic}` : ""}
                     {item.source?.synced_at
                       ? ` · ${item.source.synced_at.slice(0, 16).replace("T", " ")}`

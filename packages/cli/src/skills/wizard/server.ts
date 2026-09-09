@@ -423,12 +423,17 @@ async function buildState(paths: AgentSignalPaths) {
   } catch {
     index_rebuilt_at = null;
   }
-  // dynamic-skill-management P2.3：订阅 + 经验库（来源/状态/裁决聚合）
+  // dynamic-skill-management P2.3/P3.4：订阅 + 经验库（来源/状态/裁决聚合）
+  // status = 平台技能的真实 sync_state（active/outdated/revoked）；本地手造 = local
   const library = skills.map((s) => ({
     id: s.id,
     name: s.name,
     bytes: s.bodyBytes,
-    status: (s.lifecycle.provenance?.sig_id ? "active" : "local") as "active" | "local",
+    status: (s.lifecycle.provenance?.sig_id ? (s.lifecycle.sync_state ?? "active") : "local") as
+      | "active"
+      | "outdated"
+      | "revoked"
+      | "local",
     source: s.lifecycle.provenance
       ? {
           topic: s.lifecycle.provenance.topic ?? null,

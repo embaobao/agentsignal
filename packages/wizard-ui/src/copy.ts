@@ -115,6 +115,8 @@ export const S = {
     `容量告警：${n}/${max} 超限 · 标「建议清理」的条目为未验证低使用项，确认后手动移除，不会自动删除`,
   candidateMark: "建议清理",
   libraryStatusPlatform: "平台",
+  libraryStatusOutdated: "有更新",
+  libraryStatusRevoked: "已失效",
   libraryStatusLocal: "本地",
   libraryRemove: "移除",
   libraryRemoveConfirm: "确认移除",

@@ -270,3 +270,47 @@ test("订阅区端点：state 带 sync/library · 增删订阅 · 同步回环�
     platform.close();
   }
 });
+
+/* ── P3.4 库列表三态：state.library.status 反映真实 sync_state ─────────────── */
+
+test("库状态三态：outdated / revoked 经 sync_state 上抛（着色数据源）", async () => {
+  const { installSignal } = await import("../src/skills/install.ts");
+  const { applySignalUpdate, markRevoked } = await import("../src/skills/lifecycle.ts");
+  await writeConfigAtomic(defaultConfig());
+  const SIGC = "sig_01statemachinetest000000000";
+  await installSignal(
+    {
+      id: SIGC,
+      topic: "ai-research",
+      kind: "solution",
+      digest: "状态机测试 | scope: e2e | validation: none",
+      created_at: "2026-09-09T12:00:00.000Z",
+      experience: {
+        format: "markdown",
+        body: "## Why\nw\n\n## What worked\n1. s\n\n## Evidence\ne\n\n## Caveats\nc\n",
+      },
+    },
+    { base_url: "https://fake.example", synced_at: "2026-09-09T12:00:00.000Z" },
+  );
+
+  await withServer(async (base) => {
+    const lib = async () =>
+      (
+        (await (await fetch(`${base}/api/state`)).json()) as {
+          library: { id: string; status: string }[];
+        }
+      ).library;
+    assert.equal((await lib()).find((l) => l.id === SIGC)?.status, "active");
+
+    await applySignalUpdate(SIGC, {
+      sig_id: "sig_01stateupdate00000000000000",
+      digest: `[adoption] 修订（anchor: ${SIGC}）`,
+      synced_at: "2026-09-09T12:01:00.000Z",
+      body: "补充",
+    });
+    assert.equal((await lib()).find((l) => l.id === SIGC)?.status, "outdated");
+
+    await markRevoked(SIGC);
+    assert.equal((await lib()).find((l) => l.id === SIGC)?.status, "revoked");
+  });
+});
