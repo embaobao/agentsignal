@@ -111,6 +111,9 @@ export const S = {
     `同步完成：装入 ${installed} 条，跳过 ${skipped} 条。`,
   baseMissing: "未配置来源站点：先在本机设置 AGENTSIGNAL_BASE 或完成注册领取身份。",
   capacity: (n: number, max: number) => `容量 ${n}/${max} 条`,
+  capacityOver: (n: number, max: number) =>
+    `容量告警：${n}/${max} 超限 · 标「建议清理」的条目为未验证低使用项，确认后手动移除，不会自动删除`,
+  candidateMark: "建议清理",
   libraryStatusPlatform: "平台",
   libraryStatusLocal: "本地",
   libraryRemove: "移除",

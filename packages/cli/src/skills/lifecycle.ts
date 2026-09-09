@@ -10,6 +10,7 @@ import { readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SkillFrontmatterSchema } from "@agentssignal/protocol";
 import JSON5 from "json5";
+import { loadConfig } from "./config.ts";
 import { type AgentSignalPaths, resolvePaths } from "./paths.ts";
 import { scanSkills } from "./store.ts";
 
@@ -99,4 +100,45 @@ export async function applySignalUpdate(
   await writeFile(tmpU, existing + section, "utf8");
   await rename(tmpU, updatesFile);
   return true;
+}
+
+export interface CapacityCandidate {
+  id: string;
+  name: string;
+  use_count: number;
+  verify_total: number;
+}
+
+export interface CapacityReport {
+  count: number;
+  max: number;
+  over: boolean;
+  /** LRU 清理候选：未验证（worked+partial+failed=0）按 use_count 升序；确认后手动清理，不自动删 */
+  candidates: CapacityCandidate[];
+}
+
+/** 容量盘点（status 告警 + 管理界面候选列表共用口径） */
+export async function capacityReport(paths?: AgentSignalPaths): Promise<CapacityReport> {
+  const p = paths ?? resolvePaths();
+  const { skills } = await scanSkills(p);
+  let max = 200;
+  try {
+    const loaded = await loadConfig(p);
+    max = loaded?.config.sync.max_skills ?? 200;
+  } catch {
+    // config 异常按默认上限
+  }
+  const candidates = skills
+    .filter(
+      (s) =>
+        s.lifecycle.metrics.worked + s.lifecycle.metrics.partial + s.lifecycle.metrics.failed === 0,
+    )
+    .sort((a, b) => a.lifecycle.metrics.use_count - b.lifecycle.metrics.use_count)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      use_count: s.lifecycle.metrics.use_count,
+      verify_total: 0,
+    }));
+  return { count: skills.length, max, over: skills.length > max, candidates };
 }

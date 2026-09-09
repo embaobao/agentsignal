@@ -21,6 +21,7 @@ interface StateResponse {
   options: { domains: string[]; stacks: StackOption[] };
   library: LibraryItem[];
   sync: { subscriptions: SubscriptionRow[]; max_skills: number; base_url: string | null } | null;
+  capacity: { count: number; max: number; over: boolean; candidates: { id: string }[] } | null;
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -126,6 +127,7 @@ function App(): ReactNode {
             metrics={data.metrics}
             root={data.layout.root}
             sync={data.sync}
+            capacity={data.capacity}
             library={data.library}
             onRerun={() => setForce("wizard")}
             onWire={(hosts) =>

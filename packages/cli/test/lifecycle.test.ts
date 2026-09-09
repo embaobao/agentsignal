@@ -304,3 +304,85 @@ test("检索降权：revoked 沉底但仍出现在结果中（置灰不隐藏）
     await rm(iso, { recursive: true, force: true });
   }
 });
+
+/* ── P3.3 容量治理（超限仅告警 · LRU 候选 · 确认后手动清理，不自动删）──────── */
+
+test("capacityReport：候选 = 未验证按 use_count 升序；超限判定读 config.sync.max_skills", async () => {
+  const iso = await freshRoot();
+  try {
+    await writeConfigAtomic(defaultConfig()); // max_skills 默认 200
+    const { verifySkill } = await import("../src/skills/verify.ts");
+    const C1 = "sig_01capacitynocheck0000000001";
+    const C2 = "sig_01capacitynocheck0000000002";
+    const V = "sig_01capacityverified000000000";
+    await installSignal(
+      { ...solution(), id: C1, digest: "容量候选一 | scope: web | validation: none" },
+      CTX,
+    );
+    await installSignal(
+      { ...solution(), id: C2, digest: "容量候选二 | scope: web | validation: none" },
+      CTX,
+    );
+    await installSignal(
+      { ...solution(), id: V, digest: "已验证方案 | scope: web | validation: none" },
+      CTX,
+    );
+    await verifySkill(V, "worked", resolvePaths());
+
+    const { capacityReport } = await import("../src/skills/lifecycle.ts");
+    const rep = await capacityReport(resolvePaths());
+    assert.equal(rep.count, 3);
+    assert.equal(rep.max, 200);
+    assert.equal(rep.over, false);
+    assert.deepEqual(
+      rep.candidates.map((c) => c.id).sort(),
+      [C1, C2].sort(),
+      "候选 = 未验证技能（已验证的 V 不入候选）",
+    );
+
+    // 超限：max_skills=2
+    const cfg = defaultConfig();
+    cfg.sync.max_skills = 2;
+    await writeConfigAtomic(cfg);
+    const rep2 = await capacityReport(resolvePaths());
+    assert.equal(rep2.over, true);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("status：超限输出容量告警行（fail-soft，退出码 0）", async () => {
+  const iso = await freshRoot();
+  try {
+    await writeConfigAtomic(defaultConfig());
+    await installSignal(
+      { ...solution(), id: SIG, digest: "容量告警方案 | scope: web | validation: none" },
+      CTX,
+    );
+    const cfg = defaultConfig();
+    cfg.sync.max_skills = 1; // 已装 1 条 + 将装 1 条 → 必超限
+    await writeConfigAtomic(cfg);
+    await installSignal(
+      { ...solution(), id: UP, digest: "第二条方案 | scope: web | validation: none" },
+      CTX,
+    );
+    const { spawnSync } = await import("node:child_process");
+    const CLI = path.resolve(import.meta.dirname, "../src/index.ts");
+    const r = spawnSync(process.execPath, [CLI, "status"], {
+      env: {
+        ...process.env,
+        AGENTSIGNAL_CONFIG: iso,
+        AGENTSIGNAL_HOME: iso,
+        AGENTSIGNAL_BASE: "http://localhost:9",
+        CI: "1",
+      },
+      encoding: "utf8",
+      timeout: 30000,
+    });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(`${r.stdout}${r.stderr}`, /容量告警：2\/1 超限/);
+    assert.match(`${r.stdout}${r.stderr}`, /不自动删/);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});

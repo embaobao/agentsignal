@@ -27,6 +27,7 @@ import {
   writeConfigAtomic,
 } from "../config.ts";
 import { deleteSkill } from "../install.ts";
+import { capacityReport } from "../lifecycle.ts";
 import { readMetrics } from "../metrics.ts";
 import { readPlatformCredentials } from "../mirror.ts";
 import { type AgentSignalPaths, resolvePaths } from "../paths.ts";
@@ -449,6 +450,7 @@ async function buildState(paths: AgentSignalPaths) {
       base_url: (await readPlatformCredentials()).base ?? null,
     };
   }
+  const capacity = config ? await capacityReport(paths) : null;
   return {
     state,
     corrupt,
@@ -465,5 +467,6 @@ async function buildState(paths: AgentSignalPaths) {
     options: { domains: DEFAULT_DOMAINS, stacks: STACK_OPTIONS },
     library,
     sync,
+    capacity,
   };
 }

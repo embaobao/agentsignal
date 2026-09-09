@@ -58,6 +58,7 @@ export interface ManageProps {
   root: string;
   sync: { subscriptions: SubscriptionRow[]; max_skills: number; base_url: string | null } | null;
   library: LibraryItem[];
+  capacity: { count: number; max: number; over: boolean; candidates: { id: string }[] } | null;
   onRerun: () => void;
   onWire: (hosts: string[]) => Promise<{ ok: boolean; failed?: { host: string; reason: string }[] }>;
   onUninstall: () => Promise<{ ok: boolean; failed?: { host: string; reason: string }[]; dataKept: string }>;
@@ -93,6 +94,7 @@ export function Manage(props: ManageProps): ReactNode {
     root,
     sync,
     library,
+    capacity,
     onRerun,
     onWire,
     onUninstall,
@@ -319,7 +321,11 @@ export function Manage(props: ManageProps): ReactNode {
             <Button variant="secondary" disabled={!topicInput.trim() || busy} onClick={() => void addSub()}>
               {S.addBtn}
             </Button>
-            <span className="field-note">{S.capacity(stats.skill_count, sync.max_skills)}</span>
+            <span className="field-note">
+              {capacity?.over
+                ? S.capacityOver(stats.skill_count, sync.max_skills)
+                : S.capacity(stats.skill_count, sync.max_skills)}
+            </span>
           </div>
           {sync.subscriptions.length > 0 ? (
             <div className="row-list">
@@ -370,6 +376,9 @@ export function Manage(props: ManageProps): ReactNode {
                   </span>
                   <span className="field-note">
                     {S.libraryVerify(item.verify.worked, item.verify.partial, item.verify.failed)}
+                    {capacity?.candidates.some((c) => c.id === item.id)
+                      ? ` · ⚠ ${S.candidateMark}`
+                      : ""}
                   </span>
                   <Button variant="ghost" onClick={() => void removeItem(item.id)}>
                     {confirmingId === item.id ? S.libraryRemoveConfirm : S.libraryRemove}

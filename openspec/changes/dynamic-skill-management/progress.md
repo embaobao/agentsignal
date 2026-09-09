@@ -17,3 +17,4 @@
 | 2026-09-09 15:12 | (白天站长令) | 发版顺序修订 | done | 本地自管理全链验证（含本地账号体系）为 npm 发版硬门 → 服务端生产部署押后；最新 CLI 已 npm link 到本地（~/.hermes/node/bin/agentsignal → workspace） |
 | 2026-09-09 23:10 | a115948 | P3.1 | done | 更新链 4 用例（outdated 标记/UPDATES.md 附加层/loadDetail 注入/sync 锚定命中才拉详情）；lifecycle 字段向后兼容；CLI 92 + verify 4/4 全绿；台账更新顺延（该文件有他人未提交 WIP，下轮补） |
 | 2026-09-10 00:15 | 8c23c1f | P3.2 | done | 失效降权 7 用例（markRevoked 不物理删/详情 404→revoked/检索沉底）；顺带修 sync 畸形响应死循环 bug；CLI 95 + verify 4/4 全绿；台账仍顺延（他人 WIP 占用） |
+| 2026-09-10 01:11 | 5bc195e | P3.3 | done | 容量治理 9 用例（capacityReport 候选口径/status 告警/wizard state capacity+UI 候选标记）；产物重注入；CLI 97 + verify 4/4 全绿；台账仍顺延 |

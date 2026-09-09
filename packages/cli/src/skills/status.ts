@@ -8,6 +8,7 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { CONFIG_INVALID, ConfigError, loadConfig } from "./config.ts";
 import { createEngine } from "./engine.ts";
+import { capacityReport } from "./lifecycle.ts";
 import { readMetrics } from "./metrics.ts";
 import { readPlatformCredentials } from "./mirror.ts";
 import { resolvePaths } from "./paths.ts";
@@ -121,6 +122,18 @@ export async function statusCmd(): Promise<void> {
   console.log(
     `本地库：${skills.length} 条条目 · 存储占用 ${fmtBytes(skills.reduce((a, s) => a + s.bodyBytes, 0))}${errors.length ? ` · ${errors.length} 个目录异常` : ""}`,
   );
+
+  // ②½ 容量告警（P3.3：超限仅告警，清理在管理界面确认后执行，不自动删）
+  try {
+    const cap = await capacityReport(paths);
+    if (cap.over) {
+      console.log(
+        `容量告警：${cap.count}/${cap.max} 超限 · 未验证低使用 ${cap.candidates.length} 条为清理候选（管理界面确认后执行，不自动删）`,
+      );
+    }
+  } catch {
+    // 容量盘点失败不阻塞体检
+  }
 
   // ③ 接线
   console.log("接线：");
