@@ -7150,7 +7150,7 @@ async function resolveParameters(skill, paths, projectRoot) {
 async function loadDetail(skillId, paths, projectRoot) {
   const p = paths ?? resolvePaths();
   const { skills } = await scanSkills(p);
-  const skill = skills.find((s) => s.id === skillId);
+  const skill = skills.find((s) => s.id === skillId.toLowerCase());
   if (!skill) {
     throw new Error(`SKILL_NOT_FOUND: ${skillId}`);
   }
@@ -7205,7 +7205,7 @@ import { SkillFrontmatterSchema as SkillFrontmatterSchema2 } from "@agentssignal
 async function verifySkill(skillId, verdict, paths) {
   const p = paths ?? resolvePaths();
   const { skills } = await scanSkills(p);
-  const skill = skills.find((s) => s.id === skillId);
+  const skill = skills.find((s) => s.id === skillId.toLowerCase());
   if (!skill) throw new Error(`SKILL_NOT_FOUND: ${skillId}`);
   const raw = await readFile5(skill.metaFile, "utf8");
   const parsed = SkillFrontmatterSchema2.parse(import_json54.default.parse(raw));
@@ -7220,7 +7220,7 @@ async function verifySkill(skillId, verdict, paths) {
   const tmp = `${skill.metaFile}.tmp-${process.pid}`;
   await writeFile3(tmp, import_json54.default.stringify(parsed, null, 2), "utf8");
   await rename3(tmp, skill.metaFile);
-  return { id: skillId, verdict, metrics: next };
+  return { id: skill.id, verdict, metrics: next };
 }
 var import_json54;
 var init_verify = __esm({
@@ -7853,7 +7853,8 @@ function transcodeSignal(input, ctx) {
   );
   try {
     const frontmatter = SkillFrontmatterSchema4.parse({
-      id: input.id,
+      // 本地 id 一律小写（平台 ULID 含大写，技能 id 白名单只收小写 slug）；provenance 保留原始大小写
+      id: input.id.toLowerCase(),
       name: description,
       description,
       domains,
@@ -7952,17 +7953,18 @@ import { SkillFrontmatterSchema as SkillFrontmatterSchema5 } from "@agentssignal
 async function updateTargetsInstalledSkill(anchor, paths) {
   if (!anchor) return false;
   const { skills } = await scanSkills(paths);
-  return skills.some((s) => s.id === anchor);
+  return skills.some((s) => s.id === anchor.toLowerCase());
 }
 async function isInstalled(sigId, paths) {
   if (!sigId) return false;
   const { skills } = await scanSkills(paths);
-  return skills.some((s) => s.id === sigId);
+  return skills.some((s) => s.id === sigId.toLowerCase());
 }
 async function markRevoked(sigId, paths) {
   const p = paths ?? resolvePaths();
-  if (!/^[a-z][a-z0-9_-]*$/.test(sigId)) return false;
-  const metaFile = path9.join(p.skillsDir, sigId, "skill.json5");
+  const id = sigId.toLowerCase();
+  if (!/^[a-z][a-z0-9_-]*$/.test(id)) return false;
+  const metaFile = path9.join(p.skillsDir, id, "skill.json5");
   let raw;
   try {
     raw = await readFile8(metaFile, "utf8");
@@ -7978,8 +7980,9 @@ async function markRevoked(sigId, paths) {
 }
 async function applySignalUpdate(anchorSigId, update2, paths) {
   const p = paths ?? resolvePaths();
-  if (!/^[a-z][a-z0-9_-]*$/.test(anchorSigId)) return false;
-  const dir = path9.join(p.skillsDir, anchorSigId);
+  const anchor = anchorSigId.toLowerCase();
+  if (!/^[a-z][a-z0-9_-]*$/.test(anchor)) return false;
+  const dir = path9.join(p.skillsDir, anchor);
   const metaFile = path9.join(dir, "skill.json5");
   let raw;
   try {
@@ -8116,7 +8119,10 @@ var init_mirror = __esm({
     "use strict";
     init_config();
     init_store();
-    PLATFORM_CONFIG = path10.join(homedir3(), ".config", "agentsignal", "config.json");
+    PLATFORM_CONFIG = path10.join(
+      process.env.AGENTSIGNAL_CLIENT_DIR ?? path10.join(homedir3(), ".config", "agentsignal"),
+      "config.json"
+    );
   }
 });
 
@@ -22804,7 +22810,7 @@ var init_uninstall_cmd = __esm({
 import { mkdir as mkdir7, readFile as readFile11, writeFile as writeFile10 } from "node:fs/promises";
 import { homedir as homedir4 } from "node:os";
 import path13 from "node:path";
-var CONFIG_DIR = path13.join(homedir4(), ".config", "agentsignal");
+var CONFIG_DIR = process.env.AGENTSIGNAL_CLIENT_DIR ?? path13.join(homedir4(), ".config", "agentsignal");
 var CONFIG_FILE = path13.join(CONFIG_DIR, "config.json");
 async function readConfig() {
   try {

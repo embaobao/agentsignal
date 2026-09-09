@@ -101,7 +101,8 @@ export function transcodeSignal(input: TranscodeInput, ctx: TranscodeContext): T
 
   try {
     const frontmatter = SkillFrontmatterSchema.parse({
-      id: input.id,
+      // 本地 id 一律小写（平台 ULID 含大写，技能 id 白名单只收小写 slug）；provenance 保留原始大小写
+      id: input.id.toLowerCase(),
       name: description,
       description,
       domains,

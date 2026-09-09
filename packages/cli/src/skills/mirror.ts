@@ -19,7 +19,11 @@ export interface PlatformCredentials {
   base?: string;
 }
 
-const PLATFORM_CONFIG = path.join(homedir(), ".config", "agentsignal", "config.json");
+// 与 index.ts register/publish 同一契约：AGENTSIGNAL_CLIENT_DIR 可整体改指凭证目录
+const PLATFORM_CONFIG = path.join(
+  process.env.AGENTSIGNAL_CLIENT_DIR ?? path.join(homedir(), ".config", "agentsignal"),
+  "config.json",
+);
 
 /** 平台 CLI 凭证（env 优先，与 register/publish 同一契约）；读不到 = 匿名 */
 export async function readPlatformCredentials(): Promise<PlatformCredentials> {
@@ -48,7 +52,8 @@ export async function mirrorContextForSkill(
   paths?: AgentSignalPaths,
 ): Promise<MirrorContext | null> {
   const { skills } = await scanSkills(paths);
-  const prov = skills.find((s) => s.id === skillId)?.lifecycle.provenance;
+  // 本地 id 一律小写存储；入参可能是平台原始大小写，归一比对
+  const prov = skills.find((s) => s.id === skillId.toLowerCase())?.lifecycle.provenance;
   if (!prov?.sig_id || !prov.base_url) return null;
   let mirrorEnabled = false;
   try {

@@ -23,7 +23,8 @@ export async function verifySkill(
 ): Promise<VerifyResult> {
   const p = paths ?? resolvePaths();
   const { skills } = await scanSkills(p);
-  const skill = skills.find((s) => s.id === skillId);
+  // 本地 id 一律小写存储；入参可能是平台原始大小写，归一比对
+  const skill = skills.find((s) => s.id === skillId.toLowerCase());
   if (!skill) throw new Error(`SKILL_NOT_FOUND: ${skillId}`);
 
   const raw = await readFile(skill.metaFile, "utf8");
@@ -40,5 +41,5 @@ export async function verifySkill(
   const tmp = `${skill.metaFile}.tmp-${process.pid}`;
   await writeFile(tmp, JSON5.stringify(parsed, null, 2), "utf8");
   await rename(tmp, skill.metaFile);
-  return { id: skillId, verdict, metrics: next };
+  return { id: skill.id, verdict, metrics: next };
 }

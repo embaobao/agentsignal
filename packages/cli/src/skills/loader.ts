@@ -101,7 +101,8 @@ export async function loadDetail(
 ): Promise<LoadResult> {
   const p = paths ?? resolvePaths();
   const { skills } = await scanSkills(p);
-  const skill = skills.find((s) => s.id === skillId);
+  // 本地 id 一律小写存储；入参可能是平台原始大小写，归一比对
+  const skill = skills.find((s) => s.id === skillId.toLowerCase());
   if (!skill) {
     throw new Error(`SKILL_NOT_FOUND: ${skillId}`);
   }

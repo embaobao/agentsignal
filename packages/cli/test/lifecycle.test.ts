@@ -386,3 +386,26 @@ test("status：超限输出容量告警行（fail-soft，退出码 0）", async 
     await rm(iso, { recursive: true, force: true });
   }
 });
+
+/* ── 4.2a 回归：真实平台 id 含大写 ULID ───────────────────────────────────── */
+
+test("真实平台 id（大写 ULID）：小写目录落库 · provenance 保留原大小写 · 原始 id 可 verify/revoked", async () => {
+  const iso = await freshRoot();
+  try {
+    const UPPER = "sig_01M23WMYSA2ZZY93YJAY0MB2MM"; // 4.2a 实测的真实形态
+    await installSignal({ ...solution(), id: UPPER }, CTX);
+    const { skills } = await scanSkills(resolvePaths());
+    const s = skills.find((x) => x.id === UPPER.toLowerCase());
+    assert.ok(s, "落库目录/记录应为小写 id");
+    assert.equal(
+      s.lifecycle.provenance?.sig_id,
+      UPPER,
+      "provenance 保留原始大小写（回流回传依据）",
+    );
+    const { verifySkill } = await import("../src/skills/verify.ts");
+    assert.equal((await verifySkill(UPPER, "worked", resolvePaths())).id, UPPER.toLowerCase());
+    assert.equal(await markRevoked(UPPER, resolvePaths()), true);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});

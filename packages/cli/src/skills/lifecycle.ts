@@ -28,7 +28,8 @@ export async function updateTargetsInstalledSkill(
 ): Promise<boolean> {
   if (!anchor) return false;
   const { skills } = await scanSkills(paths);
-  return skills.some((s) => s.id === anchor);
+  // 本地 id 一律小写存储；平台 ULID 含大写，比对统一归一
+  return skills.some((s) => s.id === anchor.toLowerCase());
 }
 
 /** 信号是否已装（sync 源失效判定用；anchor 缺省 = false） */
@@ -38,14 +39,15 @@ export async function isInstalled(
 ): Promise<boolean> {
   if (!sigId) return false;
   const { skills } = await scanSkills(paths);
-  return skills.some((s) => s.id === sigId);
+  return skills.some((s) => s.id === sigId.toLowerCase());
 }
 
 /** 源失效（404/hidden）：标 revoked 降权置灰，不物理删；返回 false = 技能不存在 */
 export async function markRevoked(sigId: string, paths?: AgentSignalPaths): Promise<boolean> {
   const p = paths ?? resolvePaths();
-  if (!/^[a-z][a-z0-9_-]*$/.test(sigId)) return false;
-  const metaFile = path.join(p.skillsDir, sigId, "skill.json5");
+  const id = sigId.toLowerCase(); // 平台 ULID 含大写，本地目录一律小写
+  if (!/^[a-z][a-z0-9_-]*$/.test(id)) return false;
+  const metaFile = path.join(p.skillsDir, id, "skill.json5");
   let raw: string;
   try {
     raw = await readFile(metaFile, "utf8");
@@ -67,8 +69,9 @@ export async function applySignalUpdate(
   paths?: AgentSignalPaths,
 ): Promise<boolean> {
   const p = paths ?? resolvePaths();
-  if (!/^[a-z][a-z0-9_-]*$/.test(anchorSigId)) return false; // 目录名白名单，防路径穿越
-  const dir = path.join(p.skillsDir, anchorSigId);
+  const anchor = anchorSigId.toLowerCase(); // 平台 ULID 含大写，本地目录一律小写
+  if (!/^[a-z][a-z0-9_-]*$/.test(anchor)) return false; // 目录名白名单，防路径穿越
+  const dir = path.join(p.skillsDir, anchor);
   const metaFile = path.join(dir, "skill.json5");
   let raw: string;
   try {

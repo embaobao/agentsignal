@@ -14,7 +14,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const CONFIG_DIR = path.join(homedir(), ".config", "agentsignal");
+// 平台凭证目录：AGENTSIGNAL_CLIENT_DIR 可整体改指（隔离验证/多账号用），缺省 ~/.config/agentsignal
+const CONFIG_DIR =
+  process.env.AGENTSIGNAL_CLIENT_DIR ?? path.join(homedir(), ".config", "agentsignal");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
 type Config = { token?: string; base?: string };
