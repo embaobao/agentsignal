@@ -1,9 +1,11 @@
 # 本地技能引擎（Local Engine）——功能定义唯一真源
 
-> 状态：**已上线**（2026-09-03，[skill-engine 提案](../../openspec/changes/skill-engine/proposal.md) Phase 1 + Phase 2 主体）
+> 状态：**已上线**（2026-09-03，[skill-engine 提案](../../openspec/changes/skill-engine/proposal.md) Phase 1 + Phase 2 主体；
+> 2026-09-09 增订阅落库 × 回流闭环——[dynamic-skill-management 提案](../../openspec/changes/dynamic-skill-management/proposal.md) P0–P3 +
+> [决议 2026-09-08](decisions/2026-09-08-dynamic-skill-management.md)，发版顺序修订：本地自管理全链验证为 npm 发版硬门，服务端生产部署押后）
 > 相关决议：[skill-envelope](decisions/2026-09-02-skill-envelope.md)（技能内部形式）·[mcp-sdk-consolidation](decisions/2026-09-02-mcp-sdk-consolidation.md)（唯一 MCP server）
 > UI 真源：[management-ui-spec-v1.md](management-ui-spec-v1.md)（本地 Web 管理/向导界面）
-> 用户手册：[user-manual.md](user-manual.md) §1.5 · 管理面：[admin-guide.md](admin-guide.md) §6
+> 用户手册：[user-manual.md](user-manual.md) §1.5–1.6 · 管理面：[admin-guide.md](admin-guide.md) §6
 
 ## 1. 定位与一句话口径
 
@@ -108,8 +110,26 @@ metrics.json     双指标累计
 ## 10. 非目标（勿重议）
 
 - 不设 `skills` 用户命令树；不让用户直接编辑配置文件（向导优先）
-- 不开MCP 维护类工具；不做登录/token 鉴权（用户域暂缓）
-- 服务端发布机制（订阅信号落本地、publish 回平台、verify 回传）另立提案（Phase 3，不排期）
+- 不开MCP 维护类工具；不做登录/token 鉴权（用户域暂缓；回流镜像复用平台 CLI 凭证，不新增登录面）
+- ~~服务端发布机制另立提案（Phase 3，不排期）~~ **已落地**：[dynamic-skill-management](../../openspec/changes/dynamic-skill-management/proposal.md)
+  （订阅落库 pull 式按需同步、更新链 outdated、源失效 revoked 降权、verify 回流镜像默认手动；
+  publish 回平台复用既有平台命令；用户域 creds 仍归 user-domain-completion）
+
+## 10.5 订阅落库 × 回流闭环（dynamic-skill-management，2026-09-09）
+
+- **订阅同步器**（`skills/sync.ts`）：config.json5 `sync.subscriptions`（topic + cursor + min_validation）
+  为订阅状态源；pull 式按需同步（管理界面「同步」按钮触发，无常驻进程、零 LLM）；
+  游标 = sig id 持久化断点续传；429 按 retry_after 退避；solution 过滤 + validation 阈值；
+  update 信号解析 `anchor: sig_x` 命中已装技能才拉详情。
+- **更新链**：命中 → `lifecycle.sync_state = outdated` + 更新正文追加 `UPDATES.md` 附加层
+  （原 SKILL.md 逐字不动，loadDetail 附于正文之后）。
+- **失效降权**：源信号 404/hidden → `revoked`（检索分数 ×0.05 沉底 + 界面置灰，不物理删）。
+- **容量治理**：`sync.max_skills`（默认 200）超限仅 status 告警 + 界面标「建议清理」
+  （未验证低使用 LRU），确认后手动物理删——不自动删。
+- **回流镜像**：`verify_skill` 落本地 metrics 后，带 provenance 的技能默认附手动回传提示；
+  `sync.mirror_verify: true` 才自动回传平台聚合（凭证复用 `~/.config/agentsignal/config.json`，env 优先）。
+- **管理界面**：B 视图「订阅」区（增删分区 / 同步按钮 / 库列表三态着色 + 候选标记）；
+  服务端端点 `/api/subscriptions/*` `/api/sync` `/api/library/delete`。
 
 ## 11. 已知收窄与后续
 

@@ -73,4 +73,20 @@ metrics.json     效率双指标累计（吞吐节省 vs 残留占用，bytes÷4
   args=[mcp]）条目；Claude Code 的推接线段落（hooks.UserPromptSubmit）。
 - 常见操作：`agentsignal init`（向导/管理界面）、`agentsignal status`（体检）、
   `agentsignal uninstall`（摘除宿主配置，本目录保留）。
+
+### 6.1 订阅与回流管理面（dynamic-skill-management，2026-09-09）
+
+> 决策：`docs/decisions/2026-09-08-dynamic-skill-management.md`。
+
+- **config.json5 新增 `sync` 段**：`subscriptions: [{topic, cursor, min_validation}]`（订阅状态源，
+  cursor=sig id 即游标，同步器持久化断点）· `mirror_verify`（默认 false，verify 回流镜像开关）·
+  `max_skills`（默认 200，容量上限——超限仅告警，清理需界面确认）。
+- **skills/<id>/ 新增产物**：`UPDATES.md`（平台 update 锚定追加的更新层，原 SKILL.md 逐字不动）；
+  skill.json5 `lifecycle.sync_state`（active/outdated/revoked）与 `lifecycle.updates`。
+- **本地管理界面新端点**（只绑 127.0.0.1）：`/api/subscriptions/add|remove`（增删订阅）·
+  `/api/sync`（按需 pull 一次，进度一次性回报）· `/api/library/delete`（确认后物删 + 索引重建）；
+  `/api/state` 增 `sync` / `library` / `capacity` 块。
+- **`agentsignal status` 体检增两行**：订阅落后统计（离线 fail-soft）与容量告警（超限时列清理候选）。
+- 运维注意：同步是按需 pull（无常驻进程）；站点来源 = `AGENTSIGNAL_BASE` 或平台凭证文件
+  （`~/.config/agentsignal/config.json`，env 优先）；本地库目录名 = sig id（白名单校验防穿越）。
 - 清理索引或轨迹不会影响上面的 config；重跑 `agentsignal init --yes` 可重建全部。

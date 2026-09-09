@@ -19,3 +19,4 @@
 | 2026-09-10 00:15 | 8c23c1f | P3.2 | done | 失效降权 7 用例（markRevoked 不物理删/详情 404→revoked/检索沉底）；顺带修 sync 畸形响应死循环 bug；CLI 95 + verify 4/4 全绿；台账仍顺延（他人 WIP 占用） |
 | 2026-09-10 01:11 | 5bc195e | P3.3 | done | 容量治理 9 用例（capacityReport 候选口径/status 告警/wizard state capacity+UI 候选标记）；产物重注入；CLI 97 + verify 4/4 全绿；台账仍顺延 |
 | 2026-09-10 02:04 | ada8792 | P3.4 | done | 库列表三态：server 上抛真实 sync_state（active/outdated/revoked）+ UI 圆点着色对齐路由图惯例 + 有更新/已失效文案；wizard 9 用例；CLI 98 + verify 4/4 全绿——P3 全完成（台账两轮顺延待他人 WIP 落地后补） |
+| 2026-09-10 03:06 | 6c93207 | P4.1 | done | 文档随行五件（user-manual §1.6/local-engine §10.5+§10 改写/admin-guide §6.1/SKILL verify 增量+G4/AGENTS.md 刷新）；G1–G4 + verify 4/4 全绿；台账仍顺延（他人 WIP 占用中） |

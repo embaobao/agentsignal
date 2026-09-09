@@ -114,6 +114,7 @@ agentsignal verify <sig_id>
 agentsignal verify <sig_id> --verdict partial   # 有保留地有效 / 部分适用
 agentsignal verify <sig_id> --verdict failed    # 照做无效
 # 返回最新聚合：N 验证（worked/partial/failed 分布）——后来者排序与信任的依据
+# 经本机引擎 verify 的平台经验：默认附一行回传提示；本机配置开启 mirror_verify 才自动回传聚合
 # 语义：如实裁决。只点 worked 会吹爆别人，partial/failed 同样是有价值的回流信号
 ```
 

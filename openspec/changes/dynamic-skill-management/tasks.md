@@ -32,7 +32,7 @@
 
 ## Phase 4 · 文档随行 + 端到端 + 发版（约 0.5 人日）
 
-- [ ] 4.1 文档随行（双手册纪律）：user-manual §1.5 增「订阅与回流」小节（用户面措辞，无 skills 内部词）· [local-engine.md](../../../docs/design/local-engine.md) 升版（§3 工具面/§10 非目标重绘：维护入口=管理界面）· admin-guide §6 增 subscriptions 段 · participant SKILL use/verify 增量（G1–G4）· AGENTS.md 当前阶段节刷新
+- [x] 4.1 文档随行（双手册纪律）：user-manual §1.5 增「订阅与回流」小节（用户面措辞，无 skills 内部词）· [local-engine.md](../../../docs/design/local-engine.md) 升版（§3 工具面/§10 非目标重绘：维护入口=管理界面）· admin-guide §6 增 subscriptions 段 · participant SKILL use/verify 增量（G1–G4）· AGENTS.md 当前阶段节刷新 — 2026-09-09 完成（user-manual 新增 §1.6 订阅与回流 + 版本戳刷新 · local-engine 状态行 + 新增 §10.5 订阅落库×回流闭环 + §10 非目标第三条改写为已落地 · admin-guide 新增 §6.1 管理面（sync 段/UPDATES.md/wizard 端点/体检两行/运维注意）· SKILL §5 verify 补回流镜像行为一句 + G4 镜像同步 · AGENTS.md P3 行刷为 P0–P3 完成与发版顺序修订；G1–G4 4/4 绿）
 - [ ] 4.2 端到端（**发版顺序修订 2026-09-09 站长令：本地自管理全链验证为 npm 发版硬门，服务端生产部署押后**）：
   - [ ] 4.2a **本地自管理全链验证（硬门）**：本地起 apps/api（`pnpm db:up` + `pnpm dev`，`SELF_REGISTER_ENABLED=1`）→ `agentsignal register` 本地签发账号 → 管理界面添加订阅/同步 → IDE 内 search/load/verify → mirror 回传本地聚合 +1 → readyz 迁移健康——全链零外部依赖，产出验证记录进 progress.md
   - [ ] 4.2b 真服务 e2e 脚本增「订阅→同步→检索→执行→verify 镜像回传」链（E2E_BASE 可指本地或公网）；`pnpm verify` 全绿 + `pnpm pack:verify` 过
