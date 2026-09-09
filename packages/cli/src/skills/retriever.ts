@@ -132,5 +132,12 @@ export async function searchSkills(
     }
   }
 
-  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, limit);
+  // 失效降权（P3.2）：revoked 仍出现在结果中（置灰不隐藏）但分数乘罚沉底
+  const penalty = (id: string): number =>
+    byId.get(id)?.lifecycle.sync_state === "revoked" ? 0.05 : 1;
+
+  return [...best.values()]
+    .map((h) => ({ ...h, score: Math.round(h.score * penalty(h.id) * 1000) / 1000 }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 }

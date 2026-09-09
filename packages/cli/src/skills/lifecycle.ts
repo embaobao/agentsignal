@@ -30,6 +30,35 @@ export async function updateTargetsInstalledSkill(
   return skills.some((s) => s.id === anchor);
 }
 
+/** 信号是否已装（sync 源失效判定用；anchor 缺省 = false） */
+export async function isInstalled(
+  sigId: string | null | undefined,
+  paths?: AgentSignalPaths,
+): Promise<boolean> {
+  if (!sigId) return false;
+  const { skills } = await scanSkills(paths);
+  return skills.some((s) => s.id === sigId);
+}
+
+/** 源失效（404/hidden）：标 revoked 降权置灰，不物理删；返回 false = 技能不存在 */
+export async function markRevoked(sigId: string, paths?: AgentSignalPaths): Promise<boolean> {
+  const p = paths ?? resolvePaths();
+  if (!/^[a-z][a-z0-9_-]*$/.test(sigId)) return false;
+  const metaFile = path.join(p.skillsDir, sigId, "skill.json5");
+  let raw: string;
+  try {
+    raw = await readFile(metaFile, "utf8");
+  } catch {
+    return false;
+  }
+  const fm = SkillFrontmatterSchema.parse(JSON5.parse(raw));
+  fm.lifecycle.sync_state = "revoked";
+  const tmp = `${metaFile}.tmp-${process.pid}`;
+  await writeFile(tmp, JSON5.stringify(fm, null, 2), "utf8");
+  await rename(tmp, metaFile);
+  return true;
+}
+
 /** 把一条平台 update 应用到锚定的本地技能；返回 false = 技能不存在 */
 export async function applySignalUpdate(
   anchorSigId: string,

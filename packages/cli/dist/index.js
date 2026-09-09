@@ -6459,7 +6459,8 @@ async function searchSkills(db, skills, input) {
       });
     }
   }
-  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, limit);
+  const penalty = (id) => byId.get(id)?.lifecycle.sync_state === "revoked" ? 0.05 : 1;
+  return [...best.values()].map((h) => ({ ...h, score: Math.round(h.score * penalty(h.id) * 1e3) / 1e3 })).sort((a, b) => b.score - a.score).slice(0, limit);
 }
 var HIT_LIMIT;
 var init_retriever = __esm({
@@ -8029,6 +8030,28 @@ async function updateTargetsInstalledSkill(anchor, paths) {
   const { skills } = await scanSkills(paths);
   return skills.some((s) => s.id === anchor);
 }
+async function isInstalled(sigId, paths) {
+  if (!sigId) return false;
+  const { skills } = await scanSkills(paths);
+  return skills.some((s) => s.id === sigId);
+}
+async function markRevoked(sigId, paths) {
+  const p = paths ?? resolvePaths();
+  if (!/^[a-z][a-z0-9_-]*$/.test(sigId)) return false;
+  const metaFile = path10.join(p.skillsDir, sigId, "skill.json5");
+  let raw;
+  try {
+    raw = await readFile9(metaFile, "utf8");
+  } catch {
+    return false;
+  }
+  const fm = SkillFrontmatterSchema5.parse(import_json58.default.parse(raw));
+  fm.lifecycle.sync_state = "revoked";
+  const tmp = `${metaFile}.tmp-${process.pid}`;
+  await writeFile8(tmp, import_json58.default.stringify(fm, null, 2), "utf8");
+  await rename7(tmp, metaFile);
+  return true;
+}
 async function applySignalUpdate(anchorSigId, update2, paths) {
   const p = paths ?? resolvePaths();
   if (!/^[a-z][a-z0-9_-]*$/.test(anchorSigId)) return false;
@@ -8136,6 +8159,7 @@ async function syncSubscription(sub, opts) {
   let installed = 0;
   let skipped = 0;
   let updated = 0;
+  let revoked = 0;
   let done = false;
   const syncedAt = (/* @__PURE__ */ new Date()).toISOString();
   while (!done) {
@@ -8194,6 +8218,13 @@ async function syncSubscription(sub, opts) {
         log2
       );
       if (!detailRes.ok) {
+        if (await isInstalled(sig.id, opts.paths)) {
+          await markRevoked(sig.id, opts.paths);
+          revoked++;
+          log2(
+            JSON.stringify({ event: "source_revoked", sig_id: sig.id, status: detailRes.status })
+          );
+        }
         skipped++;
         log2(
           JSON.stringify({ event: "detail_unavailable", sig_id: sig.id, status: detailRes.status })
@@ -8219,9 +8250,10 @@ async function syncSubscription(sub, opts) {
       );
       installed++;
     }
-    const lastId2 = (page.signals ?? []).at(-1)?.id ?? null;
+    const signals = Array.isArray(page.signals) ? page.signals : [];
+    const lastId2 = signals.at(-1)?.id ?? null;
     cursor = page.next_cursor ?? lastId2 ?? cursor;
-    done = page.next_cursor === null;
+    done = page.next_cursor == null;
     const entry = loaded.config.sync.subscriptions.find((s) => s.topic === sub.topic);
     if (entry) entry.cursor = cursor ?? void 0;
     else
@@ -8243,7 +8275,7 @@ async function syncSubscription(sub, opts) {
       })
     );
   }
-  return { topic: sub.topic, scanned, installed, skipped, updated, cursor, done };
+  return { topic: sub.topic, scanned, installed, skipped, updated, revoked, cursor, done };
 }
 var SyncError, RANK, defaultSleep;
 var init_sync = __esm({

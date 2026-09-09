@@ -15,7 +15,7 @@ import JSON5 from "json5";
 import { SkillFrontmatterSchema } from "../../protocol/src/skill-schema.ts";
 import { defaultConfig, writeConfigAtomic } from "../src/skills/config.ts";
 import { installSignal } from "../src/skills/install.ts";
-import { applySignalUpdate } from "../src/skills/lifecycle.ts";
+import { applySignalUpdate, markRevoked } from "../src/skills/lifecycle.ts";
 import { loadDetail } from "../src/skills/loader.ts";
 import { resolvePaths } from "../src/skills/paths.ts";
 import { scanSkills } from "../src/skills/store.ts";
@@ -170,4 +170,137 @@ test("sync：锚定已装技能的 update → updated=1 标 outdated；未命中
   assert.ok(!log.some((l) => l.includes(OTHER) && l.includes("signals/")), "未命中锚点不得拉详情");
   const { skills } = await scanSkills(resolvePaths());
   assert.equal(skills.find((s) => s.id === SIG)?.lifecycle.sync_state, "outdated");
+});
+
+/* ── P3.2 失效降权（404/hidden → revoked：降权置灰不物理删）──────────────── */
+
+/** 独立 root：库/游标状态隔离（防同文件用例间污染与死循环重放） */
+async function freshRoot(): Promise<string> {
+  const dir = await mkdtemp(path.join(tmpdir(), "as-lc-iso-"));
+  process.env.AGENTSIGNAL_CONFIG = dir;
+  return dir;
+}
+
+test("markRevoked：标 revoked 但文件保留（不物理删）", async () => {
+  const iso = await freshRoot();
+  try {
+    await installSignal(solution(), CTX);
+    const ok = await applySignalUpdate(
+      SIG,
+      {
+        sig_id: UP,
+        digest: `[adoption] 修订（anchor: ${SIG}）`,
+        synced_at: CTX.synced_at,
+        body: UPDATE_BODY,
+      },
+      resolvePaths(),
+    );
+    assert.equal(ok, true);
+    assert.equal(await markRevoked(SIG, resolvePaths()), true);
+    const meta = JSON5.parse(
+      await readFile(path.join(iso, "skills", SIG, "skill.json5"), "utf8"),
+    ) as {
+      lifecycle: { sync_state: string };
+    };
+    assert.equal(meta.lifecycle.sync_state, "revoked");
+    // 不物理删
+    assert.equal(await readFile(path.join(iso, "skills", SIG, "SKILL.md"), "utf8"), BODY);
+    assert.ok((await readFile(path.join(iso, "skills", SIG, "UPDATES.md"), "utf8")).length > 0);
+    assert.equal(await markRevoked("sig_01notinstalled000000000000", resolvePaths()), false);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("sync：列表内 solution 详情 404 且已装 → 标 revoked（report.revoked），未装仅跳过", async () => {
+  const iso = await freshRoot();
+  try {
+    await writeConfigAtomic(defaultConfig());
+    const HIDDEN = "sig_01lifecyclehidden0000000000";
+    await installSignal(
+      { ...solution(), id: HIDDEN, digest: "将被隐藏的方案 | scope: web | validation: none" },
+      CTX,
+    );
+    const NEW = "sig_01lifecyclenew00000000000000";
+    const fetchImpl = (async (input: string | URL) => {
+      const url = String(input);
+      if (url === `https://fake.example/topics/${TOPIC}/signals?limit=20`) {
+        return new Response(
+          JSON.stringify({
+            topic_id: "tp_1",
+            next_cursor: null,
+            tokens_saved_est: 0,
+            signals: [
+              {
+                id: HIDDEN,
+                kind: "solution",
+                topic: TOPIC,
+                digest: "将被隐藏的方案 | scope: web | validation: none",
+                created_at: "2026-09-09T11:00:00.000Z",
+              },
+              {
+                id: NEW,
+                kind: "solution",
+                topic: TOPIC,
+                digest: "新方案 | scope: web | validation: none",
+                created_at: "2026-09-09T11:01:00.000Z",
+              },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.startsWith(`https://fake.example/signals/${HIDDEN}`)) {
+        return new Response("{}", { status: 404 }); // 已 hidden
+      }
+      if (url.startsWith(`https://fake.example/signals/${NEW}`)) {
+        return new Response(
+          JSON.stringify({
+            id: NEW,
+            kind: "solution",
+            topic: TOPIC,
+            digest: "新方案 | scope: web | validation: none",
+            experience: { format: "markdown", body: BODY },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    }) as typeof fetch;
+    const report = await syncSubscription({ topic: TOPIC }, opts({ fetchImpl }));
+    assert.equal(report.revoked, 1, "已装信号详情 404 应计 revoked");
+    assert.equal(report.installed, 1);
+    const { skills } = await scanSkills(resolvePaths());
+    assert.equal(skills.find((s) => s.id === HIDDEN)?.lifecycle.sync_state, "revoked");
+    // 不物理删
+    await readFile(path.join(iso, "skills", HIDDEN, "SKILL.md"), "utf8");
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
+});
+
+test("检索降权：revoked 沉底但仍出现在结果中（置灰不隐藏）", async () => {
+  const iso = await freshRoot();
+  try {
+    const A = "sig_01revokedemoted00000000000";
+    const B = "sig_01revokenormal000000000000";
+    await installSignal(
+      { ...solution(), id: A, digest: "登录认证方案 A | scope: web | validation: none" },
+      CTX,
+    );
+    await installSignal(
+      { ...solution(), id: B, digest: "登录认证方案 B | scope: web | validation: none" },
+      CTX,
+    );
+    assert.equal(await markRevoked(A, resolvePaths()), true);
+    await writeConfigAtomic(defaultConfig()); // createEngine 需要引擎 config
+    const { createEngine } = await import("../src/skills/engine.ts");
+    const engine = await createEngine(iso);
+    const hits = await engine.search({ query: "登录认证", domain: "common", limit: 10 });
+    const ids = hits.map((h) => h.id);
+    assert.ok(ids.includes(A) && ids.includes(B), `两者都应在结果中：${JSON.stringify(ids)}`);
+    assert.ok(ids.indexOf(B) < ids.indexOf(A), `revoked 应沉底：${JSON.stringify(ids)}`);
+  } finally {
+    await rm(iso, { recursive: true, force: true });
+  }
 });

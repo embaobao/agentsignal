@@ -26,7 +26,7 @@
 ## Phase 3 · 生命周期治理（约 1 人日）
 
 - [x] 3.1 更新链：sync 时对 update 信号解析 digest 锚定（`anchor: sig_x`）→ 命中本地技能则标 `outdated` + 更新正文经 layers 作附加层注入（不覆盖原 Runbook）；`test/lifecycle.test.ts` 锚定链用例 — 2026-09-09 完成（lifecycle 新增 sync_state/updates 字段（安全默认向后兼容）· lifecycle.ts applySignalUpdate（meta 原子改写 + UPDATES.md 追加段落，SKILL.md 逐字不动）· loader loadDetail 附加注入 · sync 对 update：命中已装才拉详情标 outdated（report.updated），未命中零详情请求；lifecycle.test.ts 4 用例红→绿）
-- [ ] 3.2 失效降权：同步发现源信号 404/hidden → 本地标 `revoked`（检索降权 + 列表置灰，不物理删）；retriever 降权断言
+- [x] 3.2 失效降权：sync 发现源信号 404/hidden → 本地标 `revoked`（检索降权 + 列表置灰，不物理删）；retriever 降权断言 — 2026-09-09 完成（lifecycle markRevoked/isInstalled · sync solution 详情 404 且已装 → revoked 计数 + 结构化事件 · retriever 最终排序 revoked 分数 ×0.05 沉底不隐藏；**顺带修 sync 健壮性 bug：畸形响应 next_cursor 缺失时 done 判不终导致死循环 → 改 `== null` 判末页 + signals 数组防御**；lifecycle.test.ts 7 用例红→绿）
 - [ ] 3.3 容量治理：`config.sync.max_skills`（默认 200）超限仅 status 告警 + 管理界面列出 LRU 清理候选（最近未命中且未 verify），确认后执行——不自动删
 - [ ] 3.4 管理界面状态着色接入 active/outdated/revoked 三态
 

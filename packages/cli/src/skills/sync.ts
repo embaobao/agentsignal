@@ -11,7 +11,12 @@
 import type { ValidationLevel } from "@agentssignal/protocol";
 import { loadConfig, writeConfigAtomic } from "./config.ts";
 import { installSignal } from "./install.ts";
-import { applySignalUpdate, updateTargetsInstalledSkill } from "./lifecycle.ts";
+import {
+  applySignalUpdate,
+  isInstalled,
+  markRevoked,
+  updateTargetsInstalledSkill,
+} from "./lifecycle.ts";
 import type { AgentSignalPaths } from "./paths.ts";
 import { extractAnchorSigId, parseDigest } from "./transcoder.ts";
 
@@ -68,6 +73,8 @@ export interface SyncReport {
   skipped: number;
   /** 更新链命中数：update 锚定已装技能并已标 outdated（P3.1） */
   updated: number;
+  /** 源失效数：已装技能的源信号 404/hidden → revoked（P3.2） */
+  revoked: number;
   /** 同步后游标（= 最后处理到的 sig id） */
   cursor: string | null;
   /** 是否已追上（next_cursor = null） */
@@ -164,6 +171,7 @@ export async function syncSubscription(
   let installed = 0;
   let skipped = 0;
   let updated = 0;
+  let revoked = 0;
   let done = false;
   const syncedAt = new Date().toISOString();
 
@@ -226,6 +234,14 @@ export async function syncSubscription(
         log,
       );
       if (!detailRes.ok) {
+        // 源失效发现点（P3.2）：已装技能的源信号 404/hidden → 标 revoked（降权置灰，不物理删）
+        if (await isInstalled(sig.id, opts.paths)) {
+          await markRevoked(sig.id, opts.paths);
+          revoked++;
+          log(
+            JSON.stringify({ event: "source_revoked", sig_id: sig.id, status: detailRes.status }),
+          );
+        }
         skipped++;
         log(
           JSON.stringify({ event: "detail_unavailable", sig_id: sig.id, status: detailRes.status }),
@@ -254,9 +270,11 @@ export async function syncSubscription(
       installed++;
     }
     // 游标推进：next_cursor 优先；末页（null）退回本页最后一条 sig id（cursor 即 ULID，字典序=时间序）
-    const lastId = (page.signals ?? []).at(-1)?.id ?? null;
+    const signals = Array.isArray(page.signals) ? page.signals : [];
+    const lastId = signals.at(-1)?.id ?? null;
     cursor = page.next_cursor ?? lastId ?? cursor;
-    done = page.next_cursor === null;
+    // 防御：畸形响应（next_cursor 缺失）视作末页，避免死循环
+    done = page.next_cursor == null;
 
     // 游标持久化（断点续传；每页落一次，原子写由 config 加载器保证）
     const entry = loaded.config.sync.subscriptions.find((s) => s.topic === sub.topic);
@@ -281,5 +299,5 @@ export async function syncSubscription(
     );
   }
 
-  return { topic: sub.topic, scanned, installed, skipped, updated, cursor, done };
+  return { topic: sub.topic, scanned, installed, skipped, updated, revoked, cursor, done };
 }
