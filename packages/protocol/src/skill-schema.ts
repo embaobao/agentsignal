@@ -95,6 +95,8 @@ export const SkillProvenanceSchema = z.object({
   synced_at: z.string().optional(),
 });
 
+export const skillSyncStates = ["active", "outdated", "revoked"] as const;
+
 export const SkillLifecycleSchema = z
   .object({
     status: z.enum(skillStatuses).default("incubating"),
@@ -107,8 +109,19 @@ export const SkillLifecycleSchema = z
         failed: z.number().int().min(0).default(0),
       })
       .default({ use_count: 0, worked: 0, partial: 0, failed: 0 }),
+    /** 订阅同步状态（dynamic-skill-management P3：源信号有更新/失效时由同步器改写） */
+    sync_state: z.enum(skillSyncStates).default("active"),
+    /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
+    updates: z
+      .array(z.object({ sig_id: z.string(), digest: z.string(), synced_at: z.string() }))
+      .default([]),
   })
-  .default({ status: "incubating", metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 } });
+  .default({
+    status: "incubating",
+    metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 },
+    sync_state: "active",
+    updates: [],
+  });
 
 /** skill.json5 —— Frontmatter 六字段必收 + 扩展 optional 安全默认 */
 export const SkillFrontmatterSchema = z.object({

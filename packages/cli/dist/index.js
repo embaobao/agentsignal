@@ -1145,11 +1145,11 @@ var require_lib = __commonJS({
   "../../node_modules/.pnpm/json5@2.2.3/node_modules/json5/lib/index.js"(exports, module) {
     var parse3 = require_parse();
     var stringify = require_stringify();
-    var JSON58 = {
+    var JSON59 = {
       parse: parse3,
       stringify
     };
-    module.exports = JSON58;
+    module.exports = JSON59;
   }
 });
 
@@ -1496,15 +1496,15 @@ function getDocumentProperties(doc, paths) {
   const properties = {};
   const pathsLength = paths.length;
   for (let i = 0; i < pathsLength; i++) {
-    const path13 = paths[i];
-    const pathTokens = path13.split(".");
+    const path14 = paths[i];
+    const pathTokens = path14.split(".");
     let current = doc;
     const pathTokensLength = pathTokens.length;
     for (let j = 0; j < pathTokensLength; j++) {
       current = current[pathTokens[j]];
       if (typeof current === "object") {
         if (current !== null && "lat" in current && "lon" in current && typeof current.lat === "number" && typeof current.lon === "number") {
-          current = properties[path13] = current;
+          current = properties[path14] = current;
           break;
         } else if (!Array.isArray(current) && current !== null && j === pathTokensLength - 1) {
           current = void 0;
@@ -1516,14 +1516,14 @@ function getDocumentProperties(doc, paths) {
       }
     }
     if (typeof current !== "undefined") {
-      properties[path13] = current;
+      properties[path14] = current;
     }
   }
   return properties;
 }
-function getNested(obj, path13) {
-  const props = getDocumentProperties(obj, [path13]);
-  return props[path13];
+function getNested(obj, path14) {
+  const props = getDocumentProperties(obj, [path14]);
+  return props[path14];
 }
 function convertDistanceToMeters(distance, unit) {
   const ratio = mapDistanceToMeters[unit];
@@ -1539,10 +1539,10 @@ function removeVectorsFromHits(searchResult, vectorProperties) {
       ...result.document,
       // Remove embeddings from the result
       ...vectorProperties.reduce((acc, prop) => {
-        const path13 = prop.split(".");
-        const lastKey = path13.pop();
+        const path14 = prop.split(".");
+        const lastKey = path14.pop();
         let obj = acc;
-        for (const key of path13) {
+        for (const key of path14) {
           obj[key] = obj[key] ?? {};
           obj = obj[key];
         }
@@ -2198,15 +2198,15 @@ var init_avl = __esm({
         if (node === null) {
           return new AVLNode(key, [value]);
         }
-        const path13 = [];
+        const path14 = [];
         let current = node;
         let parent = null;
         while (current !== null) {
-          path13.push({ parent, node: current });
+          path14.push({ parent, node: current });
           if (key < current.k) {
             if (current.l === null) {
               current.l = new AVLNode(key, [value]);
-              path13.push({ parent: current, node: current.l });
+              path14.push({ parent: current, node: current.l });
               break;
             } else {
               parent = current;
@@ -2215,7 +2215,7 @@ var init_avl = __esm({
           } else if (key > current.k) {
             if (current.r === null) {
               current.r = new AVLNode(key, [value]);
-              path13.push({ parent: current, node: current.r });
+              path14.push({ parent: current, node: current.r });
               break;
             } else {
               parent = current;
@@ -2230,8 +2230,8 @@ var init_avl = __esm({
         if (this.insertCount++ % rebalanceThreshold === 0) {
           needRebalance = true;
         }
-        for (let i = path13.length - 1; i >= 0; i--) {
-          const { parent: parent2, node: currentNode } = path13[i];
+        for (let i = path14.length - 1; i >= 0; i--) {
+          const { parent: parent2, node: currentNode } = path14[i];
           currentNode.updateHeight();
           if (needRebalance) {
             const rebalancedNode = this.rebalanceNode(currentNode);
@@ -2337,10 +2337,10 @@ var init_avl = __esm({
       removeNode(node, key) {
         if (node === null)
           return null;
-        const path13 = [];
+        const path14 = [];
         let current = node;
         while (current !== null && current.k !== key) {
-          path13.push(current);
+          path14.push(current);
           if (key < current.k) {
             current = current.l;
           } else {
@@ -2352,10 +2352,10 @@ var init_avl = __esm({
         }
         if (current.l === null || current.r === null) {
           const child = current.l ? current.l : current.r;
-          if (path13.length === 0) {
+          if (path14.length === 0) {
             node = child;
           } else {
-            const parent = path13[path13.length - 1];
+            const parent = path14[path14.length - 1];
             if (parent.l === current) {
               parent.l = child;
             } else {
@@ -2378,13 +2378,13 @@ var init_avl = __esm({
           }
           current = successorParent;
         }
-        path13.push(current);
-        for (let i = path13.length - 1; i >= 0; i--) {
-          const currentNode = path13[i];
+        path14.push(current);
+        for (let i = path14.length - 1; i >= 0; i--) {
+          const currentNode = path14[i];
           currentNode.updateHeight();
           const rebalancedNode = this.rebalanceNode(currentNode);
           if (i > 0) {
-            const parent = path13[i - 1];
+            const parent = path14[i - 1];
             if (parent.l === currentNode) {
               parent.l = rebalancedNode;
             } else if (parent.r === currentNode) {
@@ -3510,15 +3510,15 @@ function create2(orama, sharedInternalDocumentStore, schema, index, prefix = "")
     };
   }
   for (const [prop, type] of Object.entries(schema)) {
-    const path13 = `${prefix}${prefix ? "." : ""}${prop}`;
+    const path14 = `${prefix}${prefix ? "." : ""}${prop}`;
     if (typeof type === "object" && !Array.isArray(type)) {
-      create2(orama, sharedInternalDocumentStore, type, index, path13);
+      create2(orama, sharedInternalDocumentStore, type, index, path14);
       continue;
     }
     if (isVectorType(type)) {
-      index.searchableProperties.push(path13);
-      index.searchablePropertiesWithTypes[path13] = type;
-      index.vectorIndexes[path13] = {
+      index.searchableProperties.push(path14);
+      index.searchablePropertiesWithTypes[path14] = type;
+      index.vectorIndexes[path14] = {
         type: "Vector",
         node: new VectorIndex(getVectorSize(type)),
         isArray: false
@@ -3528,32 +3528,32 @@ function create2(orama, sharedInternalDocumentStore, schema, index, prefix = "")
       switch (type) {
         case "boolean":
         case "boolean[]":
-          index.indexes[path13] = { type: "Bool", node: new BoolNode(), isArray: isArray2 };
+          index.indexes[path14] = { type: "Bool", node: new BoolNode(), isArray: isArray2 };
           break;
         case "number":
         case "number[]":
-          index.indexes[path13] = { type: "AVL", node: new AVLTree(0, []), isArray: isArray2 };
+          index.indexes[path14] = { type: "AVL", node: new AVLTree(0, []), isArray: isArray2 };
           break;
         case "string":
         case "string[]":
-          index.indexes[path13] = { type: "Radix", node: new RadixTree(), isArray: isArray2 };
-          index.avgFieldLength[path13] = 0;
-          index.frequencies[path13] = {};
-          index.tokenOccurrences[path13] = {};
-          index.fieldLengths[path13] = {};
+          index.indexes[path14] = { type: "Radix", node: new RadixTree(), isArray: isArray2 };
+          index.avgFieldLength[path14] = 0;
+          index.frequencies[path14] = {};
+          index.tokenOccurrences[path14] = {};
+          index.fieldLengths[path14] = {};
           break;
         case "enum":
         case "enum[]":
-          index.indexes[path13] = { type: "Flat", node: new FlatTree(), isArray: isArray2 };
+          index.indexes[path14] = { type: "Flat", node: new FlatTree(), isArray: isArray2 };
           break;
         case "geopoint":
-          index.indexes[path13] = { type: "BKD", node: new BKDTree(), isArray: isArray2 };
+          index.indexes[path14] = { type: "BKD", node: new BKDTree(), isArray: isArray2 };
           break;
         default:
-          throw createError("INVALID_SCHEMA_TYPE", Array.isArray(type) ? "array" : type, path13);
+          throw createError("INVALID_SCHEMA_TYPE", Array.isArray(type) ? "array" : type, path14);
       }
-      index.searchableProperties.push(path13);
-      index.searchablePropertiesWithTypes[path13] = type;
+      index.searchableProperties.push(path14);
+      index.searchablePropertiesWithTypes[path14] = type;
     }
   }
   return index;
@@ -4116,12 +4116,12 @@ function innerCreate(orama, sharedInternalDocumentStore, schema, sortableDeniedP
     sorts: {}
   };
   for (const [prop, type] of Object.entries(schema)) {
-    const path13 = `${prefix}${prefix ? "." : ""}${prop}`;
-    if (sortableDeniedProperties.includes(path13)) {
+    const path14 = `${prefix}${prefix ? "." : ""}${prop}`;
+    if (sortableDeniedProperties.includes(path14)) {
       continue;
     }
     if (typeof type === "object" && !Array.isArray(type)) {
-      const ret = innerCreate(orama, sharedInternalDocumentStore, type, sortableDeniedProperties, path13);
+      const ret = innerCreate(orama, sharedInternalDocumentStore, type, sortableDeniedProperties, path14);
       safeArrayPush(sorter.sortableProperties, ret.sortableProperties);
       sorter.sorts = {
         ...sorter.sorts,
@@ -4138,9 +4138,9 @@ function innerCreate(orama, sharedInternalDocumentStore, schema, sortableDeniedP
         case "boolean":
         case "number":
         case "string":
-          sorter.sortableProperties.push(path13);
-          sorter.sortablePropertiesWithTypes[path13] = type;
-          sorter.sorts[path13] = {
+          sorter.sortableProperties.push(path14);
+          sorter.sortablePropertiesWithTypes[path14] = type;
+          sorter.sorts[path14] = {
             docs: /* @__PURE__ */ new Map(),
             orderedDocsToRemove: /* @__PURE__ */ new Map(),
             orderedDocs: [],
@@ -4156,7 +4156,7 @@ function innerCreate(orama, sharedInternalDocumentStore, schema, sortableDeniedP
         case "string[]":
           continue;
         default:
-          throw createError("INVALID_SORT_SCHEMA_TYPE", Array.isArray(type) ? "array" : type, path13);
+          throw createError("INVALID_SORT_SCHEMA_TYPE", Array.isArray(type) ? "array" : type, path14);
       }
     }
   }
@@ -5686,8 +5686,8 @@ function innerFullTextSearch(orama, params, language) {
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function getPropValue(obj, path13) {
-  const keys = path13.split(".");
+function getPropValue(obj, path14) {
+  const keys = path14.split(".");
   let value = obj;
   for (const key of keys) {
     if (value && typeof value === "object" && key in value) {
@@ -7171,7 +7171,21 @@ async function loadDetail(skillId, paths, projectRoot) {
   }
   const raw = await readFile4(skill.bodyFile, "utf8");
   const body = mustache_default.render(raw, values);
-  return { ok: true, id: skill.id, name: skill.name, body };
+  let updates = "";
+  try {
+    updates = await readFile4(path4.join(path4.dirname(skill.bodyFile), "UPDATES.md"), "utf8");
+  } catch {
+  }
+  return {
+    ok: true,
+    id: skill.id,
+    name: skill.name,
+    body: updates ? `${body}
+
+---
+
+${updates}` : body
+  };
 }
 var import_json53;
 var init_loader = __esm({
@@ -7818,6 +7832,10 @@ function parseDigest(digest) {
   const validation = validationLevels.includes(rawVal ?? "") ? rawVal : "none";
   return { claim, domains: domains.length ? domains : ["common"], validation };
 }
+function extractAnchorSigId(digest) {
+  const m = /anchor:\s*(sig_[a-z0-9]+)/i.exec(digest);
+  return m?.[1] ?? null;
+}
 function transcodeSignal(input, ctx) {
   if (input.kind !== "solution") {
     throw new TranscodeError("KIND_NOT_SOLUTION", `kind=${input.kind} \u4E0D\u843D\u6280\u80FD\u5E93\uFF08\u4EC5 solution\uFF09`);
@@ -8002,6 +8020,63 @@ var init_mirror = __esm({
   }
 });
 
+// src/skills/lifecycle.ts
+import { readFile as readFile9, rename as rename7, writeFile as writeFile8 } from "node:fs/promises";
+import path10 from "node:path";
+import { SkillFrontmatterSchema as SkillFrontmatterSchema5 } from "@agentssignal/protocol";
+async function updateTargetsInstalledSkill(anchor, paths) {
+  if (!anchor) return false;
+  const { skills } = await scanSkills(paths);
+  return skills.some((s) => s.id === anchor);
+}
+async function applySignalUpdate(anchorSigId, update2, paths) {
+  const p = paths ?? resolvePaths();
+  if (!/^[a-z][a-z0-9_-]*$/.test(anchorSigId)) return false;
+  const dir = path10.join(p.skillsDir, anchorSigId);
+  const metaFile = path10.join(dir, "skill.json5");
+  let raw;
+  try {
+    raw = await readFile9(metaFile, "utf8");
+  } catch {
+    return false;
+  }
+  const fm = SkillFrontmatterSchema5.parse(import_json58.default.parse(raw));
+  fm.lifecycle.sync_state = "outdated";
+  fm.lifecycle.updates.push({
+    sig_id: update2.sig_id,
+    digest: update2.digest,
+    synced_at: update2.synced_at
+  });
+  const tmp = `${metaFile}.tmp-${process.pid}`;
+  await writeFile8(tmp, import_json58.default.stringify(fm, null, 2), "utf8");
+  await rename7(tmp, metaFile);
+  const updatesFile = path10.join(dir, "UPDATES.md");
+  let existing = "";
+  try {
+    existing = await readFile9(updatesFile, "utf8");
+  } catch {
+  }
+  const section = `${existing ? "\n\n" : "# \u5E73\u53F0\u66F4\u65B0\n"}## \u66F4\u65B0 ${update2.sig_id}
+
+digest\uFF1A${update2.digest}
+
+${update2.body.trimEnd()}
+`;
+  const tmpU = `${updatesFile}.tmp-${process.pid}`;
+  await writeFile8(tmpU, existing + section, "utf8");
+  await rename7(tmpU, updatesFile);
+  return true;
+}
+var import_json58;
+var init_lifecycle = __esm({
+  "src/skills/lifecycle.ts"() {
+    "use strict";
+    import_json58 = __toESM(require_lib(), 1);
+    init_paths();
+    init_store();
+  }
+});
+
 // src/skills/sync.ts
 async function fetchWithRetry(url, init, opts, log2) {
   for (let attempt = 0; ; attempt++) {
@@ -8060,6 +8135,7 @@ async function syncSubscription(sub, opts) {
   let scanned = 0;
   let installed = 0;
   let skipped = 0;
+  let updated = 0;
   let done = false;
   const syncedAt = (/* @__PURE__ */ new Date()).toISOString();
   while (!done) {
@@ -8071,6 +8147,37 @@ async function syncSubscription(sub, opts) {
     const page = await res.json();
     for (const sig of page.signals ?? []) {
       scanned++;
+      if (sig.kind === "update") {
+        const anchor = extractAnchorSigId(sig.digest);
+        if (anchor && await updateTargetsInstalledSkill(anchor, opts.paths)) {
+          const detailRes2 = await fetchWithRetry(
+            `${opts.baseUrl}/signals/${encodeURIComponent(sig.id)}?include=experience`,
+            void 0,
+            attemptOpts,
+            log2
+          );
+          if (detailRes2.ok) {
+            const detail2 = await detailRes2.json();
+            if (detail2.experience?.body) {
+              await applySignalUpdate(
+                anchor,
+                {
+                  sig_id: detail2.id,
+                  digest: detail2.digest,
+                  synced_at: syncedAt,
+                  body: detail2.experience.body
+                },
+                opts.paths
+              );
+              updated++;
+              continue;
+            }
+          }
+          log2(JSON.stringify({ event: "update_detail_unavailable", sig_id: sig.id }));
+        }
+        skipped++;
+        continue;
+      }
       if (sig.kind !== "solution") {
         skipped++;
         continue;
@@ -8136,7 +8243,7 @@ async function syncSubscription(sub, opts) {
       })
     );
   }
-  return { topic: sub.topic, scanned, installed, skipped, cursor, done };
+  return { topic: sub.topic, scanned, installed, skipped, updated, cursor, done };
 }
 var SyncError, RANK, defaultSleep;
 var init_sync = __esm({
@@ -8144,6 +8251,7 @@ var init_sync = __esm({
     "use strict";
     init_config();
     init_install();
+    init_lifecycle();
     init_transcoder();
     SyncError = class extends Error {
       code;
@@ -8195,7 +8303,7 @@ var init_html = __esm({
 
 // src/skills/wizard/server.ts
 import { spawn } from "node:child_process";
-import { readFile as readFile9, rename as rename7, stat as stat4 } from "node:fs/promises";
+import { readFile as readFile10, rename as rename8, stat as stat4 } from "node:fs/promises";
 import { createServer } from "node:http";
 function json(res, body, status = 200) {
   const payload = JSON.stringify(body);
@@ -8343,12 +8451,12 @@ async function startWizard(options = {}) {
           return;
         }
         if (req.method === "POST" && url2.pathname === "/api/autofix") {
-          const raw = await readFile9(paths.configFile, "utf8");
+          const raw = await readFile10(paths.configFile, "utf8");
           const cut = raw.lastIndexOf("}");
           if (cut > 0) {
-            await rename7(paths.configFile, `${paths.configFile}.bak-${Date.now()}`);
-            const { writeFile: writeFile10 } = await import("node:fs/promises");
-            await writeFile10(paths.configFile, raw.slice(0, cut + 1), "utf8");
+            await rename8(paths.configFile, `${paths.configFile}.bak-${Date.now()}`);
+            const { writeFile: writeFile11 } = await import("node:fs/promises");
+            await writeFile11(paths.configFile, raw.slice(0, cut + 1), "utf8");
             json(res, { ok: true });
             return;
           }
@@ -8357,7 +8465,7 @@ async function startWizard(options = {}) {
         }
         if (req.method === "POST" && url2.pathname === "/api/reinit") {
           try {
-            await rename7(paths.configFile, `${paths.configFile}.bak-${Date.now()}`);
+            await rename8(paths.configFile, `${paths.configFile}.bak-${Date.now()}`);
           } catch {
           }
           json(res, { ok: true });
@@ -8773,11 +8881,11 @@ function normalizeObjectSchema(schema) {
   }
   return void 0;
 }
-function getDotPath(path13) {
-  if (path13.length === 0) {
+function getDotPath(path14) {
+  if (path14.length === 0) {
     return "object root";
   }
-  return path13.reduce((acc, seg, index) => {
+  return path14.reduce((acc, seg, index) => {
     if (index === 0) {
       return String(seg);
     }
@@ -16211,8 +16319,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path13) {
-      let input = path13;
+    function removeDotSegments(path14) {
+      let input = path14;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -16617,8 +16725,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path13 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path13 && path13 !== "/" ? path13 : void 0;
+        const path14 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -21881,8 +21989,8 @@ var init_stdio2 = __esm({
 });
 
 // src/skills/session.ts
-import { mkdir as mkdir6, rename as rename8, writeFile as writeFile8 } from "node:fs/promises";
-import path10 from "node:path";
+import { mkdir as mkdir6, rename as rename9, writeFile as writeFile9 } from "node:fs/promises";
+import path11 from "node:path";
 import { ulid } from "@agentssignal/protocol";
 function createTrace(paths) {
   return new Trace(paths ?? resolvePaths());
@@ -21922,7 +22030,7 @@ async function pruneSessions(paths) {
   }
   const now = Date.now();
   for (const f of files) {
-    const full = path10.join(p.sessionsDir, f);
+    const full = path11.join(p.sessionsDir, f);
     try {
       const st = await stat6(full);
       if (now - st.mtimeMs > SESSION_TTL_MS) {
@@ -21954,7 +22062,7 @@ var init_session = __esm({
         this.startedAt = startedAt ?? (/* @__PURE__ */ new Date()).toISOString();
       }
       get file() {
-        return path10.join(this.paths.sessionsDir, `${this.id}.json`);
+        return path11.join(this.paths.sessionsDir, `${this.id}.json`);
       }
       get length() {
         return this.entries.length;
@@ -21980,8 +22088,8 @@ var init_session = __esm({
         };
         await mkdir6(this.paths.sessionsDir, { recursive: true });
         const tmp = `${this.file}.tmp-${process.pid}-${++this.tmpSeq}`;
-        await writeFile8(tmp, JSON.stringify(payload, null, 2), "utf8");
-        await rename8(tmp, this.file);
+        await writeFile9(tmp, JSON.stringify(payload, null, 2), "utf8");
+        await rename9(tmp, this.file);
         return this.file;
       }
       close() {
@@ -22005,8 +22113,8 @@ var init_client = __esm({
         this.token = opts.token ?? process.env.AGENTSIGNAL_TOKEN;
         this.doFetch = opts.fetchImpl ?? fetch;
       }
-      async request(path13, init = {}) {
-        const res = await this.doFetch(`${this.baseUrl}${path13}`, {
+      async request(path14, init = {}) {
+        const res = await this.doFetch(`${this.baseUrl}${path14}`, {
           method: init.method ?? "GET",
           headers: {
             accept: "application/json",
@@ -22440,7 +22548,7 @@ __export(status_exports, {
   statusCmd: () => statusCmd
 });
 import { readdir as readdir3, stat as stat5 } from "node:fs/promises";
-import path11 from "node:path";
+import path12 from "node:path";
 function segmenterCheck() {
   try {
     if (typeof Intl === "undefined" || !("Segmenter" in Intl))
@@ -22455,11 +22563,11 @@ function segmenterCheck() {
 async function coexistenceCheck() {
   const found = [];
   const bins = ["rtk", "codegraph", "mcp-codegraph"];
-  const dirs = (process.env.PATH ?? "").split(path11.delimiter).filter(Boolean);
+  const dirs = (process.env.PATH ?? "").split(path12.delimiter).filter(Boolean);
   for (const bin of bins) {
     for (const dir of dirs) {
       try {
-        await stat5(path11.join(dir, bin));
+        await stat5(path12.join(dir, bin));
         found.push(`PATH: ${bin}`);
         break;
       } catch {
@@ -22628,21 +22736,21 @@ var init_uninstall_cmd = __esm({
 });
 
 // src/index.ts
-import { mkdir as mkdir7, readFile as readFile10, writeFile as writeFile9 } from "node:fs/promises";
+import { mkdir as mkdir7, readFile as readFile11, writeFile as writeFile10 } from "node:fs/promises";
 import { homedir as homedir4 } from "node:os";
-import path12 from "node:path";
-var CONFIG_DIR = path12.join(homedir4(), ".config", "agentsignal");
-var CONFIG_FILE = path12.join(CONFIG_DIR, "config.json");
+import path13 from "node:path";
+var CONFIG_DIR = path13.join(homedir4(), ".config", "agentsignal");
+var CONFIG_FILE = path13.join(CONFIG_DIR, "config.json");
 async function readConfig() {
   try {
-    return JSON.parse(await readFile10(CONFIG_FILE, "utf8"));
+    return JSON.parse(await readFile11(CONFIG_FILE, "utf8"));
   } catch {
     return {};
   }
 }
 async function writeConfig(cfg) {
   await mkdir7(CONFIG_DIR, { recursive: true, mode: 448 });
-  await writeFile9(CONFIG_FILE, JSON.stringify(cfg, null, 2), { mode: 384 });
+  await writeFile10(CONFIG_FILE, JSON.stringify(cfg, null, 2), { mode: 384 });
 }
 var baseUrl = (cfg) => process.env.AGENTSIGNAL_BASE ?? cfg.base ?? "http://localhost:3000";
 async function api(cfg, urlPath, init) {
@@ -22772,7 +22880,7 @@ async function main(argv = process.argv.slice(2)) {
         throw new Error("usage: agentsignal edit <sig_id> [--digest 'new'] [--body @file.md]");
       const experience = bodyFile ? {
         format: "markdown",
-        body: bodyFile.startsWith("@") ? await readFile10(bodyFile.slice(1), "utf8") : bodyFile
+        body: bodyFile.startsWith("@") ? await readFile11(bodyFile.slice(1), "utf8") : bodyFile
       } : void 0;
       const res = await fetch(`${baseUrl(cfg)}/signals/${id}`, {
         method: "PATCH",
@@ -22813,7 +22921,7 @@ async function main(argv = process.argv.slice(2)) {
       if (!topic || !digest || !bodyArg) {
         throw new Error("usage: agentsignal publish <topic> <digest> <body\u6216@file>");
       }
-      const body = bodyArg.startsWith("@") ? await readFile10(bodyArg.slice(1), "utf8") : bodyArg;
+      const body = bodyArg.startsWith("@") ? await readFile11(bodyArg.slice(1), "utf8") : bodyArg;
       const errs = [...validatePlan(body), ...validateDigest(digest)];
       if (errs.length) {
         console.log("\u2715 \u672C\u5730\u6821\u9A8C\u672A\u901A\u8FC7\uFF0C\u672A\u53D1\u5E03\uFF1A");
@@ -22865,7 +22973,7 @@ async function main(argv = process.argv.slice(2)) {
       const sig = await api(cfg, `/signals/${id}?include=experience`);
       if (!sig?.experience?.body) throw new Error("\u8BE5\u65B9\u6848\u65E0\u6B63\u6587\uFF08\u65E0 experience.body\uFF09\uFF0C\u65E0\u6CD5 use");
       const file = outPath ?? `as-${id.replaceAll(":", "-")}.md`;
-      await writeFile9(file, `# ${sig.id ?? id}
+      await writeFile10(file, `# ${sig.id ?? id}
 
 ${sig.experience.body}
 `, "utf8");
@@ -22914,7 +23022,7 @@ ${sig.experience.body}
     case "validate": {
       const file = rest[0];
       if (!file) throw new Error("usage: agentsignal validate <body.md>");
-      const body = await readFile10(file, "utf8");
+      const body = await readFile11(file, "utf8");
       const errs = validatePlan(body);
       if (errs.length) {
         for (const e of errs) console.log(`  - ${e}`);

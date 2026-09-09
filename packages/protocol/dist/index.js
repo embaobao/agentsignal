@@ -229,6 +229,7 @@ var SkillProvenanceSchema = z3.object({
   /** 最近一次同步时间（ISO 8601） */
   synced_at: z3.string().optional()
 });
+var skillSyncStates = ["active", "outdated", "revoked"];
 var SkillLifecycleSchema = z3.object({
   status: z3.enum(skillStatuses).default("incubating"),
   provenance: SkillProvenanceSchema.optional(),
@@ -237,8 +238,17 @@ var SkillLifecycleSchema = z3.object({
     worked: z3.number().int().min(0).default(0),
     partial: z3.number().int().min(0).default(0),
     failed: z3.number().int().min(0).default(0)
-  }).default({ use_count: 0, worked: 0, partial: 0, failed: 0 })
-}).default({ status: "incubating", metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 } });
+  }).default({ use_count: 0, worked: 0, partial: 0, failed: 0 }),
+  /** 订阅同步状态（dynamic-skill-management P3：源信号有更新/失效时由同步器改写） */
+  sync_state: z3.enum(skillSyncStates).default("active"),
+  /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
+  updates: z3.array(z3.object({ sig_id: z3.string(), digest: z3.string(), synced_at: z3.string() })).default([])
+}).default({
+  status: "incubating",
+  metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 },
+  sync_state: "active",
+  updates: []
+});
 var SkillFrontmatterSchema = z3.object({
   // === 必收六字段 ===
   id: z3.string().regex(SKILL_ID_PATTERN, "id \u987B\u4E3A\u5C0F\u5199 slug\uFF08[a-z][a-z0-9_-]*\uFF09"),
@@ -411,6 +421,7 @@ export {
   prefixed,
   signalKinds,
   skillStatuses,
+  skillSyncStates,
   triggerFields,
   triggerOperators,
   ulid,

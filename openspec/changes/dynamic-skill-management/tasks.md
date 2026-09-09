@@ -25,7 +25,7 @@
 - [x] 2.4 `status` 增体检行：「订阅 N topic · 落后 M 条待同步」（仅统计不自动同步）；init-e2e 断言 — 2026-09-09 完成（sync.ts probePending 一页信封级探针（next_cursor 非空记 + 下限）；status ③½ 块：无站点提示 / 离线 fail-soft「落后统计失败」退出码 0 / 多分区失败计数；init-e2e 6 用例绿含在线统计与离线 fail-soft 断言）
 ## Phase 3 · 生命周期治理（约 1 人日）
 
-- [ ] 3.1 更新链：sync 时对 update 信号解析 digest 锚定（`anchor: sig_x`）→ 命中本地技能则标 `outdated` + 更新正文经 layers 作附加层注入（不覆盖原 Runbook）；`test/lifecycle.test.ts` 锚定链用例
+- [x] 3.1 更新链：sync 时对 update 信号解析 digest 锚定（`anchor: sig_x`）→ 命中本地技能则标 `outdated` + 更新正文经 layers 作附加层注入（不覆盖原 Runbook）；`test/lifecycle.test.ts` 锚定链用例 — 2026-09-09 完成（lifecycle 新增 sync_state/updates 字段（安全默认向后兼容）· lifecycle.ts applySignalUpdate（meta 原子改写 + UPDATES.md 追加段落，SKILL.md 逐字不动）· loader loadDetail 附加注入 · sync 对 update：命中已装才拉详情标 outdated（report.updated），未命中零详情请求；lifecycle.test.ts 4 用例红→绿）
 - [ ] 3.2 失效降权：同步发现源信号 404/hidden → 本地标 `revoked`（检索降权 + 列表置灰，不物理删）；retriever 降权断言
 - [ ] 3.3 容量治理：`config.sync.max_skills`（默认 200）超限仅 status 告警 + 管理界面列出 LRU 清理候选（最近未命中且未 verify），确认后执行——不自动删
 - [ ] 3.4 管理界面状态着色接入 active/outdated/revoked 三态

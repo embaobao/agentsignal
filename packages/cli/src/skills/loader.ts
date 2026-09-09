@@ -129,5 +129,17 @@ export async function loadDetail(
 
   const raw = await readFile(skill.bodyFile, "utf8");
   const body = mustache.render(raw, values);
-  return { ok: true, id: skill.id, name: skill.name, body };
+  // 更新层附加（P3.1）：UPDATES.md 存在则附于正文之后，不覆盖原 Runbook
+  let updates = "";
+  try {
+    updates = await readFile(path.join(path.dirname(skill.bodyFile), "UPDATES.md"), "utf8");
+  } catch {
+    // 无平台更新
+  }
+  return {
+    ok: true,
+    id: skill.id,
+    name: skill.name,
+    body: updates ? `${body}\n\n---\n\n${updates}` : body,
+  };
 }

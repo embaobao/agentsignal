@@ -11,8 +11,9 @@
 import type { ValidationLevel } from "@agentssignal/protocol";
 import { loadConfig, writeConfigAtomic } from "./config.ts";
 import { installSignal } from "./install.ts";
+import { applySignalUpdate, updateTargetsInstalledSkill } from "./lifecycle.ts";
 import type { AgentSignalPaths } from "./paths.ts";
-import { parseDigest } from "./transcoder.ts";
+import { extractAnchorSigId, parseDigest } from "./transcoder.ts";
 
 export const SYNC_CODES = ["CONFIG_MISSING", "RATE_LIMITED", "HTTP_ERROR"] as const;
 export type SyncCode = (typeof SYNC_CODES)[number];
@@ -65,6 +66,8 @@ export interface SyncReport {
   installed: number;
   /** 跳过数：非 solution / 低于阈值 / 详情不可达 */
   skipped: number;
+  /** 更新链命中数：update 锚定已装技能并已标 outdated（P3.1） */
+  updated: number;
   /** 同步后游标（= 最后处理到的 sig id） */
   cursor: string | null;
   /** 是否已追上（next_cursor = null） */
@@ -160,6 +163,7 @@ export async function syncSubscription(
   let scanned = 0;
   let installed = 0;
   let skipped = 0;
+  let updated = 0;
   let done = false;
   const syncedAt = new Date().toISOString();
 
@@ -172,6 +176,40 @@ export async function syncSubscription(
     const page = (await res.json()) as ListPage;
     for (const sig of page.signals ?? []) {
       scanned++;
+      // 更新链（P3.1）：update 锚定已装技能 → 拉详情标 outdated；未命中/无锚点直接跳过（不拉详情）
+      if (sig.kind === "update") {
+        const anchor = extractAnchorSigId(sig.digest);
+        if (anchor && (await updateTargetsInstalledSkill(anchor, opts.paths))) {
+          const detailRes = await fetchWithRetry(
+            `${opts.baseUrl}/signals/${encodeURIComponent(sig.id)}?include=experience`,
+            undefined,
+            attemptOpts,
+            log,
+          );
+          if (detailRes.ok) {
+            const detail = (await detailRes.json()) as ListEnvelope & {
+              experience?: { format: string; body: string };
+            };
+            if (detail.experience?.body) {
+              await applySignalUpdate(
+                anchor,
+                {
+                  sig_id: detail.id,
+                  digest: detail.digest,
+                  synced_at: syncedAt,
+                  body: detail.experience.body,
+                },
+                opts.paths,
+              );
+              updated++;
+              continue;
+            }
+          }
+          log(JSON.stringify({ event: "update_detail_unavailable", sig_id: sig.id }));
+        }
+        skipped++;
+        continue;
+      }
       if (sig.kind !== "solution") {
         skipped++;
         continue;
@@ -243,5 +281,5 @@ export async function syncSubscription(
     );
   }
 
-  return { topic: sub.topic, scanned, installed, skipped, cursor, done };
+  return { topic: sub.topic, scanned, installed, skipped, updated, cursor, done };
 }
