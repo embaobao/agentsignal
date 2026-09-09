@@ -33,8 +33,10 @@
 ## Phase 4 · 文档随行 + 端到端 + 发版（约 0.5 人日）
 
 - [ ] 4.1 文档随行（双手册纪律）：user-manual §1.5 增「订阅与回流」小节（用户面措辞，无 skills 内部词）· [local-engine.md](../../../docs/design/local-engine.md) 升版（§3 工具面/§10 非目标重绘：维护入口=管理界面）· admin-guide §6 增 subscriptions 段 · participant SKILL use/verify 增量（G1–G4）· AGENTS.md 当前阶段节刷新
-- [ ] 4.2 端到端：真服务 e2e 脚本增「订阅→同步→检索→执行→verify 镜像回传」全链（E2E_BASE 可指环境）；`pnpm verify` 全绿 + `pnpm pack:verify` 过
-- [ ] 4.3 changeset（cli/protocol lockstep minor）→ 发版流程按 deployment.md（protocol→cli 顺序）；台账落账
+- [ ] 4.2 端到端（**发版顺序修订 2026-09-09 站长令：本地自管理全链验证为 npm 发版硬门，服务端生产部署押后**）：
+  - [ ] 4.2a **本地自管理全链验证（硬门）**：本地起 apps/api（`pnpm db:up` + `pnpm dev`，`SELF_REGISTER_ENABLED=1`）→ `agentsignal register` 本地签发账号 → 管理界面添加订阅/同步 → IDE 内 search/load/verify → mirror 回传本地聚合 +1 → readyz 迁移健康——全链零外部依赖，产出验证记录进 progress.md
+  - [ ] 4.2b 真服务 e2e 脚本增「订阅→同步→检索→执行→verify 镜像回传」链（E2E_BASE 可指本地或公网）；`pnpm verify` 全绿 + `pnpm pack:verify` 过
+- [ ] 4.3 changeset（cli/protocol lockstep minor）→ 发版流程按 deployment.md（protocol→cli 顺序）；**4.2a 通过后才发版**；服务端生产部署（Netlify 三变量 + 手动部署）押后，不阻塞发版，发版后照跑公网 smoke 验收；台账落账
 
 ## 验收（全部 Phase 完成后）
 

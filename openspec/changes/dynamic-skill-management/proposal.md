@@ -5,6 +5,14 @@
 > 来源：[skill-engine 提案](../skill-engine/proposal.md) Phase 3 预留的「服务端发布机制」另立提案（其 tasks.md Phase 3 占位即本提案）
 > 关联：[local-engine.md](../../../docs/design/local-engine.md) §10 非目标注记 · [skill-envelope 决议](../../../docs/decisions/2026-09-02-skill-envelope.md)（内部形式定义）
 
+> **修订（2026-09-09 站长令）：发版顺序改定——平台 server 侧先本地验证，再做服务端发版。**
+> 订阅同步协议客户端只依赖协议 v0.2 三端点（游标列表 / 详情 include=experience / verify），
+> 凡符合协议的 server 均可用。故先以本地 apps/api（`SELF_REGISTER_ENABLED=1`）验证
+> **自订阅管理 + 默认账号体系完整本地化**全链（register 本地签发 → 管理界面订阅/同步 →
+> verify 镜像回传本地聚合 → readyz 迁移健康），通过即发 npm 版本；
+> 服务端生产部署（Netlify）押后为纯运维动作，不阻塞 CLI 发版（发版后照跑公网 smoke 验收）。
+> 任务落点见 [tasks.md](tasks.md) P4 修订。
+
 ## 一、为什么（核心主张）
 
 北极星问题是「一个真实的 Agent 是否愿意长期订阅一个 Space 并依赖收到的信息做事」。本地引擎 0.4.0 已把**消费侧**做动态了——检索（Orama 双路径）、分层加载、参数四来源链、verify metrics、管理界面点选即改——但**供给侧是零**：
