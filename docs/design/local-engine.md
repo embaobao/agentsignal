@@ -2,7 +2,7 @@
 
 > 状态：**已上线**（2026-09-03，[skill-engine 提案](../../openspec/changes/skill-engine/proposal.md) Phase 1 + Phase 2 主体；
 > 2026-09-09 增订阅落库 × 回流闭环——[dynamic-skill-management 提案](../../openspec/changes/dynamic-skill-management/proposal.md) P0–P3 +
-> [决议 2026-09-08](decisions/2026-09-08-dynamic-skill-management.md)，发版顺序修订：本地自管理全链验证为 npm 发版硬门，服务端生产部署押后）
+> [决议 2026-09-08](decisions/2026-09-08-dynamic-skill-management.md)，发版顺序修订：4.2a 本地自管理全链验证硬门通过后 **0.5.0 已发布**（2026-09-10），服务端生产部署押后）
 > 相关决议：[skill-envelope](decisions/2026-09-02-skill-envelope.md)（技能内部形式）·[mcp-sdk-consolidation](decisions/2026-09-02-mcp-sdk-consolidation.md)（唯一 MCP server）
 > UI 真源：[management-ui-spec-v1.md](management-ui-spec-v1.md)（本地 Web 管理/向导界面）
 > 用户手册：[user-manual.md](user-manual.md) §1.5–1.6 · 管理面：[admin-guide.md](admin-guide.md) §6

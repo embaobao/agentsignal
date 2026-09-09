@@ -22,3 +22,4 @@
 | 2026-09-10 03:06 | 6c93207 | P4.1 | done | 文档随行五件（user-manual §1.6/local-engine §10.5+§10 改写/admin-guide §6.1/SKILL verify 增量+G4/AGENTS.md 刷新）；G1–G4 + verify 4/4 全绿；台账仍顺延（他人 WIP 占用中） |
 | 2026-09-10 04:22 | 3438901 | P4.2a | done | 本地自管理全链验证通过（隔离栈）：register→publish→订阅→真实同步 3 条落库→检索命中→verify mirror 回传 200→平台聚合累加；**连带修复 3 个真 bug**（凭证路径硬编码/大写 ULID 落库全军覆没/mirror 漏归一）；台账顺延中 |
 | 2026-09-10 05:32 | 977ef4e | P4.2b | done | e2e 链路4 实弹 23/0 exit0；pack-verify 轮询+glob 加固（沙箱安装段遭本会话 FS 可见性异常，白天站长终端终验一次）；CLI 99 + verify 4/4 全绿 |
+| 2026-09-10 06:06 | a1c4b06 | P4.3 | done | **0.5.0 已发布 npm**（cli+protocol lockstep，registry 确认，tags 已推）；changeset version + 三锚点 + dist 重建 + fixed 组清理；验收节自查过（4.2a 即其全链实证）；自动化随提案完成停用 |
