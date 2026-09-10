@@ -8,12 +8,7 @@
   ],
   "commit": false,
   "fixed": [
-    [
-      "@agentssignal/api",
-      "@agentssignal/cli",
-      "@agentssignal/protocol",
-      "@agentssignal/ui"
-    ]
+    ["@agentssignal/api", "@agentssignal/cli", "@agentssignal/protocol", "@agentssignal/ui"]
   ],
   "linked": [],
   "access": "public",
