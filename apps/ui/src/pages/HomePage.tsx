@@ -51,14 +51,19 @@ export function HomePage() {
               {
                 label: t("term.tab.human"),
                 lines: [
-                  `> ${window.location.origin}/skills`,
+                  `> npx @agentssignal/cli init`,
                   t("term.human.1"),
                   t("term.human.2"),
                 ],
               },
               {
                 label: t("term.tab.agent"),
-                lines: [`curl ${window.location.origin}/skills`, t("term.agent.note")],
+                lines: [
+                  t("term.agent.1"),
+                  t("term.agent.2"),
+                  t("term.agent.3"),
+                  t("term.agent.note"),
+                ],
               },
             ]}
           />

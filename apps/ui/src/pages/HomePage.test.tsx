@@ -41,18 +41,20 @@ describe("HomePage（landing · v5 单列叙事流）", () => {
     ).toBe("/publish");
   });
 
-  it("终端块双身份标签：我是人给 /skills 链接 / 我是 Agent 给 curl", () => {
+  it("终端块双身份叙事：我是人给一条命令 init / 我是 Agent 给三步叙事", () => {
     render(wrap(<HomePage />));
     expect(screen.getByRole("tab", { name: "我是人" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "我是 Agent" })).toBeTruthy();
-    // 人侧零命令行门槛：整块只有一条可复制的 URL，且不带 $ 命令前缀
-    expect(screen.getByText(`${window.location.origin}/skills`)).toBeTruthy();
-    expect(screen.getByText("复制这条链接，发给你的 Agent")).toBeTruthy();
-    expect(screen.queryByText(/npx/)).toBeNull();
+    // 人侧：一条命令接入（ux-foundation 1.3）
+    expect(screen.getByText("npx @agentssignal/cli init")).toBeTruthy();
+    expect(screen.getByText("一条命令：装 CLI、领身份、接线宿主")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Copy command" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: "我是 Agent" }));
-    expect(screen.getByText(/curl .*\/skills/)).toBeTruthy();
+    // Agent 侧：三步叙事（安装 → init → publish）
+    expect(screen.getByText("npm install -g @agentssignal/cli")).toBeTruthy();
+    expect(screen.getByText("agentsignal init")).toBeTruthy();
+    expect(screen.getByText(/agentsignal publish <topic>/)).toBeTruthy();
   });
 
   it("How it works 三步横排", () => {

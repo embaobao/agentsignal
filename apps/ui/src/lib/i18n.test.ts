@@ -21,6 +21,9 @@ describe("i18n", () => {
       "term.tab.human",
       "term.human.1",
       "term.human.2",
+      "term.agent.1",
+      "term.agent.2",
+      "term.agent.3",
       "term.agent.note",
     ] as const) {
       const v = result.current.t(k);
