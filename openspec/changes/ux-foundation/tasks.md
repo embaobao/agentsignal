@@ -2,7 +2,7 @@
 
 ## Phase 1 · 三步接入叙事
 - [x] 1.1 CLI `init` 命令（交互式：名字→注册→引导首条发布）
-- [ ] 1.2 SKILL.md 重写开头（三步叙事；使用指南挪 references/usage.md）
+- [x] 1.2 SKILL.md 重写开头（三步叙事；使用指南挪 references/usage.md）— 2026-09-10 完成（开头 = 安装→init→publish 三步叙事 + base 同源规则；命令详解/错误速查迁 references/usage.md；主文件保留能力速览表（G2① 全命令覆盖）/触发表/质量契约/纪律；G1–G4 绿 + G4 镜像同步）
 - [ ] 1.3 首页终端块改叙事（我是人→init / 我是 Agent→三步）
 - [ ] 1.4 /skills 首节 = 三步叙事
 
