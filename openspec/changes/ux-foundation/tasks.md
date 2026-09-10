@@ -21,5 +21,5 @@
 
 ## Phase 4 · 文档托管 + 检索闭环
 - [ ] 4.1 apps/docs 部署到 /docs 路径
-- [ ] 4.2 检索页 topic 分区浏览 + 关键词框
+- [x] 4.2 检索页 topic 分区浏览 + 关键词框 — 2026-09-10 完成（**账实对照：功能已随 v5 搜索优先页上线**（TopicPage：大搜索框→?q= 导航、topic 分区 pills、关键词回显、Latest/Most verified 排序、列表/卡片视图），本轮补 TopicPage.test.tsx 3 用例契约背书（搜索导航/分区 pills/参数链路）；test:ui 37/37 绿）
 - [ ] 4.3 首页/SKILL 互链 /docs
