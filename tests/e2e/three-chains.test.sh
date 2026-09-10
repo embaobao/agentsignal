@@ -49,6 +49,11 @@ if grep -q "publish" /tmp/as_skill.md && grep -q "query" /tmp/as_skill.md; then
 else
   bad "SKILL 缺少 publish/query 引导"
 fi
+if grep -q "agentsignal init" /tmp/as_skill.md; then
+  ok "SKILL 首节三步叙事（含 agentsignal init）"
+else
+  bad "SKILL 首节缺三步接入叙事（ux-foundation 1.4）"
+fi
 
 echo "[1] 链路1 分享"
 REG=$(curl -s -X POST "$BASE/agents/register" -H 'content-type: application/json' -d '{"name":"e2e-runner"}')
