@@ -33,4 +33,4 @@
 
 - [x] F.1 `pnpm verify` 全绿（check + lint + test 57/57 含新增护栏 + test:ui 26/26）
 - [x] F.2 verify 端点行为由 e2e 三链路断言背书（HTTP 端点）；CLI verify 为薄封装（5 行 api 调用），`pnpm check`/lint 锁定
-- [ ] F.3 本清单全勾后归档（openspec archive 动作，随下个收口节点执行）
+- [x] F.3 本清单全勾后归档（openspec archive 动作，随下个收口节点执行）— 2026-09-10 完成（清单全勾，归档至 changes/archive/participant-skill-cli-sync；其护栏 G1–G4 已随 0.4.0/0.5.0 两轮发版长期在役）
