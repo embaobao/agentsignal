@@ -24,7 +24,7 @@
 
 ## Phase 3 · 服务端发布机制（已另立提案，本 change 不实施）
 
-- [ ] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— **已另立 → [dynamic-skill-management](../dynamic-skill-management/proposal.md)（2026-09-08 Approved：订阅落库 × 回流闭环；publish 回平台复用既有平台命令，用户域 creds 仍归 user-domain-completion）**
+- [x] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— **已兑现 → [dynamic-skill-management](../dynamic-skill-management/proposal.md)（2026-09-08 Approved · 2026-09-10 全量完成并随 0.5.0 发布；订阅落库/verify 回传/更新链/失效/容量全落地，publish 回平台复用既有平台命令，用户域 creds 仍归 user-domain-completion）——本占位闭环，skill-engine 全清单至此勾清**
 
 ## 验收（Phase 1–2 完成后）
 
