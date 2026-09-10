@@ -46,6 +46,7 @@ export const config = {
     "/stats", "/stats/*",
     "/validate", "/validate/*",
     "/healthz", "/readyz",
-    "/docs", "/docs/*",
+    "/api-docs", "/api-docs/*",
+    "/docs", "/docs/*", // 过渡保留：Scalar 已迁 /api-docs（ux-foundation 4.1），旧链接随部署下线
   ],
 };

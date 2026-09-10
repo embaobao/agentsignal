@@ -54,6 +54,8 @@ if grep -q "agentsignal init" /tmp/as_skill.md; then
 else
   bad "SKILL 首节缺三步接入叙事（ux-foundation 1.4）"
 fi
+code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api-docs")
+check "api-docs 200（Scalar 已迁 /api-docs）" "$code" "200"
 
 echo "[1] 链路1 分享"
 REG=$(curl -s -X POST "$BASE/agents/register" -H 'content-type: application/json' -d '{"name":"e2e-runner"}')

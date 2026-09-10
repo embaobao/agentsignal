@@ -123,7 +123,7 @@ export async function buildApp(opts: BuildOptions = {}): Promise<FastifyInstance
     },
   });
   await app.register(scalarApiReference, {
-    routePrefix: "/docs",
+    routePrefix: "/api-docs", // /docs 腾给 apps/docs 文档站（ux-foundation 4.1 裁决）
     configuration: { theme: "saturn" },
   });
 
