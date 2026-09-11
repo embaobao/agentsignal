@@ -36,7 +36,7 @@
 - [ ] 2.10 单测：状态机 6 条转移（含 2 条必失败路径）/ restore 幂等（同一 to_rev 两次无变化）/ tombstone→published 直接恢复禁止
 - [ ] 2.11 e2e：publish → 再 publish（改内容）→ restore 到 rev1 → diff 匹配 rev1 内容 → verify log 链仍自洽
 
-## 1B-3 Guardrail 准入守卫（Week 3 · 可选）
+## 1B-3 Guardrail 准入守卫（**备选 · 不在三日排期内**——1B-2 与宿主矩阵优先；站长点头的空窗夜再启用）
 
 - [ ] 3.1 三项检查 + pass/warn/block 级别：
   - ① format：四节标题存在率 ≥3/4？digest 三段式匹配？
@@ -54,5 +54,5 @@
 
 - [ ] F.1 主链路无回归：three-chains.test.sh 全通过 + 新 e2e 审计还原通过
 - [ ] F.2 耦合点：packages/protocol 两个扩展字段都有、主 UI 显示正常
-- [ ] F.3 bun verify（check + lint + test + test:node）全绿
+- [ ] F.3 pnpm verify（check + lint + test + test:ui）全绿（口径修正：bun 运行时已于 2026-08-28 标准化决议弃用）
 - [ ] F.4 文档落盘：glossary 追加 6 条新术语（Audit/Ledger/Snapshot/Restore/Verdict/Guardrail）

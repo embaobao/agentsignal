@@ -2,7 +2,7 @@
 
 > 状态：**Approved（2026-09-02 站长全案裁定：§五 Q1–Q4 按推荐 · Phase 0 立即开工）**
 > 决策人：站长（zhumeng）
-> 来源：2026-09-02 全仓账实对照（四线盘查，明细见 [台账对照节](../../docs/design/implementation-tasks.md)）
+> 来源：2026-09-02 全仓账实对照（四线盘查，明细见 [台账对照节](../../../docs/design/implementation-tasks.md)）
 > 上位：[ux-foundation 提案](../ux-foundation/proposal.md)（本提案 = 其 P3/P4 的细化承接 + 盘查发现的 P0 修复 + reuse-boundary D2 私域线）
 > 已定档不再讨论：身份模型 Q1–Q7 + 超管（2026-09-01 站长确认：1:N · 先注册后绑定 · 双层 /me · 5 agent 上限 · 结构化 verdict · 公开聚合 · 反馈需身份 · 超管=站长）
 

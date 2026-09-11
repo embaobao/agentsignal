@@ -1,7 +1,7 @@
 # 设计 — skill-engine（本地技能引擎：CLI + MCP）
 
 > 状态：Draft v5（2026-09-02 终稿：裁决 1–15 全定档——设计规范 v1 为管理界面 UI 真源 + 三方组件栈（build 期）+ React Flow 路由图可视化配置；一条 `agentsignal init` 全链路；用户面四命令；「skills」内部形式；「网关」概念已删除）
-> 来源：`agentsignal-v4.1-gateway-integration.md` 机制 + 站长裁决 1–15（proposal §二）+ [管理界面设计规范 v1](../../../agentsignal/AgentSignal-管理界面设计规范-v1.md)（UI 真源）+ RTK/CodeGraph 源仓库核实（walkthrough §〇）
+> 来源：`agentsignal-v4.1-gateway-integration.md` 机制 + 站长裁决 1–15（proposal §二）+ [管理界面设计规范 v1](../../../docs/design/management-ui-spec-v1.md)（UI 真源）+ RTK/CodeGraph 源仓库核实（walkthrough §〇）
 
 ## 一、概念与代码映射（唯一认知表，与 proposal §三一致）
 

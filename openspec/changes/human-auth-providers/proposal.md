@@ -3,7 +3,7 @@
 > 状态：**Draft（方案已按 2026-09-02 站长推荐定向；排队主线之后，批准即生效）**
 > 决策人：站长（zhumeng）· 站长指令：「用户维度支持邮箱验证和 Google 等」
 > 排期：**主线优先**（站长令 2026-09-02：先完成个人 Agent 的创建与管理 = user-domain-completion Phase 0→1），本提案依赖其 Phase 1 的 006 迁移 + session 桥接先落库
-> 上位：[reuse-boundary 决议](../../docs/decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D1（**Google OAuth 本就在放行清单内**，本提案是实施而非翻案）· 配套决议：[human-auth-email-otp](../../docs/decisions/2026-09-02-human-auth-email-otp.md)（邮箱准入的窄推翻）
+> 上位：[reuse-boundary 决议](../../../docs/decisions/2026-08-31-reuse-boundary-and-public-docs-site.md) D1（**Google OAuth 本就在放行清单内**，本提案是实施而非翻案）· 配套决议：[human-auth-email-otp](../../../docs/decisions/2026-09-02-human-auth-email-otp.md)（邮箱准入的窄推翻）
 > 不变的定档：身份模型 Q1–Q7（1:N · ≤5 · 绑定解锁管理权）不受影响；**密码体系仍然禁止**；人类仍不发 Signal（人是策展容器）
 
 ## 一、为什么

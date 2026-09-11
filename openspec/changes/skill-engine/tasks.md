@@ -20,11 +20,11 @@
 - [x] 2.2 推通道 + 兜底：hook 输出内部实现（context.ts：L1/L2 正文 + L3 简表，预算内截断，异常静默）+ Claude Code UserPromptSubmit hook 片段 + 其余宿主 rules 一行兜底（随 init 接线写入）；**宿主覆盖矩阵收窄声明**：Cursor/Gemini/Cline/Codex 的 hook 位待宿主 hooks API 稳定后开放，Phase 2 一律 MCP+rules 一行（wiring/hosts.ts hooks 标志位已留） — 2026-09-03 完成
 - [x] 2.3 `skills/session.ts`：`~/.agentsignal/sessions/<id>.json` Trace 持久化（调用链/lazy 加载/verify）· TTL 30min · 50 轮 · graceful shutdown · tee 兜底（异常全量落盘附路径）；**只记录不审计** — 2026-09-03 完成（session.test.ts 4 用例）
 - [x] 2.4 `agentsignal uninstall`：全量摘除宿主 MCP 配置/hooks/rules（`~/.agentsignal` 数据保留）+ 摘除不残留断言 — 2026-09-03 完成（init-e2e「摘除不残留」断言绿；兼容壳条目随包移除不再涉及）
-- [x] 2.5 文档随行：user-manual **只写四命令（init/mcp/status/uninstall），skills 概念零出现** · admin-guide（~/.agentsignal 布局与 config 产物说明）· SKILL lockstep（G1–G3）· @agentssignal/mcp 弃用说明 · 指标口径说明 — 2026-09-03 完成（canonical [local-engine.md](../../docs/design/local-engine.md) · user-manual §1.5 四命令 skills 零出现 · admin-guide §6 · deployment 发布顺序 · maintenance-cheatsheet 配方 E / 目录定位 · SKILL lockstep G1–G4 · 唯一 MCP server 说明）
+- [x] 2.5 文档随行：user-manual **只写四命令（init/mcp/status/uninstall），skills 概念零出现** · admin-guide（~/.agentsignal 布局与 config 产物说明）· SKILL lockstep（G1–G3）· @agentssignal/mcp 弃用说明 · 指标口径说明 — 2026-09-03 完成（canonical [local-engine.md](../../../docs/design/local-engine.md) · user-manual §1.5 四命令 skills 零出现 · admin-guide §6 · deployment 发布顺序 · maintenance-cheatsheet 配方 E / 目录定位 · SKILL lockstep G1–G4 · 唯一 MCP server 说明）
 
 ## Phase 3 · 服务端发布机制（已另立提案，本 change 不实施）
 
-- [x] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— **已兑现 → [dynamic-skill-management](../dynamic-skill-management/proposal.md)（2026-09-08 Approved · 2026-09-10 全量完成并随 0.5.0 发布；订阅落库/verify 回传/更新链/失效/容量全落地，publish 回平台复用既有平台命令，用户域 creds 仍归 user-domain-completion）——本占位闭环，skill-engine 全清单至此勾清**
+- [x] （占位，不实施）订阅信号落本地技能（watch `kind=solution` → 落盘，provenance 留位）· solidified publish 回平台 · 平台 verify 回传 + 用户域 creds 接入 —— **已兑现 → [dynamic-skill-management](../archive/dynamic-skill-management/proposal.md)（2026-09-08 Approved · 2026-09-10 全量完成并随 0.5.0 发布；订阅落库/verify 回传/更新链/失效/容量全落地，publish 回平台复用既有平台命令，用户域 creds 仍归 user-domain-completion）——本占位闭环，skill-engine 全清单至此勾清**
 
 ## 验收（Phase 1–2 完成后）
 
