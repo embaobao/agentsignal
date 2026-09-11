@@ -78,6 +78,10 @@ function statusOf(entry: unknown): WireStatus {
 
 /** 读取某宿主的当前 MCP 接线状态 */
 export async function hostStatus(host: HostDef): Promise<WireResult> {
+  // D1/D7：mcpPath=null 宿主（Hermes）无 MCP 语义，状态恒 absent，零文件触碰
+  if (host.mcpPath === null) {
+    return { host: host.id, name: host.name, path: host.soulPath ?? "", mcp: "absent" };
+  }
   if (host.toml) return tomlStatus(host);
   const json = await readJson(host.mcpPath);
   const servers = (json.mcpServers ?? {}) as Record<string, unknown>;
@@ -92,6 +96,16 @@ export async function hostStatus(host: HostDef): Promise<WireResult> {
 /* ------------------------------- JSON 宿主 ------------------------------- */
 
 export async function wireMcp(host: HostDef): Promise<WireResult> {
+  // mcpPath=null 宿主跳过 MCP 同步（不建目录不写文件，零垃圾）；rules/hook 兜底照走
+  if (host.mcpPath === null) {
+    return {
+      host: host.id,
+      name: host.name,
+      path: host.soulPath ?? "",
+      mcp: "absent",
+      extra: await writeExtra(host),
+    };
+  }
   if (host.toml) return wireToml(host);
   const json = await readJson(host.mcpPath);
   const servers = (json.mcpServers ?? {}) as Record<string, unknown>;
@@ -110,6 +124,8 @@ export async function wireMcp(host: HostDef): Promise<WireResult> {
 /** hooks（Claude Code）或 rules 一行兜底（无 hooks 宿主） */
 async function writeExtra(host: HostDef): Promise<"hook" | "rules" | "none"> {
   if (host.hooks) {
+    // hooks 宿主（Claude Code）mcpPath 恒非 null（settings.json 与 mcpPath 同根）
+    if (host.mcpPath === null) return "none";
     const settingsPath = path.join(path.dirname(host.mcpPath), ".claude", "settings.json");
     const json = await readJson(settingsPath);
     const hooks = (json.hooks ?? {}) as Record<string, unknown[]>;
@@ -140,6 +156,16 @@ async function writeExtra(host: HostDef): Promise<"hook" | "rules" | "none"> {
 }
 
 export async function unwireMcp(host: HostDef): Promise<WireResult> {
+  // mcpPath=null 宿主无 MCP 可摘，直接 absent（摘除兜底片段照走）
+  if (host.mcpPath === null) {
+    return {
+      host: host.id,
+      name: host.name,
+      path: host.soulPath ?? "",
+      mcp: "absent",
+      extra: await removeExtra(host),
+    };
+  }
   if (host.toml) return unwireToml(host);
   const json = await readJson(host.mcpPath);
   const servers = (json.mcpServers ?? {}) as Record<string, unknown>;
@@ -161,6 +187,7 @@ export async function unwireMcp(host: HostDef): Promise<WireResult> {
 
 async function removeExtra(host: HostDef): Promise<"none"> {
   if (host.hooks) {
+    if (host.mcpPath === null) return "none";
     const settingsPath = path.join(path.dirname(host.mcpPath), ".claude", "settings.json");
     try {
       const json = await readJson(settingsPath);
@@ -213,6 +240,7 @@ function stripTomlSection(text: string): string {
 }
 
 async function tomlStatus(host: HostDef): Promise<WireResult> {
+  if (host.mcpPath === null) return { host: host.id, name: host.name, path: "", mcp: "absent" };
   let text = "";
   try {
     text = await readFile(host.mcpPath, "utf8");
@@ -228,6 +256,9 @@ async function tomlStatus(host: HostDef): Promise<WireResult> {
 }
 
 async function wireToml(host: HostDef): Promise<WireResult> {
+  if (host.mcpPath === null) {
+    return { host: host.id, name: host.name, path: "", mcp: "absent", extra: "none" };
+  }
   let text = "";
   try {
     text = await readFile(host.mcpPath, "utf8");
@@ -250,6 +281,9 @@ async function wireToml(host: HostDef): Promise<WireResult> {
 }
 
 async function unwireToml(host: HostDef): Promise<WireResult> {
+  if (host.mcpPath === null) {
+    return { host: host.id, name: host.name, path: "", mcp: "absent", extra: "none" };
+  }
   let text = "";
   try {
     text = await readFile(host.mcpPath, "utf8");

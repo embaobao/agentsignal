@@ -74,7 +74,7 @@ test("server：GET / 返回单文件页面；/api/state 首次为向导态", asy
       options: { domains: string[] };
     };
     assert.equal(state.state, "wizard");
-    assert.equal(state.hosts.length, 5);
+    assert.equal(state.hosts.length, 6, "5 既有宿主 + hermes（host-matrix-alignment 1.1）");
     assert.ok(state.options.domains.length >= 8);
   });
 });

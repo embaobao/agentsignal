@@ -235,8 +235,8 @@ export const ConfigLayerSchema = z.object({
 
 /** 宿主接线声明（wiring 探测/写入的产物，config 是唯一真源） */
 export const HostBindingSchema = z.object({
-  /** 宿主标识：claude-code | cursor | codex | cline | gemini */
-  host: z.enum(["claude-code", "cursor", "codex", "cline", "gemini"]),
+  /** 宿主标识：claude-code | cursor | codex | cline | gemini | hermes（host-matrix-alignment Phase 1 起） */
+  host: z.enum(["claude-code", "cursor", "codex", "cline", "gemini", "hermes"]),
   wired: z.boolean().default(false),
   /** 实际写入的配置文件绝对路径 */
   config_path: z.string().optional(),

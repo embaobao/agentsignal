@@ -9,19 +9,25 @@ import { statSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-export type HostId = "claude-code" | "cursor" | "codex" | "cline" | "gemini";
+export type HostId = "claude-code" | "cursor" | "codex" | "cline" | "gemini" | "hermes";
 
 export interface HostDef {
   id: HostId;
   name: string;
-  /** MCP mcpServers 配置文件（绝对路径模板，~ 已展开） */
-  mcpPath: string;
+  /** MCP mcpServers 配置文件（绝对路径模板，~ 已展开）；null = 宿主不写 MCP（D1/D7：Hermes） */
+  mcpPath: string | null;
   /** 宿主是否支持 hooks（否则用 rules 一行兜底） */
   hooks: boolean;
   /** rules 兜底文件（无 hooks 宿主）；null = 不支持 */
   rulesPath: string | null;
   /** TOML 格式（Codex）走专用合并器 */
   toml: boolean;
+  /** SOUL.md 块注入文件（Hermes，标记段 agentsignal:rules:start/end） */
+  soulPath?: string;
+  /** hooks YAML（Hermes config.yaml 的 hooks.<event>[]，双写其一） */
+  hooksYamlPath?: string;
+  /** shell hook 白名单（Hermes 双写其二，同 {event,command} 去重） */
+  hookAllowlistPath?: string;
   detect(): boolean;
 }
 
@@ -43,9 +49,15 @@ function statSyncSafe(file: string): void {
   statSync(file);
 }
 
+/** Hermes home：HERMES_HOME env 优先（夹具/多环境），缺省 ~/.hermes */
+function hermesHome(): string {
+  return process.env.HERMES_HOME ?? path.join(home(), ".hermes");
+}
+
 /** 宿主清单：每次调用重新求值（AGENTSIGNAL_HOME 夹具生效的前提） */
 export function hostDefs(): HostDef[] {
   const h = home();
+  const hm = hermesHome();
   return [
     {
       id: "claude-code",
@@ -93,6 +105,19 @@ export function hostDefs(): HostDef[] {
       toml: false,
       detect: () => exists(path.join(h, ".gemini")),
     },
+    {
+      // Hermes（TeamAI）：只发 skill + SOUL.md 块 + hook 双写；不写 MCP（D1/D7 不猜纪律）
+      id: "hermes",
+      name: "Hermes",
+      mcpPath: null,
+      hooks: false,
+      rulesPath: null,
+      toml: false,
+      soulPath: path.join(hm, "SOUL.md"),
+      hooksYamlPath: path.join(hm, "config.yaml"),
+      hookAllowlistPath: path.join(hm, "shell-hooks-allowlist.json"),
+      detect: () => exists(hm),
+    },
   ];
 }
 
@@ -106,7 +131,7 @@ export interface DetectedHost {
   id: HostId;
   name: string;
   detected: boolean;
-  mcpPath: string;
+  mcpPath: string | null;
 }
 
 export function detectHosts(): DetectedHost[] {

@@ -328,8 +328,8 @@ var ConfigLayerSchema = z3.object({
   ).default([])
 });
 var HostBindingSchema = z3.object({
-  /** 宿主标识：claude-code | cursor | codex | cline | gemini */
-  host: z3.enum(["claude-code", "cursor", "codex", "cline", "gemini"]),
+  /** 宿主标识：claude-code | cursor | codex | cline | gemini | hermes（host-matrix-alignment Phase 1 起） */
+  host: z3.enum(["claude-code", "cursor", "codex", "cline", "gemini", "hermes"]),
   wired: z3.boolean().default(false),
   /** 实际写入的配置文件绝对路径 */
   config_path: z3.string().optional()

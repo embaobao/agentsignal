@@ -16,11 +16,11 @@
 
 > 硬门槛：决议 [2026-08-27-agent-skill-distribution](../../../docs/decisions/2026-08-27-agent-skill-distribution.md) 要求 Testnet 验收「≥2 宿主全环，必须含 Hermes」。Hermes 不在注册表 = 这条线今天一条都跑不了。
 
-- [ ] 1.1 `wiring/hosts.ts`：`HostId` 联合类型加 `"hermes"`；`HostDef` 加三个可选字段（`soulPath` / `hooksYamlPath` / `hookAllowlistPath`）；新增 hermes HostDef — home = `HERMES_HOME ?? ~/.hermes`，detect = `exists(home)`
+- [x] 1.1 `wiring/hosts.ts`：`HostId` 联合类型加 `"hermes"`；`HostDef` 加三个可选字段（`soulPath` / `hooksYamlPath` / `hookAllowlistPath`）；新增 hermes HostDef — home = `HERMES_HOME ?? ~/.hermes`，detect = `exists(home)`（同笔：protocol `HostBindingSchema.host` 枚举加 hermes——config 唯一真源闭环，协调点打底）
 - [ ] 1.2 skills 落盘：`$hermesHome/skills/<name>/SKILL.md`（目录式），复用既有 skill 写入器
 - [ ] 1.3 **SOUL.md 块注入**：标记段 `<!-- agentsignal:rules:start/end -->`；文件不存在则创建，存在则追加；重复注入不产生第二块；摘除只删标记段 —— 单测覆盖「用户原有内容完好」
 - [ ] 1.4 **hook 双写**：`$hermesHome/config.yaml` 的 `hooks.<event>[]` **且** `$hermesHome/shell-hooks-allowlist.json`（同 `{event,command}` 去重）—— **只写前者 hook 不执行**，单测断言两文件都被写
-- [ ] 1.5 Hermes 不写 MCP（D1/D7）：`mcpPath = null`，wiring 跳过 MCP 同步，不产生垃圾配置文件
+- [x] 1.5 Hermes 不写 MCP（D1/D7）：`mcpPath = null`，wiring 跳过 MCP 同步，不产生垃圾配置文件
 - [ ] 1.6 事件映射：TeamAI 的 `SessionStart` / `Stop` 语义 → AgentSignal 既有推通道（`skills/context.ts` L1/L2/L3 三档）
 - [ ] 1.7 兜底：config.yaml 解析失败 → 跳过 hooks 只发 skill，不 fail 整个 init（异常落 stderr）
 - [ ] 1.8 测试：`packages/cli/test/` 扩展 `AGENTSIGNAL_HOME` 夹具 —— Hermes 探测 / 写入（含 SOUL.md 块 + 双写 + 无 MCP 文件）/ 摘除不残留 三断言 + 专项 3 条（见 design.md §五）
