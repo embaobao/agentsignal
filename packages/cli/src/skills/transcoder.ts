@@ -41,6 +41,8 @@ export interface TranscodeInput {
   digest: string;
   created_at?: string;
   experience?: { format: string; body: string };
+  /** 来源声明（P5 5.2）：缺省 = 平台订阅落库；包导入/手动路径显式传（P4 接线） */
+  origin?: { kind: string; ref: string; path?: string };
 }
 
 export interface TranscodeContext {
@@ -139,6 +141,8 @@ export function transcodeSignal(input: TranscodeInput, ctx: TranscodeContext): T
       lifecycle: {
         provenance: {
           sig_id: input.id,
+          // 新落库必有 origin（P5 5.2）：缺省 = 平台订阅；包导入/手动由调用方显式传
+          origin: input.origin ?? { kind: "platform", ref: input.id },
           digest: input.digest,
           base_url: ctx.base_url,
           topic: input.topic,

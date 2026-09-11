@@ -8,7 +8,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SkillFrontmatterSchema } from "../../protocol/src/skill-schema.ts";
+import { SkillFrontmatterSchema, SkillProvenanceSchema } from "../../protocol/src/skill-schema.ts";
 import {
   extractAnchorSigId,
   TranscodeError,
@@ -45,6 +45,7 @@ test("中文 digest/正文：全量快照（golden）——六字段必收齐 + 
   ]);
   assert.deepEqual(frontmatter.lifecycle.provenance, {
     sig_id: "sig_01m1b90pz1z1bwfnfawd4rp4gd",
+    origin: { kind: "platform", ref: "sig_01m1b90pz1z1bwfnfawd4rp4gd" },
     digest: "语义分块 beats 固定分块 | scope: 中文RAG | validation: self-tested",
     base_url: "https://agentsignal.vip",
     topic: "ai-research",
@@ -113,4 +114,36 @@ test("转出物必过 SkillFrontmatterSchema（转出即合法技能信封）", 
   const { frontmatter } = transcodeSignal(solution(), CTX);
   const parsed = SkillFrontmatterSchema.parse(frontmatter);
   assert.equal(parsed.id, frontmatter.id);
+});
+
+/* ---------------- P5 5.2 provenance.origin 补写入 ---------------- */
+
+test("origin 缺省 = platform 订阅来源（新落库必有 origin）", () => {
+  const { frontmatter } = transcodeSignal(solution(), CTX);
+  assert.deepEqual(frontmatter.lifecycle.provenance?.origin, {
+    kind: "platform",
+    ref: "sig_01m1b90pz1z1bwfnfawd4rp4gd",
+  });
+});
+
+test("origin 显式透传：包导入 / 手动来源形态", () => {
+  const imported = transcodeSignal(
+    solution({ origin: { kind: "package-import", ref: "apm:some-pkg" } }),
+    CTX,
+  );
+  assert.deepEqual(imported.frontmatter.lifecycle.provenance?.origin, {
+    kind: "package-import",
+    ref: "apm:some-pkg",
+  });
+  const manual = transcodeSignal(
+    solution({ origin: { kind: "manual", ref: "local", path: "/tmp/notes.md" } }),
+    CTX,
+  );
+  assert.equal(manual.frontmatter.lifecycle.provenance?.origin?.kind, "manual");
+  assert.equal(manual.frontmatter.lifecycle.provenance?.origin?.path, "/tmp/notes.md");
+});
+
+test("旧记录读 null 不报错：provenance 无 origin 仍过 schema（optional 兼容）", () => {
+  const legacy = SkillProvenanceSchema.parse({ sig_id: "sig_old", digest: "d" });
+  assert.equal(legacy.origin, undefined);
 });

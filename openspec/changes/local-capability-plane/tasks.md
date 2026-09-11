@@ -151,7 +151,7 @@
 
 - [x] **5.1** `skill-schema.ts` + `packages/cli/src/skills/verify.ts`：`verify_target` 补实现（`{statement, checks[]}`）
   - DoD：三态判定可关联目标；旧 `skill.json5` 零破坏（null 兼容读）
-- [ ] **5.2** `transcoder.ts`：`provenance.origin` 补写入（平台订阅/包导入/手动）
+- [x] **5.2** `transcoder.ts`：`provenance.origin` 补写入（平台订阅/包导入/手动）
   - DoD：新落库必有 origin；旧记录读 null 不报错
 - [ ] **5.3** `metrics.ts` + 检索/注入埋点：**三计数分立 `retrieved/injected/used`**（现状只 verify +1，S2 缺口）
   - DoD：三路径各 +1 断言（V1）
