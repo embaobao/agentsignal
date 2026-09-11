@@ -63,30 +63,40 @@ function injectYamlHook(text: string, event: string, command: string): string {
   return lines.join("\n");
 }
 
-/** config.yaml 摘除该 event 块（或块内该 command 行），用户其余内容原样 */
-function removeYamlHook(text: string, event: string, command: string): string {
+/**
+ * config.yaml 摘除我方 command 行（R5-a 审查整改：逐条删除，绝不整块删——
+ * 用户在同一 event 块下的自有 command 必须毫发无损，E-10 边界）；
+ * 块内删空后连 event 键一并清掉，用户其余内容原样。
+ */
+function removeYamlHook(text: string, event: string, eventCommand: string): string {
   const lines = text.split("\n");
+  const cmdToken = `command: "${eventCommand}"`;
   const out: string[] = [];
-  let skippingBlock = false;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i] ?? "";
     if (l.trimEnd() === `  ${event}:`) {
-      // 向看一块：是否包含目标 command（含则整块删——块只服务该 command 的最小现实）
+      // 收集该 event 块的列表行
       let j = i + 1;
-      let hasCmd = false;
+      const block: string[] = [];
       while (j < lines.length && (lines[j]?.startsWith("    ") ?? false)) {
-        if (lines[j]?.includes(`command: "${command}"`)) hasCmd = true;
+        block.push(lines[j] ?? "");
         j++;
       }
-      if (hasCmd) {
-        i = j - 1; // 跳过整块
-        skippingBlock = true;
+      const kept = block.filter((b) => !b.includes(cmdToken));
+      if (kept.length === block.length) {
+        // 块内无我方条目：原样保留（含 event 键），继续扫后续
+        out.push(l);
         continue;
       }
+      if (kept.length > 0) {
+        out.push(l, ...kept); // 只删我方行，用户条目与 event 键保留
+      }
+      // kept 为空：块删空，连 event 键一并去掉
+      i = j - 1;
+      continue;
     }
     out.push(l);
   }
-  void skippingBlock;
   return out.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 

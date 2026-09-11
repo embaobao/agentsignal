@@ -7,7 +7,7 @@
  * 夹具 = 临时目录，不碰真实宿主配置；config.yaml 为行级最小操作（解析失败兜底归 1.7）。
  */
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -89,4 +89,37 @@ test("摘除不存在的文件不抛；全摘后 hooks 段清空", async () => {
     hooks: { event: string; command: string }[];
   };
   assert.deepEqual(allow.hooks, []);
+});
+
+test("R5-a：同 event 块内用户自有 command 与我方共存——摘除只删我方行，用户条目保留", async () => {
+  const root2 = await mkdtemp(path.join(tmpdir(), "as-heryaml-r5a-"));
+  try {
+    const y = path.join(root2, "config.yaml");
+    const a = path.join(root2, "allow.json");
+    // 用户先有自己的 SessionStart hook
+    await writeFile(
+      y,
+      'model: x\nhooks:\n  SessionStart:\n    - command: "user-own-hook"\n',
+      "utf8",
+    );
+    await writeFile(
+      a,
+      JSON.stringify({ hooks: [{ event: "SessionStart", command: "user-own-hook" }] }),
+      "utf8",
+    );
+    // 我方注入同 event
+    await injectHermesHook(y, a, "SessionStart", CMD);
+    // 摘除我方——用户条目必须毫发无损
+    await removeHermesHook(y, a, "SessionStart", CMD);
+    const text = await readFile(y, "utf8");
+    assert.ok(!text.includes(`command: "${CMD}"`), "我方行已摘除");
+    assert.ok(text.includes("user-own-hook"), "用户自有 command 必须保留");
+    assert.ok(text.includes("model: x"), "用户其他段落保留");
+    const allow = JSON.parse(await readFile(a, "utf8")) as {
+      hooks: { event: string; command: string }[];
+    };
+    assert.deepEqual(allow.hooks, [{ event: "SessionStart", command: "user-own-hook" }]);
+  } finally {
+    await rm(root2, { recursive: true, force: true });
+  }
 });
