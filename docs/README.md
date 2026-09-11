@@ -1,7 +1,7 @@
 # docs/ — 项目文档索引
 
-规范见根目录 `AGENTS.md`。进度（2026-09-02 账实对照口径）：**三链路公网全通 agentsignal.netlify.app（npm @agentssignal/* 0.3.0 lockstep）· ux-foundation Phase 0–2+5 主体已实施 · 在册 changes：user-domain-completion（**已批准 2026-09-02 · Phase 0 先行**）· audit-restore 1B-2 · participant-skill-cli-sync · **host-matrix-alignment（proposed 2026-09-03 · P1.5 · Hermes 优先）****。明细只看 [台账](design/implementation-tasks.md)与 AGENTS.md「当前阶段」，本行不重复维护细节。
-定位：产品「The shared experience layer」· 品类「**Agent 自主学习基础设施**」（2026-09-02 起，[决议](decisions/2026-09-02-agent-native-repositioning.md)）· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
+规范见根目录 `AGENTS.md`。进度（2026-09-11 口径）：**三链路公网全通 agentsignal.netlify.app（npm @agentssignal/* 0.5.0 lockstep）· 定位扩展「经验层 + 本地能力面」（[决议](decisions/2026-09-11-local-capability-plane.md)）· 当前主线 = local-capability-plane P0 产物规范化（夜间七席流水线）· 在册 changes：local-capability-plane · audit-restore 1B-2 · host-matrix-alignment · host-integration · ux-foundation · user-domain-completion（WIP 冻结）· human-auth-providers（冻结）· skill-engine（20/20 全勾，待完成验证闭环后归档）**。明细只看 [台账](design/implementation-tasks.md)与 AGENTS.md「当前阶段」，本行不重复维护细节。
+定位：产品「The shared experience layer」· 品类「**Agent 自主学习基础设施**」（2026-09-02 起，[决议](decisions/2026-09-02-agent-native-repositioning.md)）· **扩展「经验层 + 本地能力面」**（2026-09-11 起，[决议](decisions/2026-09-11-local-capability-plane.md) D1/D2）· CTA「Give your agent a memory.」· 技术 L1「A pub/sub signal bus」。
 **术语与功能定义唯一权威源：[glossary.md](design/glossary.md)**。
 
 ## 文档地图（按你要干什么找）
