@@ -43,18 +43,21 @@
 | 问 | 答 |
 |---|---|
 | **MCP 动态加载？** | **不自建网关**。三件证明这是成熟赛道（企业级/自托管/桌面三种形态俱全），自建 = 重造轮子 + 撞「无常驻」红线。**落法 = 外挂兼容**：`wiring/hosts.ts` 增加一类「MCP 端点透传」宿主条目——用户若已跑 mcphub/gateway，init 可把其统一端点写进宿主配置；AgentSignal 的 9 工具面不变（守裁决），外部 MCP 能力经用户自己的网关按需增删。技能面动态到达已由 0.5.0 订阅同步落地 |
-| **skill 动态加载？** | **已落地**（0.5.0）：订阅同步 → transcoder 落库 → 检索即命中；`use --install` 单条装载。skill-management-landscape 笔记指出的「落库 ≠ 宿主可见」断裂已由 wiring 接线接通。三件套的 install⇄deploy/provenance/反向可见性四点与我们对齐，外部印证方向正确 |
+| **skill 动态加载？** | **消费侧已落地（0.5.0），但「落库 ≠ 宿主可见」的断裂经代码核实后确认仍然存在**（2026-09-11 勘误）。已通的是：订阅同步 → transcoder 落库 `~/.agentsignal/skills/<sig_id>/` → MCP `search_skills` 检索即命中——**这是"可达"，不是"宿主原生可见"**。核实证据：`wiring/snippets.ts` 只写三类（MCP 配置 / hook / rules 一行），`wiring/hosts.ts` 的 `HostDef` 只有 `mcpPath/hooks/rulesPath/toml`，**无 skills 目录位**；`install.ts` 的 `installSignal` 只写中央库、不落宿主目录。故「宿主技能目录」这一层**尚未接通**，已另立提案 [host-integration](../../openspec/changes/host-integration/proposal.md)（含"落地是稀缺动作"的准入约束与 validation 预登记待补）。三件套的 install⇄deploy/provenance/反向可见性四点与我们对齐，外部印证方向正确 |
 | **Agent 整体安装管理 / fork 远程 Agent？** | **这是唯一值得自建的新命题，且是空白位**——三件都只管「工具/技能」这个物质层，没有一家管「经验流 → 临时执行环境」。我们的零件已齐：订阅（拉经验流）+ transcoder（溯源落库）+ use --install（装载）+ wiring（接线）+ 更新链（跟随上游）。缺的只是一层**编排**：`agentsignal fork <来源>` = 把某来源（远程 Agent 的公开 preset / 一组 topic / 一个 sig 集合）一键物化为本机临时环境（技能落库 + 订阅挂上 + 宿主接线），用完 `uninstall` 零残留。与 skills-manager 的 Preset 同构但多两样它没有的：**经验 provenance 链** 与 **回流通道** |
 
 ## 五、建议（不排期，供站长裁决）
 
-1. **不做**：自建 MCP 网关/hub/控制平面（任何形态）——三个轮子+jam，撞红线
+1. **不做**：自建 MCP 网关/hub/控制平面（任何形态）——三个轮子已熟，撞红线
 2. **小步（可排期）**：wiring「MCP 端点透传」条目（mcphub/gateway 用户的一等公民支持）——一个 HostDef 级改动，host-matrix-alignment 顺手可捎
-3. **中步（建议立项，排队 D/E 后）**：`fork` 编排提案（agent-preset）：来源解析（远程 preset 清单格式）→ 订阅批量挂载 → 技能批量落库 → 宿主接线 → 临时标签 → uninstall 零残留；verdict/metrics 随环境走
-4. **差异位宣示**：对外叙事钉死一句——「skills-manager 管技能文件，mcphub/mcp-gateway 管 MCP 通道，AgentSignal 管经验本身；fork 一个远程 Agent 的临时执行环境，只有经验层做得到」
+3. **先补断层（已立项 2026-09-10）**：[host-integration](../../openspec/changes/host-integration/proposal.md)——把落库经验装进宿主技能目录（+ 反向可见 / 状态治理）。这是下述 fork 的**前置**：fork 要把经验物化到宿主，先得有装载能力
+4. **中步（建议立项，排队 D/E 后）**：`fork` 编排提案（agent-preset）：来源解析（远程 preset 清单格式）→ 订阅批量挂载 → 技能批量落库 → **宿主装载（依赖第 3 条）** → 临时标签 → uninstall 零残留；verdict/metrics 随环境走
+5. **差异位宣示**：对外叙事钉死一句——「skills-manager 管技能文件，mcphub/mcp-gateway 管 MCP 通道，AgentSignal 管经验本身；fork 一个远程 Agent 的临时执行环境，只有经验层做得到」
 
 ## 关联
 
 - [2026-09-10 skill-management-landscape](2026-09-10-skill-management-landscape.md)（断裂发现 + 四点吸收）
+- [host-integration 提案](../../openspec/changes/host-integration/proposal.md)（断裂的落地方案；本笔记 §五 fork 建议的**前置**）
 - [2026-09-09 semantic-router 评估](2026-09-09-semantic-router-evaluation.md)（embedding 成本论证）
 - [teamai-host-matrix](../design/teamai-host-matrix.md) §四（多一个出口，不是交出分发）
+- [.workbuddy/memory/2026-09-11.md](../../.workbuddy/memory/2026-09-11.md)（两条 session 线进度打通记录）

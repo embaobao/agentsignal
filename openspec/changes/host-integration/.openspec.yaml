@@ -1,0 +1,21 @@
+id: host-integration
+status: draft
+created_at: 2026-09-10
+owner: project
+tags: [wiring, host, install, subscription, visibility, provenance, token-budget]
+summary: |
+  补齐「经验落库 ≠ 宿主可见」的断口：中央库 ~/.agentsignal/skills/ 里的订阅经验，
+  以 symlink 优先（copy 回退）装载进各宿主技能目录，使宿主 Agent 原生可发现、不依赖 MCP 存活。
+  受准入控制（validation 阈值 × 用户启用 × 数量上限），避免把 Context 污染复现到宿主侧；
+  并对账落库 ⇄ 落地 ⇄ 宿主实况（含外来条目只读），供 status 与管理界面治理。
+  协议零变化、命令面零变化、工具面零变化、零触碰 apps/api。
+upstream_docs:
+  - docs/notes/2026-09-10-skill-management-landscape.md   # 调研来源与缺口论证
+  - docs/design/experience.md                              # 幕二 M2 硬门槛「装进技能目录」
+  - docs/design/local-engine.md                            # 本地引擎 canonical
+  - docs/design/teamai-host-matrix.md                      # 宿主路径事实表来源
+depends_on:
+  - host-matrix-alignment   # 需其宿主矩阵（9 宿主）与 skillsPath 能力位就绪
+  - dynamic-skill-management # 订阅落库/更新链/revoked 已由其实施
+blocked_by: []
+supersedes: []

@@ -15,7 +15,7 @@
 | **新 Agent 接手 / 怎么开发、改哪里、避什么坑** | ★[design/agent-dev-paradigm.md](design/agent-dev-paradigm.md)（开发闭环 · DoD 四本账+两手册）· ★[design/maintenance-cheatsheet.md](design/maintenance-cheatsheet.md)（30 秒定位 · 变更配方 · 坑速查） |
 | **对协议 / 字段语义** | [protocols/api.md](protocols/api.md) · [protocols/message-envelope.md](protocols/message-envelope.md) · [design/glossary.md](design/glossary.md) |
 | **本地引擎（四命令 / MCP 九工具 / 管理界面）** | ★[design/local-engine.md](design/local-engine.md)（功能 canonical）· [UI 真源](design/management-ui-spec-v1.md) |
-| **查进度 / 提案 / 验证** | [design/implementation-tasks.md](design/implementation-tasks.md) · `../openspec/changes/`（**在册 7 个活跃**：user-domain-completion · host-matrix-alignment · participant-skill-cli-sync · skill-engine · audit-restore · human-auth-providers · ux-foundation）· [design/validation.md](design/validation.md) |
+| **查进度 / 提案 / 验证** | [design/implementation-tasks.md](design/implementation-tasks.md) · `../openspec/changes/`（**在册 8 个活跃**：user-domain-completion · host-matrix-alignment · skill-engine · audit-restore · human-auth-providers · ux-foundation · **host-integration（2026-09-10 新，依赖 host-matrix-alignment）** · **local-capability-plane（2026-09-11 新，全量提案：能力代理 × 适配器 × 经验层；归并 local-content-model / mcp-service-exposure）**；participant-skill-cli-sync / dynamic-skill-management / **local-content-model / mcp-service-exposure（2026-09-11 被 local-capability-plane 吸收归档）** 已归档）· [design/validation.md](design/validation.md) |
 | **查决策为什么这么做** | [decisions/](decisions/)（一事一文，最新：standardize-node-postgres） |
 
 ## 设计（活文档）
@@ -29,7 +29,7 @@
 | `design/stability.md` | 稳定性：三命令主线、凭证双轨、引用机制、无插件红线、失败矩阵、catch-up |
 | `design/onboarding.md` | ⓪/skills 总入口、动态自更新、模板内建、宿主矩阵、时间预算 |
 | `design/participant-skill-redesign.md` | ★参与技能重设计 + CLI 联动架构（方案，2026-08-31 待裁决 R1–R3）：业务边界、Agent Skills 开放标准调研、SKILL 七节结构、防漂移护栏 G1–G3 |
-| `design/validation.md` | Experiment 001（宿主覆盖、五问、pass bar）、Experiment 000a 预留 |
+| `design/validation.md` | Experiment 000b/001（宿主覆盖、五问、pass bar）、Experiment 002b/002/003 预留、**Experiment 004 语义层是否值得做（2026-09-09 预登记 · 未排期 · 前置门槛 = 002 基线）** |
 | `design/value-signals.md` | 四层信号、outcome 五元组（artifact 必填）、Signal Graph |
 | `design/web-ia.md` | 七屏首页、Signal 卡、Experience Record、Use=动作即命令 |
 | `design/proposal.md` | ★开发提案书：范围/技术栈/里程碑/脚手架/风险（开工单一入口） |
@@ -46,7 +46,7 @@
 | `design/management-ui-spec-v1.md` | ★本地 Web 管理界面设计规范 v1（UI 真源：三态 A/B/C + 组件 + 文案表 + tokens + 验收清单） |
 | `design/local-engine.md` | ★本地技能引擎 canonical：四命令 / MCP 九工具 / 引擎模块 / 交付三通道与接线矩阵 / 参数链 / 双指标 / 目录布局 / 测试与验收 |
 | `design/maintenance-cheatsheet.md` | ★维护速查表：30 秒目录定位、五张变更配方（端点/迁移/CLI/UI/admin）、硬不变量、坑速查（症状→原因→修法）、外部触点 |
-| `design/teamai-host-matrix.md` | ★TeamAI CLI（v0.22.0）调研 + 宿主矩阵对齐方案：三层能力拆解 · 9 宿主逐字路径事实表 · MCP 五格式族 · 三个坑（Hermes allowlist 双写 / OpenCode instructions glob / 不猜 MCP）· R1–R3 裁决（不采纳分发范式 · 抄宿主矩阵 Hermes 优先 · 反向可被订阅）· 提案 [host-matrix-alignment](openspec/changes/host-matrix-alignment/proposal.md) |
+| `design/teamai-host-matrix.md` | ★TeamAI CLI（v0.22.0）调研 + 宿主矩阵对齐方案：三层能力拆解 · 9 宿主逐字路径事实表 · MCP 五格式族 · 三个坑（Hermes allowlist 双写 / OpenCode instructions glob / 不猜 MCP）· R1–R3 裁决（不采纳分发范式 · 抄宿主矩阵 Hermes 优先 · 反向可被订阅）· 提案 [host-matrix-alignment](../openspec/changes/host-matrix-alignment/proposal.md) |
 
 ### 图表 design/diagrams/
 `architecture-panorama.html` · `minimal-loop-review.html` · **`runtime-architecture.html`（运行时架构 · 四通道同权）** · **`release-pipeline.html`（发布部署流水线 · lockstep 发版）** · `mockups/`（UI 设计稿 PNG ×54，已归档：2026-08-28 视觉推翻后不再是比对真源，仅作历史参考）
@@ -65,9 +65,10 @@
 | 形态与商业 | overseas-deployment · web-ia-gates-badges · commercial-model-minimal（反馈积分/企业调用/私有部署） |
 | 工程与选型 | **2026-08-28-standardize-node-postgres（★现行运行时基线：Node ≥22.18 LTS + pnpm 10 + Postgres/node-postgres·无 ORM·`Db` 接口直写 SQL）** · **2026-08-28-lean-stack-adoption（瘦栈：禁成品库·许 headless+copy-in；Tailwind v4 + shadcn/Base UI）** · **2026-08-28-container-deployment（单服务起步·多阶段构建·三环境一套 compose·生产形态=单机 Docker Compose）** |
 | 本地技能引擎 | **2026-09-02-skill-envelope（技能内部形式定档 + 与线上信封 v0.2 映射）** · **2026-09-02-mcp-sdk-consolidation（官方 SDK + 唯一 server 九工具面 5+3+1，修订 mcp-early-access）** |
+| 本地能力面 | **2026-09-11-local-capability-plane（★定位扩展：**经验层 + 本地能力面**；外部生态作**可插拔适配器**；开放产物 + 开放扩展；不 Fork/不复刻 APM。✅ 已签发，**开发中**——执行计划见 [local-capability-plane/tasks.md](../openspec/changes/local-capability-plane/tasks.md)，由夜间四席定时流水线推进）** |
 
 ## 笔记与归档
-`notes/red-team-v0.2.md`（五案结案）· `notes/2026-08-28-pi-research.md`（pi 调研：盟友判定+借鉴清单）· `notes/2026-08-27-minimal-validation-path.md`（72 节输入源）· `notes/2026-08-28-implementation-plan-codex-v1.md`（历史 Codex 方案归档）
+`notes/red-team-v0.2.md`（五案结案）· `notes/2026-08-28-pi-research.md`（pi 调研：盟友判定+借鉴清单）· `notes/2026-08-27-minimal-validation-path.md`（72 节输入源）· `notes/2026-08-28-implementation-plan-codex-v1.md`（历史 Codex 方案归档）· **`notes/2026-09-09-semantic-router-evaluation.md`（外部输入：aurelio-labs/semantic-router 评估——结论不引入，但照出 Think Gate「判声明不判内容」缺口，已预登记 Experiment 004）** · **`notes/2026-09-10-skill-management-landscape.md`（外部输入：分层 Skill 管理构想件 + xingkongliang/skills-manager 调研——结论不引入形态，吸收 install⇄deploy 分离 / provenance / 反向可见 / 更新跟踪四点；**照出缺口：经验落库 ≠ 宿主可见**，立提案 [host-integration](../openspec/changes/host-integration/proposal.md)）** · **`notes/2026-09-11-mcp-hosting-management-trio.md`（外部输入：mcp-gateway / skills-manager / mcphub 三件套——不自建网关·落法 = 外挂兼容；差异位 = fork 远程 Agent 临时执行环境；**已勘误「断裂已接通」的误判**，与 host-integration 串成依赖链，打通记录见 `.workbuddy/memory/2026-09-11.md`）** · **`notes/2026-09-11-agent-skill-layered-management.md`（外部输入：Agent 分层 Skill 管理 + 按场景动态加载方案构想稿——2026-09-11 由根级按治理 §1 归档至此并纳入跟踪；逐条对齐现状见 [local-content-model](../openspec/changes/local-content-model/proposal.md) §八：**分层与渐进加载内核已基本落地，不采纳 MCP Gateway / pgvector**，需补 = 验证目标闭环 + 资源/脚本两级加载）** · **`notes/2026-09-11-microsoft-apm-evaluation.md`（外部输入：Microsoft APM（Agent Package Manager）评估——**结论：包清单与多宿主装载层已有主，且比我们设想完整**（`apm.yml` + `apm.lock.yaml` 含内容哈希/SBOM · **16 宿主矩阵** · `apm-policy` 策略继承 · fail-closed 安全默认）→ **不自造 `agents.json`**；真空白位 = **记忆下发同步 + 经验来源回流**）** · **`notes/2026-09-11-agent-platform-proposal-evaluation.md`（外部输入：《Agent 管理与开发平台（MVP→平台化）》方案评估——**顶层判断"APM 只作 Adapter、不 Fork"与我们的结论完全一致（强背书）**；可借鉴 5 条模型级设计（spec/status 分离 · 身份不绑易变物 · PackageProvider 签名 · 实体不混 · Workflow 只描述不执行）；**不适用 4 条**（Runtime Plane / Marketplace+六类 Registry / 无经验层 / 中心化平台假设）——照做会进「又一个 Agent 平台」红海）**
 
 ## 其他
 `prompt-blueprint.md`（英文蓝本，词表同步）
