@@ -237,8 +237,8 @@
   - DoD：16 个壳文件存在且可跳过/待填充；fixture 构造器齐（无 L1 宿主 / 无 APM / 外部漂移 / 双适配器冲突 / 双宿主…）（S8 fakeAdapter 构造器待 P1 types 落地补，壳注记已标）
 - [ ] **C2** 契约测试骨架（V0 层）：四方法 × 门控 × 锁的通用套件，供 A 轨适配器**直接套用**
   - DoD：fake 适配器跑通套件；**新适配器接入 = 3 行**
-- [ ] **C3** 台账一致性脚本 `scripts/check-ledger.mjs`：`tasks.md` ↔ `git log` ↔ `progress.md` 三方对账
-  - DoD：能报出「勾了没提交 / 提交没勾 / 无台账条目 / 台账 sha 不存在」四类
+- [x] **C3** 台账一致性脚本 `scripts/check-ledger.mjs`：`tasks.md` ↔ `git log` ↔ `progress.md` 三方对账
+  - DoD：能报出「勾了没提交 / 提交没勾 / 无台账条目 / 台账 sha 不存在」四类（按任务号对账为主键；sha 失效为 warning——amend 自指悖论已在脚本头注说明；首跑即暴露 host-matrix 0.1–0.4 历史无尾注勾选，留审查席裁定）
 - [ ] **C4** 性能评估基线 `scripts/bench/`（**架构不限，bun/rust 可**）：检索 / 装配 / 对账三条关键路径
   - DoD：基线可重复跑并输出数字；**纳入参考，不入 CI 门禁**
 - [ ] **C5** 手册随行检查：`user-manual` / participant SKILL / `admin-guide` 与 CLI 命令面一致性核对
