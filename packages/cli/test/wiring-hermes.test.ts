@@ -7,7 +7,7 @@
  * 零垃圾断言：wireMcp/unwireMcp 对 hermes 不产生任何文件（1.5 DoD）。
  */
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -50,13 +50,16 @@ test("wireMcp(hermes)：零文件产生（不写 MCP/不建目录）", async () 
   const hermes = hostById("hermes");
   const r = await wireMcp(hermes);
   assert.equal(r.mcp, "absent", "无 MCP 语义下接线即 absent");
-  let entries: string[] = [];
-  try {
-    entries = await readdir(path.join(root, ".hermes"));
-  } catch {
-    /* 目录不存在 = 零垃圾（期望） */
-  }
-  assert.deepEqual(entries, [], `HERMES_HOME 下不得有任何文件：${JSON.stringify(entries)}`);
+  assert.equal(r.extra, "rules", "rules 兜底走 SOUL.md 块注入（1.3）");
+  // 1.3 后预期产物 = 仅 SOUL.md（无任何 MCP 配置文件 = 零垃圾语义）
+  const entries = await readdir(path.join(root, ".hermes"));
+  assert.deepEqual(
+    entries.sort(),
+    ["SOUL.md"],
+    `HERMES_HOME 下只应有 SOUL.md：${JSON.stringify(entries)}`,
+  );
+  const soul = await readFile(path.join(root, ".hermes", "SOUL.md"), "utf8");
+  assert.ok(soul.includes("agentsignal:rules:start") && soul.includes("search_skills"));
 });
 
 test("hostStatus(hermes)：absent 且不抛（null mcpPath 守卫）", async () => {
@@ -64,9 +67,13 @@ test("hostStatus(hermes)：absent 且不抛（null mcpPath 守卫）", async () 
   assert.equal(st.mcp, "absent");
 });
 
-test("unwireMcp(hermes)：零文件操作", async () => {
+test("unwireMcp(hermes)：摘除 SOUL.md 块且用户内容保留、无 MCP 文件", async () => {
   const r = await unwireMcp(hostById("hermes"));
   assert.equal(r.mcp, "absent");
+  const soul = await readFile(path.join(root, ".hermes", "SOUL.md"), "utf8");
+  assert.ok(!soul.includes("agentsignal:rules"), "标记段整体摘除");
+  const entries = await readdir(path.join(root, ".hermes"));
+  assert.deepEqual(entries.sort(), ["SOUL.md"], "不得产生 MCP 等其他文件");
 });
 
 test("既有 5 宿主回归：claude-code 定义不受 mcpPath 类型放宽影响", () => {

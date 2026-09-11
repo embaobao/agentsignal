@@ -9,6 +9,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
 import type { HostDef, HostId } from "./hosts.ts";
+import { injectSoulBlock, removeSoulBlock } from "./soul.ts";
 
 export type WireStatus = "wired" | "drift" | "absent";
 
@@ -139,6 +140,11 @@ async function writeExtra(host: HostDef): Promise<"hook" | "rules" | "none"> {
     await writeJsonAtomic(settingsPath, json);
     return "hook";
   }
+  // Hermes 等无 rules 文件位宿主：rules 一行兜底注入 SOUL.md 标记段（1.3）
+  if (host.soulPath) {
+    await injectSoulBlock(host.soulPath, RULES_LINE);
+    return "rules";
+  }
   if (host.rulesPath) {
     await mkdir(path.dirname(host.rulesPath), { recursive: true });
     let existing = "";
@@ -200,6 +206,15 @@ async function removeExtra(host: HostDef): Promise<"none"> {
       if (Object.keys(hooks).length > 0) json.hooks = hooks;
       else delete json.hooks;
       await writeJsonAtomic(settingsPath, json);
+    } catch {
+      /* 摘除阶段不因兜底片段失败而中断 */
+    }
+    return "none";
+  }
+  // Hermes 等宿主：摘除 SOUL.md 标记段（用户原有内容保留）
+  if (host.soulPath) {
+    try {
+      await removeSoulBlock(host.soulPath);
     } catch {
       /* 摘除阶段不因兜底片段失败而中断 */
     }
