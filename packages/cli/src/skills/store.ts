@@ -10,6 +10,7 @@ import path from "node:path";
 import {
   type SkillFrontmatter,
   SkillFrontmatterSchema,
+  type SkillVerifyTarget,
   type TriggerRule,
 } from "@agentssignal/protocol";
 import { type AnyOrama, create, insert, load, save, search } from "@orama/orama";
@@ -28,7 +29,7 @@ export interface SkillRecord {
   dependencies: { env: string[]; bins: string[]; packages: string[] };
   /** mustache 参数声明（四来源链解析用） */
   params: SkillFrontmatter["parameters"];
-  verify_target: string[];
+  verify_target: string[] | SkillVerifyTarget | null;
   lifecycle: SkillFrontmatter["lifecycle"];
   /** skill.json5 绝对路径 */
   metaFile: string;
@@ -79,7 +80,7 @@ export async function scanSkills(paths?: AgentSignalPaths): Promise<{
         triggers: parsed.triggers,
         dependencies: parsed.dependencies,
         params: parsed.parameters,
-        verify_target: parsed.verify_target,
+        verify_target: parsed.verify_target ?? null,
         lifecycle: parsed.lifecycle,
         metaFile,
         bodyFile,

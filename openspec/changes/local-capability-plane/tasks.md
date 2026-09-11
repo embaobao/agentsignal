@@ -149,7 +149,7 @@
 
 ## 四、P5 —— 经验层收口【轨道 B】
 
-- [ ] **5.1** `skill-schema.ts` + `packages/cli/src/skills/verify.ts`：`verify_target` 补实现（`{statement, checks[]}`）
+- [x] **5.1** `skill-schema.ts` + `packages/cli/src/skills/verify.ts`：`verify_target` 补实现（`{statement, checks[]}`）
   - DoD：三态判定可关联目标；旧 `skill.json5` 零破坏（null 兼容读）
 - [ ] **5.2** `transcoder.ts`：`provenance.origin` 补写入（平台订阅/包导入/手动）
   - DoD：新落库必有 origin；旧记录读 null 不报错

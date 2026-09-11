@@ -123,6 +123,17 @@ export const SkillLifecycleSchema = z
     updates: [],
   });
 
+/* ------------------------------- verify_target（local-capability-plane P5） ------------------------------- */
+
+/**
+ * 核验目标（P5 5.1）：三态判定（worked/partial/failed）的可关联依据——
+ * statement = 这条经验「怎么算用对了」的一句话主张；checks = 可逐条对照的核验清单。
+ */
+export const SkillVerifyTargetSchema = z.object({
+  statement: z.string().min(1),
+  checks: z.array(z.string().min(1)).default([]),
+});
+
 /** skill.json5 —— Frontmatter 六字段必收 + 扩展 optional 安全默认 */
 export const SkillFrontmatterSchema = z.object({
   // === 必收六字段 ===
@@ -143,8 +154,9 @@ export const SkillFrontmatterSchema = z.object({
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
   parameters: SkillParametersSchema.default({}),
-  /** verify_target：verify_skill 的可核验目标清单 */
-  verify_target: z.array(z.string()).default([]),
+  /** verify_target：verify_skill 的可核验目标（P5 起新形态 {statement, checks[]}；
+   *  历史形态 null 与字符串数组照旧可读（零破坏），归一归引擎层 normalizeVerifyTarget） */
+  verify_target: z.union([SkillVerifyTargetSchema, z.array(z.string()), z.null()]).optional(),
   /** 正文引用（正文存储在同级 SKILL.md） */
   content: z
     .object({
@@ -268,6 +280,7 @@ export const ConfigSchema = z.object({
 /* ------------------------------- 类型导出 ------------------------------- */
 
 export type TriggerRule = z.infer<typeof TriggerRuleSchema>;
+export type SkillVerifyTarget = z.infer<typeof SkillVerifyTargetSchema>;
 export type SkillFrontmatter = z.infer<typeof SkillFrontmatterSchema>;
 export type ArtifactFrontmatter = z.infer<typeof ArtifactFrontmatterSchema>;
 export type SkillParameters = z.infer<typeof SkillParametersSchema>;

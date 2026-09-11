@@ -249,6 +249,10 @@ var SkillLifecycleSchema = z3.object({
   sync_state: "active",
   updates: []
 });
+var SkillVerifyTargetSchema = z3.object({
+  statement: z3.string().min(1),
+  checks: z3.array(z3.string().min(1)).default([])
+});
 var SkillFrontmatterSchema = z3.object({
   // === 必收六字段 ===
   id: z3.string().regex(SKILL_ID_PATTERN, "id \u987B\u4E3A\u5C0F\u5199 slug\uFF08[a-z][a-z0-9_-]*\uFF09"),
@@ -267,8 +271,9 @@ var SkillFrontmatterSchema = z3.object({
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
   parameters: SkillParametersSchema.default({}),
-  /** verify_target：verify_skill 的可核验目标清单 */
-  verify_target: z3.array(z3.string()).default([]),
+  /** verify_target：verify_skill 的可核验目标（P5 起新形态 {statement, checks[]}；
+   *  历史形态 null 与字符串数组照旧可读（零破坏），归一归引擎层 normalizeVerifyTarget） */
+  verify_target: z3.union([SkillVerifyTargetSchema, z3.array(z3.string()), z3.null()]).optional(),
   /** 正文引用（正文存储在同级 SKILL.md） */
   content: z3.object({
     format: z3.string().default("markdown"),
@@ -417,6 +422,7 @@ export {
   SkillLifecycleSchema,
   SkillParametersSchema,
   SkillProvenanceSchema,
+  SkillVerifyTargetSchema,
   SubscriptionSchema,
   SyncStateSchema,
   TOKENS_EST_MAX,
