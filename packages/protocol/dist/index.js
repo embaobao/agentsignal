@@ -277,6 +277,19 @@ var SkillFrontmatterSchema = z3.object({
   }).default({ format: "markdown", path: "./SKILL.md" }),
   lifecycle: SkillLifecycleSchema
 });
+var ArtifactFrontmatterSchema = z3.object({
+  name: z3.string().min(1),
+  description: z3.string().min(1)
+});
+function parseArtifactFrontmatter(raw, expectedDirName) {
+  const parsed = ArtifactFrontmatterSchema.parse(raw);
+  if (expectedDirName !== void 0 && parsed.name !== expectedDirName) {
+    throw new Error(
+      `\u4EA7\u7269 frontmatter name\uFF08${parsed.name}\uFF09\u2260 \u843D\u88C5\u76EE\u5F55\u540D\uFF08${expectedDirName}\uFF09\u2014\u2014\u4EA7\u7269 name \u5FC5\u987B\u7B49\u4E8E\u76EE\u5F55\u540D`
+    );
+  }
+  return parsed;
+}
 var SubscriptionSchema = z3.object({
   topic: z3.string().min(1),
   /** 游标（sig_<ulid>）；缺省 = 从头同步 */
@@ -375,6 +388,7 @@ export {
   AgentPublicSchema,
   ApiErrorSchema,
   AppError,
+  ArtifactFrontmatterSchema,
   BODY_MAX,
   ConfigLayerSchema,
   ConfigSchema,
@@ -418,6 +432,7 @@ export {
   includeValues,
   isPrefixed,
   parameterTypes,
+  parseArtifactFrontmatter,
   prefixed,
   signalKinds,
   skillStatuses,
