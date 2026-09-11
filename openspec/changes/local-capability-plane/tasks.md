@@ -115,7 +115,7 @@
 
 - [x] **0.1** `AGENTS.md` 定位更新（决议 D1/D2：经验层 + 本地能力面）；当前阶段刷为 P0
   - DoD：三节与决议一致；`docs/README.md` 阶段行同步
-- [ ] **0.2** `packages/protocol/src/skill-schema.ts`：产物 frontmatter（`name`/`description` 必填；`name`=目录名）
+- [x] **0.2** `packages/protocol/src/skill-schema.ts`：产物 frontmatter（`name`/`description` 必填；`name`=目录名）
   - DoD：schema+校验导出；私有层字段（`layers`/`triggers`/`domains`）**不进产物 schema**
 - [ ] **0.3** `packages/cli/src/skills/transcoder.ts` + `install.ts`：落库生成/校验 frontmatter
   - DoD：产物 `SKILL.md` 首部合规；私有增强只进 `skill.json5`

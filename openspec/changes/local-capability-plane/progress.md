@@ -15,3 +15,4 @@
 2. **可追溯**：每条必含 commit sha；git log 中每个任务编号提交都能反查到台账条目
 3. **可更新**：任务状态变化（`[x]`→审查驳回→修复→`[x]`）逐次追加新条目，不删旧条目
 | 2026-09-12 | 席1·主轨开发（轨道A） | 0.1 AGENTS.md 定位更新（D1/D2 三节：定位扩展行+当前阶段刷 P0+剩余列当前主线）· docs/README.md 进度行/定位行同步（0.3.0→0.5.0 · 主线刷 local-capability-plane P0） | ✅ 待审查 | `ba25b0b`
+| 2026-09-12 | 席1·主轨开发（轨道A） | 0.2 产物 frontmatter——protocol 新增 ArtifactFrontmatterSchema（name/description 必填）+ parseArtifactFrontmatter（目录名一致性）+ 类型导出；私有层字段零泄漏断言；CLI 5 新用例（红→绿，104/104）· protocol build · check/lint 绿 | ✅ 待审查 | `84f887e`

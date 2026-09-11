@@ -156,6 +156,34 @@ export const SkillFrontmatterSchema = z.object({
   lifecycle: SkillLifecycleSchema,
 });
 
+/* ------------------------------- 产物 frontmatter（local-capability-plane P0） ------------------------------- */
+
+/**
+ * 产物 frontmatter —— 落到宿主技能目录的 SKILL.md 首部，**零工具可读**
+ * （APM / skills-manager 等外部工具直接消费，D3 保留 APM 原则 P1「不发明私有 frontmatter」）。
+ *
+ * 与内部形式 SkillFrontmatterSchema 的边界：
+ *   - 标准字段仅 name / description，均必填；name 须等于落装目录名（parseArtifactFrontmatter 校验）；
+ *   - 私有层字段（id/domains/layers/triggers/keywords/verify_target/lifecycle 等检索与
+ *     分层元数据）**不进产物 schema**，只存内部形式 skill.json5；产物侧出现时按 zod
+ *     未知键默认行为剥离（零泄漏语义，S10 同款）。
+ */
+export const ArtifactFrontmatterSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+});
+
+/** 产物 frontmatter 校验入口：schema 解析 + 可选目录名一致性（不一致即抛错，错误含目录名） */
+export function parseArtifactFrontmatter(raw: unknown, expectedDirName?: string) {
+  const parsed = ArtifactFrontmatterSchema.parse(raw);
+  if (expectedDirName !== undefined && parsed.name !== expectedDirName) {
+    throw new Error(
+      `产物 frontmatter name（${parsed.name}）≠ 落装目录名（${expectedDirName}）——产物 name 必须等于目录名`,
+    );
+  }
+  return parsed;
+}
+
 /* ------------------------------- 订阅（dynamic-skill-management） ------------------------------- */
 
 /** 单条订阅：pull 式同步的最小声明（无常驻进程，游标 = 最后同步的 sig id） */
@@ -241,6 +269,7 @@ export const ConfigSchema = z.object({
 
 export type TriggerRule = z.infer<typeof TriggerRuleSchema>;
 export type SkillFrontmatter = z.infer<typeof SkillFrontmatterSchema>;
+export type ArtifactFrontmatter = z.infer<typeof ArtifactFrontmatterSchema>;
 export type SkillParameters = z.infer<typeof SkillParametersSchema>;
 export type ConfigLayer = z.infer<typeof ConfigLayerSchema>;
 export type HostBinding = z.infer<typeof HostBindingSchema>;
