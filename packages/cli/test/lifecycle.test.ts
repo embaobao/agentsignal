@@ -96,8 +96,10 @@ test("applySignalUpdate：标 outdated + updates 记录 + UPDATES.md 附加层�
   assert.equal(meta.lifecycle.sync_state, "outdated");
   assert.equal(meta.lifecycle.updates.length, 1);
   assert.equal(meta.lifecycle.updates[0]?.sig_id, UP);
-  // 原 Runbook 逐字不动
-  assert.equal(await readFile(path.join(root, "skills", SIG, "SKILL.md"), "utf8"), BODY);
+  // 原 Runbook 逐字不动（P0.3 产物格式：首部产物 frontmatter + 正文）
+  const md = await readFile(path.join(root, "skills", SIG, "SKILL.md"), "utf8");
+  assert.ok(md.startsWith(`---\nname: "${SIG}"\ndescription: `), "产物首部 name=目录名");
+  assert.ok(md.endsWith(BODY), "正文逐字保留在首部之后");
   // 更新层落 UPDATES.md
   const updatesMd = await readFile(path.join(root, "skills", SIG, "UPDATES.md"), "utf8");
   assert.ok(updatesMd.includes(UP) && updatesMd.includes(UPDATE_BODY));
@@ -203,8 +205,10 @@ test("markRevoked：标 revoked 但文件保留（不物理删）", async () => 
       lifecycle: { sync_state: string };
     };
     assert.equal(meta.lifecycle.sync_state, "revoked");
-    // 不物理删
-    assert.equal(await readFile(path.join(iso, "skills", SIG, "SKILL.md"), "utf8"), BODY);
+    // 不物理删（P0.3 产物格式：首部产物 frontmatter + 正文）
+    const md = await readFile(path.join(iso, "skills", SIG, "SKILL.md"), "utf8");
+    assert.ok(md.startsWith(`---\nname: "${SIG}"\ndescription: `));
+    assert.ok(md.endsWith(BODY));
     assert.ok((await readFile(path.join(iso, "skills", SIG, "UPDATES.md"), "utf8")).length > 0);
     assert.equal(await markRevoked("sig_01notinstalled000000000000", resolvePaths()), false);
   } finally {

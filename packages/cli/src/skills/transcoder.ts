@@ -9,6 +9,7 @@
  * kind≠solution 拒转（update 走更新链，锚定用 extractAnchorSigId 提取）。
  */
 import {
+  parseArtifactFrontmatter,
   type SkillFrontmatter,
   SkillFrontmatterSchema,
   validationLevels,
@@ -81,6 +82,31 @@ export function parseDigest(digest: string): {
 export function extractAnchorSigId(digest: string): string | null {
   const m = /anchor:\s*(sig_[a-z0-9]+)/i.exec(digest);
   return m?.[1] ?? null;
+}
+
+/**
+ * 产物 SKILL.md 渲染（local-capability-plane P0.3）：首部产物 frontmatter（零工具可读，
+ * 仅 name/description 标准两字段）+ 正文逐字保留。私有增强（layers/triggers/domains 等）
+ * 只进内部形式 skill.json5，本函数不收不写。
+ * 值用 JSON.stringify 序列化——YAML 1.2 是 JSON 超集，引号/换行/冒号天然安全。
+ * 写前过 parseArtifactFrontmatter 校验（含 name = 目录名一致性）。
+ */
+export function renderArtifactSkillMd(dirName: string, description: string, body: string): string {
+  const fm = parseArtifactFrontmatter({ name: dirName, description }, dirName);
+  return `---\nname: ${JSON.stringify(fm.name)}\ndescription: ${JSON.stringify(fm.description)}\n---\n\n${body}`;
+}
+
+/**
+ * 产物首部剥离（renderArtifactSkillMd 的对偶）：注入/MCP 消费侧读正文前剥掉
+ * 产物 frontmatter（Token Firewall——name/description 已在工具元信息，正文不重复付费）。
+ * 精确匹配本函数族的输出形态（name/description 两行 JSON 值）；旧技能无首部、
+ * 正文以 `---` 水平线开头等情形一律原样返回（零破坏，D10 约束 3 语义不变）。
+ */
+const ARTIFACT_FM_PREFIX =
+  /^---\nname: ("(?:[^"\\]|\\.)*")\ndescription: ("(?:[^"\\]|\\.)*")\n---\n\n/;
+
+export function stripArtifactFrontmatter(raw: string): string {
+  return raw.replace(ARTIFACT_FM_PREFIX, "");
 }
 
 export function transcodeSignal(input: TranscodeInput, ctx: TranscodeContext): TranscodeResult {

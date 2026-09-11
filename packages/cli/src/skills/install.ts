@@ -10,7 +10,12 @@ import path from "node:path";
 import JSON5 from "json5";
 import { type AgentSignalPaths, resolvePaths } from "./paths.ts";
 import { buildIndex, saveIndex, scanSkills } from "./store.ts";
-import { type TranscodeContext, type TranscodeInput, transcodeSignal } from "./transcoder.ts";
+import {
+  renderArtifactSkillMd,
+  type TranscodeContext,
+  type TranscodeInput,
+  transcodeSignal,
+} from "./transcoder.ts";
 
 export interface InstallResult {
   /** 技能目录绝对路径（skills/<sig_id>/） */
@@ -33,7 +38,12 @@ export async function installSignal(
   await writeFile(metaTmp, JSON5.stringify(frontmatter, null, 2), "utf8");
   await rename(metaTmp, path.join(dir, "skill.json5"));
   const bodyTmp = path.join(dir, `SKILL.md.tmp-${process.pid}`);
-  await writeFile(bodyTmp, body, "utf8");
+  // 产物 SKILL.md = 首部产物 frontmatter（零工具可读，name=目录名）+ 正文（P0.3）
+  await writeFile(
+    bodyTmp,
+    renderArtifactSkillMd(frontmatter.id, frontmatter.description, body),
+    "utf8",
+  );
   await rename(bodyTmp, path.join(dir, "SKILL.md"));
 
   const { skills } = await scanSkills(p);

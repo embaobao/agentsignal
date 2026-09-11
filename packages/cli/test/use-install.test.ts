@@ -52,7 +52,10 @@ test("installSignal：落库两件套 + provenance 全录 + 正文逐字", async
   assert.equal(meta.lifecycle.provenance?.topic, "ai-research");
   assert.equal(meta.lifecycle.provenance?.validation, "self-tested");
   assert.equal(meta.lifecycle.provenance?.base_url, CTX.base_url);
-  assert.equal(await readFile(path.join(dir, "SKILL.md"), "utf8"), BODY);
+  // P0.3 产物格式：首部产物 frontmatter（name=目录名）+ 正文逐字
+  const md = await readFile(path.join(dir, "SKILL.md"), "utf8");
+  assert.ok(md.startsWith(`---\nname: "${SIG_ID}"\ndescription: `), "产物首部 name=目录名");
+  assert.ok(md.endsWith(BODY), "正文逐字保留在首部之后");
 });
 
 test("索引：落库后 ensureIndex 加载即可检索命中（save/load 全链）", async () => {

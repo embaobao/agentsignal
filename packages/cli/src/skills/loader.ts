@@ -13,6 +13,7 @@ import JSON5 from "json5";
 import mustache from "mustache";
 import { type AgentSignalPaths, resolvePaths } from "./paths.ts";
 import { type SkillRecord, scanSkills } from "./store.ts";
+import { stripArtifactFrontmatter } from "./transcoder.ts";
 
 export interface MissingReport {
   env: string[];
@@ -128,7 +129,8 @@ export async function loadDetail(
     return { ok: false, id: skill.id, code: "PARAMETERS_MISSING", missing };
   }
 
-  const raw = await readFile(skill.bodyFile, "utf8");
+  // 产物首部剥离（P0.3）：SKILL.md 落库带产物 frontmatter，注入正文不含（Token Firewall）
+  const raw = stripArtifactFrontmatter(await readFile(skill.bodyFile, "utf8"));
   const body = mustache.render(raw, values);
   // 更新层附加（P3.1）：UPDATES.md 存在则附于正文之后，不覆盖原 Runbook
   let updates = "";

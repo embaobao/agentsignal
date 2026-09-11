@@ -117,7 +117,7 @@
   - DoD：三节与决议一致；`docs/README.md` 阶段行同步
 - [x] **0.2** `packages/protocol/src/skill-schema.ts`：产物 frontmatter（`name`/`description` 必填；`name`=目录名）
   - DoD：schema+校验导出；私有层字段（`layers`/`triggers`/`domains`）**不进产物 schema**
-- [ ] **0.3** `packages/cli/src/skills/transcoder.ts` + `install.ts`：落库生成/校验 frontmatter
+- [x] **0.3** `packages/cli/src/skills/transcoder.ts` + `install.ts`：落库生成/校验 frontmatter
   - DoD：产物 `SKILL.md` 首部合规；私有增强只进 `skill.json5`
 - [ ] **0.4** 快照测试：产物结构 + frontmatter + **旧技能零破坏**（旧样例升级路径夹具）
   - DoD：`pnpm verify` 全绿；正/旧两版样例
