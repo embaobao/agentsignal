@@ -22,6 +22,6 @@
 ## Phase 4 · 文档托管 + 检索闭环
 - [ ] 4.1 apps/docs 部署到 /docs 路径：
   - [x] 4.1a Scalar API 参考迁 /docs → /api-docs — 2026-09-10 完成（server.ts routePrefix 迁移；netlify/functions-src config.path 增 /api-docs（保留 /docs 过渡，随下次部署生效——部署面 toml 按纪律未动）；three-chains e2e 增 /api-docs 200 断言；隔离栈实弹：/api-docs → 200（Scalar UI），旧 /docs 本地为 SPA 兜底、公网归文档站）；**部署面遗留：下次 Netlify 部署时 function config.path 随构建自动带上，无需仪表盘操作**
-  - [ ] 4.1b 渲染器（Docusaurus 3 裁决）落地 + apps/docs 构建产物部署 /docs
+  - [x] 4.1b 渲染器（Docusaurus 3 裁决）落地 + apps/docs 构建产物部署 /docs — 2026-09-10 完成（Docusaurus ~3.7.0 + @docusaurus/faster（rspack，绕开 webpackbar 6×webpack 5.110 ProgressPlugin 冲突）+ sidebars 自动生成 + 品牌定制 css；**build 全绿**（18 页入站产物全渲染）；**装配器新增 MDX 清洗三层**：围栏/行内代码豁免下的裸尖括号转义、表格行内代码 `|`→`\|`（GFM 劈格根因）、散文裸 `{` 转义——三个真根因各配复现探针；构建产物 build/ 与 .docusaurus 缓存已 gitignore；**「部署 /docs」动作随下次 Netlify 部署执行（部署押后令）**；Node 25 跑 docs 构建需 Node 22（nvm 切换，已知边界））
 - [x] 4.2 检索页 topic 分区浏览 + 关键词框 — 2026-09-10 完成（**账实对照：功能已随 v5 搜索优先页上线**（TopicPage：大搜索框→?q= 导航、topic 分区 pills、关键词回显、Latest/Most verified 排序、列表/卡片视图），本轮补 TopicPage.test.tsx 3 用例契约背书（搜索导航/分区 pills/参数链路）；test:ui 37/37 绿）
 - [ ] 4.3 首页/SKILL 互链 /docs

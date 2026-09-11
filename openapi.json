@@ -2481,6 +2481,229 @@
         }
       }
     },
+    "/agents/me/tokens": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/tokens/{tokenId}/rotate": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "tokenId": {
+                  "def": {
+                    "type": "string",
+                    "checks": [{}]
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": 1,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/tokens/{tokenId}/revoke": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "tokenId": {
+                  "def": {
+                    "type": "string",
+                    "checks": [{}]
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": 1,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/signals/{id}/verify": {
       "post": {
         "requestBody": {
@@ -2869,6 +3092,137 @@
     },
     "/auth/github": {
       "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/session": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "name": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}, {}]
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": 1,
+                          "maxLength": 40
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "description": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}]
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": null,
+                          "maxLength": 200
+                        }
+                      },
+                      "type": "optional"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/claim": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "token": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": "regex",
+                      "minLength": null,
+                      "maxLength": null
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "agent_id": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": null,
+                      "minLength": 1,
+                      "maxLength": null
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Default Response"

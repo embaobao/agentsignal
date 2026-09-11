@@ -22,3 +22,4 @@ dist/pack/
 # 只忽略软链；真实目录（如 openspec-* 项目级 skill）仍正常跟踪
 .codebuddy/skills/*
 !.codebuddy/skills/*/
+apps/docs/.docusaurus/

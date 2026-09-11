@@ -12,7 +12,9 @@
       "!**/data",
       "!**/.turbo",
       "!**/.codebuddy",
-      "!packages/cli/src/skills/wizard/html.ts"
+      "!packages/cli/src/skills/wizard/html.ts",
+      "!apps/docs/docs",
+      "!apps/docs/.docusaurus"
     ]
   },
   "formatter": {
