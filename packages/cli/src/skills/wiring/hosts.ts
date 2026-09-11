@@ -1,8 +1,10 @@
 /**
  * 宿主注册表与探测（wiring/detect）。
  *
- * 宿主覆盖矩阵（裁决 7/8，Phase 2 验收物）：
- *   Claude Code = hooks + MCP 全量 · Cursor/Gemini = hook + MCP · Cline/Codex/Trae = MCP + rules
+ * 宿主覆盖矩阵（host-matrix-alignment）：
+ *   Claude Code = hooks + MCP 全量 · Cursor/Gemini/Cline/Codex = MCP（+rules 一行兜底）
+ *   Hermes = skill + SOUL.md 块 + hook 双写，不写 MCP（mcpPath = null）
+ * D7 不猜 MCP 纪律：没把握的宿主一律不写 MCP，只发 skill + rules 一行兜底，不产生垃圾配置。
  * 探测 = 配置目录特征文件存在；写入只碰 agentsignal 自己的条目，不覆盖用户已有配置（规范 E-10）。
  */
 import { statSync } from "node:fs";

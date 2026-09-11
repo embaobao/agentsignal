@@ -31,8 +31,8 @@
 - [ ] 2.1 **WorkBuddy**：`~/.workbuddy/skills` + rules + settings；MCP `~/.workbuddy/mcp.json`，顶层键 `mcpServers`，形状 `{ "transportType":"streamable-http", … }` + timeout
 - [ ] 2.2 **dsh（DeepSeek Harness）**：**只发 skill** 到 `~/.dsh/skills`；rules/settings/MCP 全不做（纯 skill 目录）
 - [ ] 2.3 **OpenCode**：`userScope` 字段落地（user `~/.config/opencode/` vs project `<root>/.opencode/` 双前缀）；rules 写入**且**在 `opencode.json` 的 `instructions` glob 注册（不注册不生效）；MCP 顶层键是 **`mcp`** 不是 `mcpServers`，无 SSE
-- [ ] 2.4 清偿既存漂移：`hosts.ts` 文件头注释提到 Trae 但 `HostId` 无 trae —— 二选一（补 trae 或删注释）**【需站长裁决 · 阻塞项：夜间轮自动选「删注释」保守执行并留档，站长可翻案】**
-- [ ] 2.5 文件头注释写入 **D7 不猜 MCP 纪律**（抄 TeamAI 原文口径：没把握的宿主一律不写 MCP，只发 skill + rules 一行兜底）
+- [x] 2.4 清偿既存漂移：`hosts.ts` 文件头注释提到 Trae 但 `HostId` 无 trae —— 二选一（补 trae 或删注释）**【需站长裁决 · 阻塞项：夜间轮自动选「删注释」保守执行并留档，站长可翻案】**（2026-09-12 夜已按授权选「删注释」：头注释已重写为当下事实，Trae 不再被提及；站长可翻案补 trae）
+- [x] 2.5 文件头注释写入 **D7 不猜 MCP 纪律**（抄 TeamAI 原文口径：没把握的宿主一律不写 MCP，只发 skill + rules 一行兜底）
 - [ ] 2.6 测试：三宿主各一套探测/写入/摘除断言；既存 5 宿主回归全绿（init-e2e 不回退）
 
 ## Phase 3 · 反向可被订阅（约 0.3 人日，可独立先行）
