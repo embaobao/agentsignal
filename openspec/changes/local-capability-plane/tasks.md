@@ -233,8 +233,8 @@
 
 > 目的：把「验证能力」本身做成基础设施，供 A/B 轨复用，并为性能与手册提供基线与随行检查。
 
-- [ ] **C1** 场景测试骨架：`packages/cli/test/scenarios/` 建 **S1–S16 fixture 库 + 测试壳**（对照 design §8.5 逐条）
-  - DoD：16 个壳文件存在且可跳过/待填充；fixture 构造器齐（无 L1 宿主 / 无 APM / 外部漂移 / 双适配器冲突 / 双宿主…）
+- [x] **C1** 场景测试骨架：`packages/cli/test/scenarios/` 建 **S1–S16 fixture 库 + 测试壳**（对照 design §8.5 逐条）
+  - DoD：16 个壳文件存在且可跳过/待填充；fixture 构造器齐（无 L1 宿主 / 无 APM / 外部漂移 / 双适配器冲突 / 双宿主…）（S8 fakeAdapter 构造器待 P1 types 落地补，壳注记已标）
 - [ ] **C2** 契约测试骨架（V0 层）：四方法 × 门控 × 锁的通用套件，供 A 轨适配器**直接套用**
   - DoD：fake 适配器跑通套件；**新适配器接入 = 3 行**
 - [ ] **C3** 台账一致性脚本 `scripts/check-ledger.mjs`：`tasks.md` ↔ `git log` ↔ `progress.md` 三方对账
