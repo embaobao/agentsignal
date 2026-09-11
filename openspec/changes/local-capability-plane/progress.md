@@ -21,3 +21,4 @@
 | 2026-09-12 | 席2·副轨开发（轨道B） | 5.2 provenance.origin 补写入——TranscodeInput 增 origin 声明·transcodeSignal 缺省 {kind:"platform",ref:sig_id}（新落库必有 origin）·包导入/手动显式透传（P4 接线位）；golden 快照随新语义更新；旧记录无 origin optional 兼容断言；CLI 126/126 · check/lint 绿 | ✅ 待审查 | `2653873`
 | 2026-09-12 | 席3·基建轨（轨道C） | C1 场景测试骨架——test/scenarios/ 16 壳（S1–S16 逐条：前置/通过标准/验证层/填充注记，test.todo 待填充）+ fixtures.ts（makeScenarioRoot/seedHostHome/seedHostSkillsDir/seedForeignSkill/seedTwoHosts/cleanup）；S8 fakeAdapter 构造器标注待 P1 types；CLI 132/132 不受壳影响 · check/lint 绿 | ✅ 待审查 | `b31187d`
 | 2026-09-12 | 席3·基建轨（轨道C） | C3 台账一致性脚本 scripts/check-ledger.mjs——tasks↔git log(spec 尾注)↔progress 三方对账四类报告（任务号主键·sha 失效 warning）；顺手修正 LCP/host-matrix 两份台账 9 个 amend 废弃 sha；首跑暴露 host-matrix 0.1-0.4 历史无尾注勾选（真实债，留审查席）；CLI 不涉 · 语法 node 直跑过 | ✅ 待审查 | `59e7834`
+| 2026-09-12 | 夜间通用轨（06:00，代审查席入库） | 审查三席报告统一入库（dod/test/redline 三份 ✅ 全过）· 四项待办处置：R5-a 已修（dda2731 前笔）· scenarios glob 缺口与台账口径两句留 06:30 汇总席定稿 · 0.4 快照夹具留轨道 A | ✅ 报告全过 | (sha见下笔)
