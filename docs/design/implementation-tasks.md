@@ -625,18 +625,56 @@ flowchart TD
 
 ---
 
-> ### 2026-09-08 动态技能管理开工（[dynamic-skill-management 提案](../../openspec/changes/dynamic-skill-management/proposal.md) · Approved 站长令 · 夜间每小时轮实施）
+> ### 2026-09-08 动态技能管理开工（[dynamic-skill-management 提案](../../openspec/changes/archive/dynamic-skill-management/proposal.md) · Approved 站长令 · 夜间每小时轮实施）
 >
-> skill-engine Phase 3 预留的「服务端发布机制」另立提案落地：订阅落库 × 回流闭环。红线：不新增用户命令（恒四）/ MCP 工具（恒九）/ 无常驻进程 / 零触碰 apps/api。进度以该 change 的 [tasks.md](../../openspec/changes/dynamic-skill-management/tasks.md) 为准（每小时轮勾选 + 本节按 Phase 汇总落账）。
+> skill-engine Phase 3 预留的「服务端发布机制」另立提案落地：订阅落库 × 回流闭环。红线：不新增用户命令（恒四）/ MCP 工具（恒九）/ 无常驻进程 / 零触碰 apps/api。进度以该 change 的 [tasks.md](../../openspec/changes/archive/dynamic-skill-management/tasks.md) 为准（每小时轮勾选 + 本节按 Phase 汇总落账）。
 >
 > | 项 | 状态 | 落点 |
 > |---|---|---|
-> | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
-> | P0 协议先行（决策 + schema + transcoder） | ✅ 2026-09-09 全完成 | [决议 2026-09-08-dynamic-skill-management](decisions/2026-09-08-dynamic-skill-management.md) · glossary「订阅（Subscription · 本地）」· skill-schema（provenance 四字段 + ConfigSchema.sync）· transcoder.ts 8 用例 |
+> | P0.1 协议决策 + 术语 | ✅ 2026-09-08 | [决议 2026-09-08-dynamic-skill-management](../decisions/2026-09-08-dynamic-skill-management.md)（映射表/provenance 扩展/更新链/回流镜像/subscriptions 段/红线）· glossary「订阅（Subscription · 本地）」 |
+> | P0 协议先行（决策 + schema + transcoder） | ✅ 2026-09-09 全完成 | [决议 2026-09-08-dynamic-skill-management](../decisions/2026-09-08-dynamic-skill-management.md) · glossary「订阅（Subscription · 本地）」· skill-schema（provenance 四字段 + ConfigSchema.sync）· transcoder.ts 8 用例 |
 > | P1 use --install + verify 回流镜像 | ✅ 2026-09-09 全完成（1.1/1.2/1.3） | skills/install.ts + skills/mirror.ts · init-e2e 增段（回环平台全链 5 用例）· SKILL §4 同步 |
 > | P2 订阅同步器 + 管理界面订阅区 | ✅ 2026-09-09 全完成（2.1–2.4） | skills/sync.ts（探针/同步器，10 用例）· wizard 4 端点 + 订阅面板/库列表（产物重注入）· status 订阅体检行（init-e2e 6 用例）· 开放问题按建议值执行待裁决 |
-> | P3 生命周期治理（outdated/revoked/容量） | 未开工 | `packages/cli/src/skills/lifecycle.ts` |
-> | P4 文档随行 + 端到端 + changeset 发版 | 未开工 | user-manual §1.5 · local-engine.md 升版 · G1–G4 |
+> | P3 生命周期治理（outdated/revoked/容量） | ✅ 2026-09-09 全完成 | `packages/cli/src/skills/lifecycle.ts`（锚定链 outdated / 源失效 revoked 降权 / 容量 LRU 候选） |
+> | P4 文档随行 + 端到端 + changeset 发版 | ✅ 2026-09-10 全完成（含 4.2a 本地自管理全链硬门 + 4.3 发版） | user-manual §1.5 · local-engine.md 升版 · G1–G4 · **@agentssignal/* 0.5.0 lockstep 已发 npm（2026-09-10）**；服务端生产部署押后为运维动作 |
+
+> ### 2026-09-09 新登记缺口 · Think Gate 语义层（**只登记不排期**）
+>
+> 来源：外部输入 [semantic-router 评估](../../docs/notes/2026-09-09-semantic-router-evaluation.md)。结论 **不引入该库**，但其内核照出 Think Gate 一处结构性缺口，如实落账如下。
+>
+> **缺口（查证事实）**：`apps/` + `packages/` 内 grep `embedding|cosine|相似度` **零命中**——Watch Filter 为纯字段过滤（kind · priority · tokens_est · digest · sender 口碑）。而该组字段**全部由发布方自报**（priority 可自抬、tokens_est 是估算、digest 由发布方撰写），故现 Gate 判的是「**声明**」不是「**内容**」，回答不了「这条信号的内容跟我要不要想的事相不相关」。
+>
+> | 项 | 状态 | 落点 |
+> |---|---|---|
+> | 外部输入归档 | ✅ 2026-09-09 | `docs/notes/2026-09-09-semantic-router-evaluation.md` |
+> | 实验预登记 | ✅ 2026-09-09 | [validation.md](validation.md) Experiment 004（索引已加；**前置门槛 = Experiment 002 过关并留存基线**） |
+> | 语义层实现 | **未开工 · 未排期** | 依赖 004 过线；过线后落点优先跨 Topic 语义发现，而非当前 Think Gate |
+> | 不引入该库的三条硬理由 | 已定案 | ① Python 库 vs Node ≥22.18 单服务（违「排除微服务」）② 多类路由 vs 二值准入形状不匹配 ③ 核心依赖含 `aurelio-sdk`，正往厂商托管迁移 |
+>
+> **若 004 过线后的实现口径**：Node 侧自研（transformers.js 本地 或 embedding API），只移植两个可移植算法——**阈值离线调优**、**utterance 聚合策略**。不引 Python、不加常驻进程。服务端若需存向量再议 `pgvector`（与 lean-stack 无 ORM 口径冲突，须另立决议）。
+>
+> **生死线（写死，勿绕过）**：`net tokens saved` 必须 > 0，即 embedding 自身调用成本须低于它省下的 token 成本。不成立则 Think Gate 经济模型崩溃，结论为不采纳。
+
+---
+
+> ### 2026-09-11 新登记缺口 · 宿主技能装载（[host-integration](../../openspec/changes/host-integration/proposal.md)，**draft**）+ fork 临时执行环境（**想法**）
+>
+> 来源：两条 session 线合流——「想法」线 [三件套调研](../../docs/notes/2026-09-11-mcp-hosting-management-trio.md)（mcp-gateway / skills-manager / mcphub）+「构建」线 [skill-management-landscape](../../docs/notes/2026-09-10-skill-management-landscape.md)（分层 Skill 方案 + skills-manager）。打通记录：`.workbuddy/memory/2026-09-11.md`。
+>
+> **缺口（代码查证）**：`installSignal` 只写中央库 `~/.agentsignal/skills/<sig_id>/`；`wiring/hosts.ts` 的 `HostDef` 无 skills 目录位；`wiring/snippets.ts` 只写 MCP / hook / rules 三类。故**宿主 Agent 原生看不到订阅来的经验**——`search_skills` 可达 ≠ 宿主技能目录可见。已就地勘误「想法」线 §四「断裂已由 wiring 接通」的误判。
+>
+> | 项 | 状态 | 落点 |
+> |---|---|---|
+> | 断裂发现与归档 | ✅ 2026-09-10 | `docs/notes/2026-09-10-skill-management-landscape.md` |
+> | 提案立项 | ✅ 2026-09-10（draft 待批） | [host-integration](../../openspec/changes/host-integration/proposal.md) 四件套 |
+> | review 结论（待站长裁决） | 已出 | ① 立论宜改「权衡」而非「补缺口」（常驻 context 成本 vs 在场性）；② 补 validation 预登记；③ 与 alignment 对账 skills 写入器归属（当前该写入器为零）；④ 拆分推进：先「落地 + 卸载对等」，对账治理后置 |
+> | 装载实现 | **未开工** | 依赖 [host-matrix-alignment](../../openspec/changes/host-matrix-alignment/proposal.md)（宿主矩阵 + skillsPath 能力位），且其需先补 `HostBindingSchema.host` 枚举与 skills 写入器 |
+> | fork 临时执行环境（agent-preset） | **想法 · 未立项** | [trio 笔记](../../docs/notes/2026-09-11-mcp-hosting-management-trio.md) §五；**依赖 host-integration 的装载能力**——先补断层再做编排 |
+> | wiring「MCP 端点透传」 | **想法 · 待裁** | trio §五 建议 2；一个 HostDef 级改动，host-matrix-alignment 顺手可捎 |
+>
+> **依赖链（勿颠倒）**：订阅落库（已上线）→ MCP 按需消费（已上线）→ **宿主技能装载（host-integration · 缺）** → fork 临时执行环境（依赖装载能力）。
+>
+> **本地化闭环（同日核实）**：本地 `apps/api` + 两开关（`SELF_REGISTER_ENABLED=1`、`AGENTSIGNAL_BASE_URL=http://localhost:3000`）即可跑内部线闭环；0.5.0 的 4.2a 已在隔离栈实测通过。
 
 ---
 

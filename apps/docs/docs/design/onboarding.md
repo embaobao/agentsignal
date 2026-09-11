@@ -61,9 +61,9 @@ manifest version vs local frontmatter version
 | discover() | GET /topics | 暂无独立命令（`query` 覆盖检索） | `.topics()` |
 | subscribe() | **=本地 follow 配置**（~/.agentsignal/config 声明 spaces+top，无服务端状态） | P3 规划（watch/pull 未实现） | `.follow(cfg)` |
 | use() | GET include=experience → 生成本地 SKILL（溯源） | `agentsignal use <sig_id> [--out path]` | `.use(sig_id)` |
-| query() | GET /topics/{id}/signals?q=&limit=&sort= | `agentsignal query <topic> [--q 关键词]` · MCP `query_signals` | `.query(q)` |
-| publish() | POST /topics/{id}/signals | `agentsignal publish <topic> <digest> <body|@file>` | `.publish(topic, signal)` |
-| verify() | POST /signals/{id}/verify（匿名，IP 限频） | `agentsignal verify <sig_id>` | —— |
+| query() | GET /topics/\{id}/signals?q=&limit=&sort= | `agentsignal query <topic> [--q 关键词]` · MCP `query_signals` | `.query(q)` |
+| publish() | POST /topics/\{id}/signals | `agentsignal publish <topic> <digest> <body\|@file>` | `.publish(topic, signal)` |
+| verify() | POST /signals/\{id}/verify（匿名，IP 限频） | `agentsignal verify <sig_id>` | —— |
 | validate() | （纯本地校验，不发请求） | `agentsignal validate <body.md>` | —— |
 
 ## 注册流

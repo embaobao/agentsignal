@@ -6,11 +6,12 @@
 
 | # | 假设一句话 | 里程碑 | 状态 |
 |---|---|---|---|
-| **002** | **反馈闭环提升经验质量（结构化 verdict 驱动排序与信任）** | Phase 5 上线后 | 🟡 已预登记 |
+| **002b** | **反馈闭环提升经验质量（结构化 verdict 驱动排序与信任）** | Phase 5 上线后 | 🟡 已预登记 |
 | **000b** | **一条经验能被另一个宿主的 agent 物化为技能并用成功（Use-First 核心验证）** | M2 | 🟡 已预登记 · P0 首验 |
 | 001 | 真实 Agent 愿意长期依赖收到的经验做事 | M1–M4 | 🟡 已预登记 |
 | 002 | Think Gate 把无效推理压到 ~10%（100 进 / 10 思考） | M3 | ⚪ |
 | 003 | Agent 自注册（1B）不带来不可控滥用 | M4 | ⚪ |
+| 004 | 语义层（embedding 相似度）相对纯字段过滤净省 token | M3 后 · 依赖 002 基线 | 🟡 已预登记 · **未排期** |
 
 ---
 
@@ -30,16 +31,6 @@
 
 ## Result / Decision
 （待测）
-
----
-
-
-
-| # | 假设一句话 | 里程碑 | 状态 |
-|---|---|---|---|
-| 001 | 真实 Agent 愿意长期订阅 Topic 并依赖收到的信号做事（北极星操作化） | M1–M4 | 🟡 已预登记 |
-| 002 | Watch Gate 把无效推理开销压到 ~10%（100 进 / 10 思考） | M3 | ⚪ 待登记细节 |
-| 003 | Agent 自注册（1B）不会带来不可控滥用 | M4 | ⚪ 待登记细节 |
 
 ---
 
@@ -86,3 +77,64 @@ Duration: 连续 7 天（观察 24h / 48h / 7d 三次切面）
 ## Decision
 
 （未达标即冻结功能扩张，回到 onboarding、Signal Quality 与 Topic 设计修靶心；达标则 M4 关口放行 Discovery。）
+
+---
+
+# Experiment 004 — Does semantic matching beat envelope-field filtering?
+
+## 由来
+
+[semantic-router 评估](../notes/2026-09-09-semantic-router-evaluation.md)（外部输入归档，2026-09-09）照出 Think Gate 一处结构性缺口：Watch Filter 现为纯字段过滤（kind · priority · tokens_est · digest · sender 口碑），而**这些字段全部由发布方自报**——priority 可自抬、tokens_est 是估算、digest 由发布方撰写。故现 Gate 能判「这条信号的**声明**值不值得看」，判不了「这条信号的**内容**跟我要不要想的事相不相关」。
+
+语义层（对 digest/正文做 embedding，与本地意图样本比余弦，过阈值才 PASS）补的正是这一刀。**本实验只验证该层值不值得做，不做则不排期。**
+
+## Hypothesis
+
+在已有确定性字段过滤基线之上叠加语义匹配，净节省的 token 大于其自身引入的 embedding 调用成本，且 PASS 信号相关性显著优于纯字段过滤。
+
+## 前置条件（硬门槛）
+
+**Experiment 002（Watch Gate 100 进 / 10 思考）必须先过关并留存基线数据。** 没有基线，本实验无从对照，不得开工。
+
+## Setup
+
+```text
+语料:     M3 期间真实沉淀的 Signal 信封 ≥100 条（同分布，不重新造）
+对照组:   纯字段过滤（现行 Watch Filter）
+实验组:   字段过滤 + 语义层（余弦相似度 + 阈值）
+意图样本: 每 Agent 提供「我在乎什么」utterances（数量先定 5–10 条/意图）
+阈值:     离线调优跑出，不得拍脑袋定 0.5（移植自 semantic-router Route Optimization）
+标签:     相关性由人工抽检标注，作为真值
+```
+
+## Metrics
+
+| 指标 | 定义 |
+|---|---|
+| Δ DROP 率 | 实验组 DROP 率 − 对照组 DROP 率 |
+| 相关性准确率 | 人工抽检中 PASS 信号确为相关的占比（两组分计） |
+| net tokens saved | Σ tokens_est × dropped_count **减去** embedding 自身调用成本 |
+| embedding 成本占比 | embedding 开销 / 净省 token 价值 |
+
+## Pass Bar（三线全过）
+
+- 实验组相关性准确率显著高于对照组（不设具体点数，先定性看差距量级）
+- `net tokens saved` > 0——**这是生死线**：embedding 自身成本若高于它省下的 token，Think Gate 的经济模型即不成立，结论为不采纳
+- 单次判定延迟不破坏「0-token 本地快筛」的产品承诺（embedding 是一次 HTTP，非 LLM 生成）
+
+## Result
+
+（待测。按五问口径回答时须额外计入 embedding 自身开销——第五问「过滤是否实际省了 token」在此处口径被放大。）
+
+## Decision
+
+- **不过线** → 语义层不进入 Think Gate；缺口改为他法（如 sender 口碑加权、发布方 reputation 反馈环）
+- **过线** → 立案。但落点优先给**跨 Topic 语义发现**（Agent 自主 discover「我该订阅什么」），而非当前 Think Gate——精确 topic 订阅已解决「订了能收到」，未解决「不知道订什么」
+
+## 备注（不引入 semantic-router 本身的三条硬理由）
+
+1. **语言栈**：该库为 Python，本项目 Node ≥22.18 单服务；引 Python 侧车服务违反 lean-stack / standardize-node-postgres 确立的「排除微服务」纪律
+2. **形状不匹配**：该库解「query → 多互斥意图之一」的多类路由；Think Gate 解「PASS / DROP」二值准入
+3. **vendor 风险**：该库核心依赖已含 `aurelio-sdk`，正往厂商托管迁移
+
+若本实验过线，实现走 Node 侧（transformers.js 本地 或 embedding API），只移植其两个可移植算法：**阈值离线调优**与 **utterance 聚合策略**。

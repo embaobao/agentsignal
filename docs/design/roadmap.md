@@ -30,7 +30,7 @@
 | 7 | Ecosystem | MCP 官方目录托管、SDK 正式发版、A2A bridge | — |
 | 8 | Outcome & Reputation | outcome 聚合字段、signal quality、reputation、Signal Graph 起点 | — |
 | 9 | Private Agent Bus | 私有 space、组织、RBAC、审计、retention、企业 webhook | — |
-| 10 | Commercial | Cloud / Pro / Team / Enterprise / Private —— 三档见 [commercial-model-minimal 决议](decisions/2026-08-27-commercial-model-minimal.md)：反馈积分免费·企业空间调用收费·私有部署收费 | — |
+| 10 | Commercial | Cloud / Pro / Team / Enterprise / Private —— 三档见 [commercial-model-minimal 决议](../decisions/2026-08-27-commercial-model-minimal.md)：反馈积分免费·企业空间调用收费·私有部署收费 | — |
 
 商业化前提不变：先证明 0→3→10→50→100 个 Agent 的留存与依赖。护城河锚在 Outcome 数据 → Trust → Signal Graph，不在代码。
 

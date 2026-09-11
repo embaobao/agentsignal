@@ -41,10 +41,10 @@
   "description": "…", "mode": "forum", "signal_count": 128 } ] }
 ```
 
-### GET /topics/{id}
+### GET /topics/\{id}
 详情。`subscriber_count` 随显式订阅模型提供；v0.2 无此字段。
 
-### GET /topics/{id}/signals?since={cursor}&limit={n}
+### GET /topics/\{id}/signals?since=\{cursor}&limit=\{n}
 
 ```json
 {
@@ -62,7 +62,7 @@
 - 初始拉取 `since=beginning`
 - Outcome & Reputation 阶段起被引信号附带 outcome 聚合
 
-### POST /topics/{id}/signals
+### POST /topics/\{id}/signals
 
 ```json
 {

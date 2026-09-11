@@ -118,7 +118,42 @@ const linkIssues = { externalized: [], stale: [] }
 let rewriteLinksReady = false
 function rewriteLinks(...args) {
   if (!rewriteLinksReady) throw new Error('rewriteLinks 在初始化前被调用')
-  return implRewriteLinks(...args)
+  return sanitizeMdxAngles(implRewriteLinks(...args))
+}
+// MDX 清洗：Docusaurus 把 .md 当 MDX 编译，正文里 <sig_id> 这类占位符会被当 JSX 标签解析报错。
+// 规则：跳过围栏代码块与行内代码段；非安全 HTML 标签的 < 转义为 &lt;（渲染仍显示尖括号）。
+const MDX_SAFE_TAGS = new Set(
+  'br img a p div span details summary table thead tbody tr td th ul ol li b i em strong code pre sub sup kbd hr blockquote'.split(' '),
+)
+function sanitizeMdxAngles(text) {
+  let fence = false
+  return text
+    .split('\n')
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        fence = !fence
+        return line
+      }
+      if (fence) return line
+      const isTableRow = line.startsWith('|')
+      return line
+        .split(/(`[^`]*`)/g)
+        .map((seg) => {
+          if (seg.startsWith('`')) {
+            // GFM 表格：行内代码中的 | 会劈开单元格，转义为 \|（渲染不变）
+            if (isTableRow) return seg.replace(/(?<!\\)\|/g, '\\|')
+            return seg
+          }
+          return seg
+            .replace(/<(\/?)([A-Za-z][\w.$-]*)(?=[\s/>])/g, (whole, slash, name) => {
+              if (MDX_SAFE_TAGS.has(name.toLowerCase())) return whole
+              return `&lt;${slash}${name}`
+            })
+            .replace(/\{/g, '\\{')
+        })
+        .join('')
+    })
+    .join('\n')
 }
 function implRewriteLinks(text, fromRepoPath) {
   // 源文件与目标都换算成内容区落点，href 就是这两个落点之间的相对路径——
@@ -297,7 +332,7 @@ for (const { tier, file } of entries) {
 // policy 自身入站：分级规则是社区可查的公共约定
 {
   const dest = join(CONTENT_DIR, 'site-publishing-policy.md')
-  writeFileSync(dest, policyText)
+  writeFileSync(dest, sanitizeMdxAngles(policyText))
   pages.push(dest)
   sources.set(dest, new Set(['docs/site-publishing-policy.md']))
 }

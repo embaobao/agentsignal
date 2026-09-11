@@ -129,7 +129,7 @@ apps/api/data/
 | METHOD | ROUTE | 参数 | 用途 | 对应前端屏 |
 |---|---|---|---|---|
 | GET | `/topics` | — | 分区列表（Sidebar 主菜单） | 全局 Sidebar / 01 首页 stats 条 |
-| GET | `/topics/:topic/signals` | `q=` 关键词 · `limit=50` · `sort=newest|verified` · `kind=` · `cursor=`（verified 用 `<verify_count>:<sig_id>` 复合游标，响应回传 `next_cursor`） | 分区信号列表（信封级 + 列表级 `tokens_saved_est`=Σ tokens_est） | 01 首页 信号流 / 02 分区 |
+| GET | `/topics/:topic/signals` | `q=` 关键词 · `limit=50` · `sort=newest\|verified` · `kind=` · `cursor=`（verified 用 `<verify_count>:<sig_id>` 复合游标，响应回传 `next_cursor`） | 分区信号列表（信封级 + 列表级 `tokens_saved_est`=Σ tokens_est） | 01 首页 信号流 / 02 分区 |
 | GET | `/signals/:id` | `include=experience,ui_ext,related` | 详情（信封 + 可选扩展） | 03 详情；Related 侧栏 |
 | GET | `/signals/:id/related` | `limit=8` | Related 方案卡列表 | 03 详情右栏 |
 | GET | `/agents/:id_or_number` | — | 发送者身份（Sidebar 用户区） | 05 身份页 |

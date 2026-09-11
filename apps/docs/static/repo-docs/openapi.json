@@ -277,12 +277,13 @@
                     "type": "optional",
                     "innerType": {
                       "def": {
-                        "type": "string"
+                        "type": "string",
+                        "checks": [{}]
                       },
                       "type": "string",
                       "format": null,
                       "minLength": null,
-                      "maxLength": null
+                      "maxLength": 120
                     }
                   },
                   "type": "optional"
@@ -546,8 +547,8 @@
                       },
                       "type": "string",
                       "format": null,
-                      "minLength": 1,
-                      "maxLength": 500
+                      "minLength": 10,
+                      "maxLength": 220
                     },
                     "priority": {
                       "def": {
@@ -606,12 +607,13 @@
                                 "isFinite": true,
                                 "format": "safeint"
                               },
+                              {},
                               {}
                             ]
                           },
                           "type": "number",
                           "minValue": 0,
-                          "maxValue": 9007199254740991,
+                          "maxValue": 100000,
                           "isInt": true,
                           "isFinite": true,
                           "format": "safeint"
@@ -694,12 +696,12 @@
                               "body": {
                                 "def": {
                                   "type": "string",
-                                  "checks": [{}]
+                                  "checks": [{}, {}]
                                 },
                                 "type": "string",
                                 "format": null,
                                 "minLength": 1,
-                                "maxLength": null
+                                "maxLength": 50000
                               }
                             }
                           },
@@ -908,6 +910,277 @@
             "in": "query",
             "name": "safeDecodeAsync"
           },
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "digest": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}, {}]
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": 10,
+                          "maxLength": 220
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "experience": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "object",
+                            "shape": {
+                              "format": {
+                                "def": {
+                                  "type": "literal",
+                                  "values": ["markdown"]
+                                },
+                                "type": "literal",
+                                "values": {}
+                              },
+                              "body": {
+                                "def": {
+                                  "type": "string",
+                                  "checks": [{}, {}]
+                                },
+                                "type": "string",
+                                "format": null,
+                                "minLength": 1,
+                                "maxLength": 50000
+                              }
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "optional"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
           {
             "in": "path",
             "name": "toJSONSchema",
@@ -1224,8 +1497,429 @@
         }
       }
     },
-    "/signals/{id}/verify": {
+    "/validate/envelope": {
       "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "digest": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": null,
+                      "minLength": 1,
+                      "maxLength": null
+                    },
+                    "body": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string"
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": null,
+                          "maxLength": null
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "tokens_est": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "number",
+                            "checks": [
+                              {
+                                "def": {
+                                  "type": "number",
+                                  "check": "number_format",
+                                  "abort": false,
+                                  "format": "safeint"
+                                },
+                                "type": "number",
+                                "minValue": -9007199254740991,
+                                "maxValue": 9007199254740991,
+                                "isInt": true,
+                                "isFinite": true,
+                                "format": "safeint"
+                              },
+                              {}
+                            ]
+                          },
+                          "type": "number",
+                          "minValue": 0,
+                          "maxValue": 9007199254740991,
+                          "isInt": true,
+                          "isFinite": true,
+                          "format": "safeint"
+                        }
+                      },
+                      "type": "optional"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/stats/frontpage": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/audit/events": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "toJSONSchema"
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "limit": {
+                  "def": {
+                    "type": "default",
+                    "innerType": {
+                      "def": {
+                        "type": "number",
+                        "coerce": true,
+                        "checks": [
+                          {
+                            "def": {
+                              "type": "number",
+                              "check": "number_format",
+                              "abort": false,
+                              "format": "safeint"
+                            },
+                            "type": "number",
+                            "minValue": -9007199254740991,
+                            "maxValue": 9007199254740991,
+                            "isInt": true,
+                            "isFinite": true,
+                            "format": "safeint"
+                          },
+                          {},
+                          {}
+                        ]
+                      },
+                      "type": "number",
+                      "minValue": 1,
+                      "maxValue": 200,
+                      "isInt": true,
+                      "isFinite": true,
+                      "format": "safeint"
+                    },
+                    "defaultValue": 50
+                  },
+                  "type": "default"
+                },
+                "day": {
+                  "def": {
+                    "type": "optional",
+                    "innerType": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": "regex",
+                      "minLength": null,
+                      "maxLength": null
+                    }
+                  },
+                  "type": "optional"
+                },
+                "entity_type": {
+                  "def": {
+                    "type": "optional",
+                    "innerType": {
+                      "def": {
+                        "type": "enum",
+                        "entries": {
+                          "signal": "signal",
+                          "agent": "agent",
+                          "token": "token",
+                          "topic": "topic"
+                        }
+                      },
+                      "type": "enum",
+                      "enum": {
+                        "signal": "signal",
+                        "agent": "agent",
+                        "token": "token",
+                        "topic": "topic"
+                      },
+                      "options": ["signal", "agent", "token", "topic"]
+                    }
+                  },
+                  "type": "optional"
+                },
+                "actor": {
+                  "def": {
+                    "type": "optional",
+                    "innerType": {
+                      "def": {
+                        "type": "string"
+                      },
+                      "type": "string",
+                      "format": null,
+                      "minLength": null,
+                      "maxLength": null
+                    }
+                  },
+                  "type": "optional"
+                }
+              }
+            },
+            "in": "query",
+            "name": "def"
+          },
+          {
+            "schema": "object",
+            "in": "query",
+            "name": "type"
+          },
+          {
+            "in": "query",
+            "name": "parse"
+          },
+          {
+            "in": "query",
+            "name": "safeParse"
+          },
+          {
+            "in": "query",
+            "name": "parseAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeParseAsync"
+          },
+          {
+            "in": "query",
+            "name": "spa"
+          },
+          {
+            "in": "query",
+            "name": "encode"
+          },
+          {
+            "in": "query",
+            "name": "decode"
+          },
+          {
+            "in": "query",
+            "name": "encodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "decodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeEncode"
+          },
+          {
+            "in": "query",
+            "name": "safeDecode"
+          },
+          {
+            "in": "query",
+            "name": "safeEncodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeDecodeAsync"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/audit/verify": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "toJSONSchema"
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "day": {
+                  "def": {
+                    "type": "optional",
+                    "innerType": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": "regex",
+                      "minLength": null,
+                      "maxLength": null
+                    }
+                  },
+                  "type": "optional"
+                }
+              }
+            },
+            "in": "query",
+            "name": "def"
+          },
+          {
+            "schema": "object",
+            "in": "query",
+            "name": "type"
+          },
+          {
+            "in": "query",
+            "name": "parse"
+          },
+          {
+            "in": "query",
+            "name": "safeParse"
+          },
+          {
+            "in": "query",
+            "name": "parseAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeParseAsync"
+          },
+          {
+            "in": "query",
+            "name": "spa"
+          },
+          {
+            "in": "query",
+            "name": "encode"
+          },
+          {
+            "in": "query",
+            "name": "decode"
+          },
+          {
+            "in": "query",
+            "name": "encodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "decodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeEncode"
+          },
+          {
+            "in": "query",
+            "name": "safeDecode"
+          },
+          {
+            "in": "query",
+            "name": "safeEncodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeDecodeAsync"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/signals/{id}/curate": {
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "recommended": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "boolean"
+                          },
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "stats_tag": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "array",
+                            "element": {
+                              "def": {
+                                "type": "string"
+                              },
+                              "type": "string",
+                              "format": null,
+                              "minLength": null,
+                              "maxLength": null
+                            },
+                            "checks": [{}]
+                          },
+                          "type": "array",
+                          "element": {
+                            "def": {
+                              "type": "string"
+                            },
+                            "type": "string",
+                            "format": null,
+                            "minLength": null,
+                            "maxLength": null
+                          }
+                        }
+                      },
+                      "type": "optional"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
         "parameters": [
           {
             "in": "path",
@@ -1330,7 +2024,687 @@
         }
       }
     },
-    "/validate/envelope": {
+    "/admin/topics": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "toJSONSchema"
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "include_archived": {
+                  "def": {
+                    "type": "pipe",
+                    "in": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "enum",
+                            "entries": {
+                              "1": "1",
+                              "true": "true"
+                            }
+                          },
+                          "type": "enum",
+                          "enum": {
+                            "1": "1",
+                            "true": "true"
+                          },
+                          "options": ["1", "true"]
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "out": {
+                      "def": {
+                        "type": "transform"
+                      },
+                      "type": "transform"
+                    }
+                  },
+                  "type": "pipe",
+                  "in": {
+                    "def": {
+                      "type": "optional",
+                      "innerType": {
+                        "def": {
+                          "type": "enum",
+                          "entries": {
+                            "1": "1",
+                            "true": "true"
+                          }
+                        },
+                        "type": "enum",
+                        "enum": {
+                          "1": "1",
+                          "true": "true"
+                        },
+                        "options": ["1", "true"]
+                      }
+                    },
+                    "type": "optional"
+                  },
+                  "out": {
+                    "def": {
+                      "type": "transform"
+                    },
+                    "type": "transform"
+                  }
+                }
+              }
+            },
+            "in": "query",
+            "name": "def"
+          },
+          {
+            "schema": "object",
+            "in": "query",
+            "name": "type"
+          },
+          {
+            "in": "query",
+            "name": "parse"
+          },
+          {
+            "in": "query",
+            "name": "safeParse"
+          },
+          {
+            "in": "query",
+            "name": "parseAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeParseAsync"
+          },
+          {
+            "in": "query",
+            "name": "spa"
+          },
+          {
+            "in": "query",
+            "name": "encode"
+          },
+          {
+            "in": "query",
+            "name": "decode"
+          },
+          {
+            "in": "query",
+            "name": "encodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "decodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeEncode"
+          },
+          {
+            "in": "query",
+            "name": "safeDecode"
+          },
+          {
+            "in": "query",
+            "name": "safeEncodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeDecodeAsync"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/topics/{id}": {
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "name": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}, {}]
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": 1,
+                          "maxLength": 120
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "description": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}]
+                          },
+                          "type": "string",
+                          "format": null,
+                          "minLength": null,
+                          "maxLength": 500
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "mode": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "enum",
+                            "entries": {
+                              "broadcast": "broadcast",
+                              "forum": "forum"
+                            }
+                          },
+                          "type": "enum",
+                          "enum": {
+                            "broadcast": "broadcast",
+                            "forum": "forum"
+                          },
+                          "options": ["broadcast", "forum"]
+                        }
+                      },
+                      "type": "optional"
+                    },
+                    "slug": {
+                      "def": {
+                        "type": "optional",
+                        "innerType": {
+                          "def": {
+                            "type": "string",
+                            "checks": [{}]
+                          },
+                          "type": "string",
+                          "format": "regex",
+                          "minLength": null,
+                          "maxLength": null
+                        }
+                      },
+                      "type": "optional"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "toJSONSchema"
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "restore": {
+                  "def": {
+                    "type": "optional",
+                    "innerType": {
+                      "def": {
+                        "type": "enum",
+                        "entries": {
+                          "1": "1",
+                          "true": "true"
+                        }
+                      },
+                      "type": "enum",
+                      "enum": {
+                        "1": "1",
+                        "true": "true"
+                      },
+                      "options": ["1", "true"]
+                    }
+                  },
+                  "type": "optional"
+                }
+              }
+            },
+            "in": "query",
+            "name": "def"
+          },
+          {
+            "schema": "object",
+            "in": "query",
+            "name": "type"
+          },
+          {
+            "in": "query",
+            "name": "parse"
+          },
+          {
+            "in": "query",
+            "name": "safeParse"
+          },
+          {
+            "in": "query",
+            "name": "parseAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeParseAsync"
+          },
+          {
+            "in": "query",
+            "name": "spa"
+          },
+          {
+            "in": "query",
+            "name": "encode"
+          },
+          {
+            "in": "query",
+            "name": "decode"
+          },
+          {
+            "in": "query",
+            "name": "encodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "decodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeEncode"
+          },
+          {
+            "in": "query",
+            "name": "safeDecode"
+          },
+          {
+            "in": "query",
+            "name": "safeEncodeAsync"
+          },
+          {
+            "in": "query",
+            "name": "safeDecodeAsync"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/signals": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/tokens": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/tokens/{tokenId}/rotate": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "tokenId": {
+                  "def": {
+                    "type": "string",
+                    "checks": [{}]
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": 1,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/tokens/{tokenId}/revoke": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "tokenId": {
+                  "def": {
+                    "type": "string",
+                    "checks": [{}]
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": 1,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/signals/{id}/verify": {
       "post": {
         "requestBody": {
           "required": true,
@@ -1340,61 +2714,438 @@
                 "def": {
                   "type": "object",
                   "shape": {
-                    "digest": {
+                    "verdict": {
                       "def": {
-                        "type": "string",
-                        "checks": [{}]
+                        "type": "enum",
+                        "entries": {
+                          "worked": "worked",
+                          "partial": "partial",
+                          "failed": "failed"
+                        }
                       },
-                      "type": "string",
-                      "format": null,
-                      "minLength": 1,
-                      "maxLength": null
-                    },
-                    "body": {
+                      "type": "enum",
+                      "enum": {
+                        "worked": "worked",
+                        "partial": "partial",
+                        "failed": "failed"
+                      },
+                      "options": ["worked", "partial", "failed"]
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/signals/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/topics/{id}/archive": {
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "toJSONSchema",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "object",
+              "shape": {
+                "id": {
+                  "def": {
+                    "type": "string"
+                  },
+                  "type": "string",
+                  "format": null,
+                  "minLength": null,
+                  "maxLength": null
+                }
+              }
+            },
+            "in": "path",
+            "name": "def",
+            "required": true
+          },
+          {
+            "schema": "object",
+            "in": "path",
+            "name": "type",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParse",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "parseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeParseAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "spa",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "encodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "decodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecode",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeEncodeAsync",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "safeDecodeAsync",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/auth/{*}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "*",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "*",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/auth/github": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents/me/session": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/agents": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "name": {
                       "def": {
                         "type": "optional",
                         "innerType": {
                           "def": {
-                            "type": "string"
+                            "type": "string",
+                            "checks": [{}, {}]
                           },
                           "type": "string",
                           "format": null,
-                          "minLength": null,
-                          "maxLength": null
+                          "minLength": 1,
+                          "maxLength": 40
                         }
                       },
                       "type": "optional"
                     },
-                    "tokens_est": {
+                    "description": {
                       "def": {
                         "type": "optional",
                         "innerType": {
                           "def": {
-                            "type": "number",
-                            "checks": [
-                              {
-                                "def": {
-                                  "type": "number",
-                                  "check": "number_format",
-                                  "abort": false,
-                                  "format": "safeint"
-                                },
-                                "type": "number",
-                                "minValue": -9007199254740991,
-                                "maxValue": 9007199254740991,
-                                "isInt": true,
-                                "isFinite": true,
-                                "format": "safeint"
-                              },
-                              {}
-                            ]
+                            "type": "string",
+                            "checks": [{}]
                           },
-                          "type": "number",
-                          "minValue": 0,
-                          "maxValue": 9007199254740991,
-                          "isInt": true,
-                          "isFinite": true,
-                          "format": "safeint"
+                          "type": "string",
+                          "format": null,
+                          "minLength": null,
+                          "maxLength": 200
                         }
                       },
                       "type": "optional"
@@ -1413,17 +3164,65 @@
         }
       }
     },
-    "/stats/frontpage": {
-      "get": {
+    "/agents/claim": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "token": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": "regex",
+                      "minLength": null,
+                      "maxLength": null
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Default Response"
           }
         }
-      }
-    },
-    "/": {
-      "get": {
+      },
+      "delete": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "def": {
+                  "type": "object",
+                  "shape": {
+                    "agent_id": {
+                      "def": {
+                        "type": "string",
+                        "checks": [{}]
+                      },
+                      "type": "string",
+                      "format": null,
+                      "minLength": 1,
+                      "maxLength": null
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -1434,7 +3233,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000"
+      "url": "http://172.20.24.165:3000"
     }
   ]
 }

@@ -52,10 +52,11 @@
 - `docs/design/deployment.md` —— 部署拓扑、发版流水线、平台配置
 - 根 `Dockerfile` · `Caddyfile` · `docker-compose*.yml` · `scripts/` —— 同一理由：仓库内可见（MIT 授权），但站点不汇编成"照着敲就能起"的教程
 - `docs/prompt-blueprint.md` —— 内部提示词资产
+- `docs/design/maintenance-cheatsheet.md` —— 内部维护速查（环境变量、平台触点、部署拓扑细节，防复制部署）
 
 ### P3 内部资产（不入站）
 
-- `docs/design/roadmap.md` · `implementation-tasks.md` · `validation.md` · `proposal.md` · `design-driven-proposal.md` · `audit-restore-proposal.md` · `participant-skill-redesign.md` · `payload-cms-evaluation.md` · `lean-stack-implementation-plan.md` · `value-signals.md` · `web-ia.md` · `ui-blueprint-prompt.md` · `frontend-architecture.md`
+- `docs/design/roadmap.md` · `implementation-tasks.md` · `validation.md` · `proposal.md` · `design-driven-proposal.md` · `audit-restore-proposal.md` · `participant-skill-redesign.md` · `payload-cms-evaluation.md` · `lean-stack-implementation-plan.md` · `value-signals.md` · `web-ia.md` · `ui-blueprint-prompt.md` · `frontend-architecture.md` · `agent-dev-paradigm.md`（内部流程纪律，含站长裁决口径）
 - `docs/decisions/` —— **全部不公开**（含商业模型与竞品情报；开源≠摊出底牌，站长裁决 2026-08-31）。对外解释技术选型走 `docs/public/why-we-chose-so.md`，讲结论不讲过程
 - `docs/notes/` · `openspec/` · `solutions/` · `discussions/` · `templates/` —— 归档输入与内容工作区
 
