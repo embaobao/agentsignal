@@ -21,17 +21,18 @@ after(async () => {
   if (root) await rm(root, { recursive: true, force: true });
 });
 
-const YAML = path.join(root, "config.yaml");
-const ALLOW = path.join(root, "shell-hooks-allowlist.json");
 const CMD = "agentsignal context";
+// 注意必须在 before 之后求值（root 为空串时会相对 cwd 泄漏文件）——故用函数而非顶层常量
+const YAML = () => path.join(root, "config.yaml");
+const ALLOW = () => path.join(root, "shell-hooks-allowlist.json");
 
 test("两文件都不存在：双写生成（config.yaml hooks 段 + allowlist json），两文件都被写", async () => {
-  await injectHermesHook(YAML, ALLOW, "SessionStart", CMD);
-  const yaml = await readFile(YAML, "utf8");
+  await injectHermesHook(YAML(), ALLOW(), "SessionStart", CMD);
+  const yaml = await readFile(YAML(), "utf8");
   assert.ok(yaml.includes("hooks:"), "config.yaml 应有 hooks 段");
   assert.ok(yaml.includes("SessionStart:"), "config.yaml 应有 event 键");
   assert.ok(yaml.includes(`command: "${CMD}"`), "config.yaml 应有 command 项");
-  const json = JSON.parse(await readFile(ALLOW, "utf8")) as {
+  const json = JSON.parse(await readFile(ALLOW(), "utf8")) as {
     hooks: { event: string; command: string }[];
   };
   assert.deepEqual(json.hooks, [{ event: "SessionStart", command: CMD }]);
@@ -50,25 +51,25 @@ test("已有用户内容：追加不覆盖（用户段逐字保留）", async ()
 });
 
 test("重复注入幂等：同 event+command 只出现一次（两文件都去重）", async () => {
-  await injectHermesHook(YAML, ALLOW, "SessionStart", CMD);
-  await injectHermesHook(YAML, ALLOW, "SessionStart", CMD);
-  const yaml = await readFile(YAML, "utf8");
+  await injectHermesHook(YAML(), ALLOW(), "SessionStart", CMD);
+  await injectHermesHook(YAML(), ALLOW(), "SessionStart", CMD);
+  const yaml = await readFile(YAML(), "utf8");
   assert.equal(yaml.split(`command: "${CMD}"`).length - 1, 1, "config.yaml 只一条");
-  const allow = JSON.parse(await readFile(ALLOW, "utf8")) as {
+  const allow = JSON.parse(await readFile(ALLOW(), "utf8")) as {
     hooks: { event: string; command: string }[];
   };
   assert.equal(allow.hooks.length, 1, "allowlist 只一条");
 });
 
 test("不同 event 各自列表；removeHermesHook 双文件摘除且用户内容保留", async () => {
-  await injectHermesHook(YAML, ALLOW, "Stop", CMD);
-  const yaml = await readFile(YAML, "utf8");
+  await injectHermesHook(YAML(), ALLOW(), "Stop", CMD);
+  const yaml = await readFile(YAML(), "utf8");
   assert.ok(yaml.includes("Stop:") && yaml.includes("SessionStart:"));
-  await removeHermesHook(YAML, ALLOW, "SessionStart", CMD);
-  const after = await readFile(YAML, "utf8");
+  await removeHermesHook(YAML(), ALLOW(), "SessionStart", CMD);
+  const after = await readFile(YAML(), "utf8");
   assert.ok(!after.includes("SessionStart:"), "SessionStart 块摘除");
   assert.ok(after.includes("Stop:"), "Stop 块保留");
-  const allow = JSON.parse(await readFile(ALLOW, "utf8")) as {
+  const allow = JSON.parse(await readFile(ALLOW(), "utf8")) as {
     hooks: { event: string; command: string }[];
   };
   assert.deepEqual(allow.hooks, [{ event: "Stop", command: CMD }]);
@@ -81,10 +82,10 @@ test("摘除不存在的文件不抛；全摘后 hooks 段清空", async () => {
     "Stop",
     CMD,
   );
-  await removeHermesHook(YAML, ALLOW, "Stop", CMD);
-  const yaml = await readFile(YAML, "utf8");
+  await removeHermesHook(YAML(), ALLOW(), "Stop", CMD);
+  const yaml = await readFile(YAML(), "utf8");
   assert.ok(!yaml.includes(CMD), "command 全部摘除");
-  const allow = JSON.parse(await readFile(ALLOW, "utf8")) as {
+  const allow = JSON.parse(await readFile(ALLOW(), "utf8")) as {
     hooks: { event: string; command: string }[];
   };
   assert.deepEqual(allow.hooks, []);
