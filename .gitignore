@@ -23,3 +23,7 @@ dist/pack/
 .codebuddy/skills/*
 !.codebuddy/skills/*/
 apps/docs/.docusaurus/
+apps/docs/build/
+
+# ── 本地 Agent 团队运行态（本地会话数据，不入库）──────────
+.codebuddy/teams/
