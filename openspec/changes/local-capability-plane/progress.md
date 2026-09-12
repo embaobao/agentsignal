@@ -21,9 +21,9 @@
 | 2026-09-12 | 席2·副轨开发（轨道B） | 5.2 provenance.origin 补写入——TranscodeInput 增 origin 声明·transcodeSignal 缺省 {kind:"platform",ref:sig_id}（新落库必有 origin）·包导入/手动显式透传（P4 接线位）；golden 快照随新语义更新；旧记录无 origin optional 兼容断言；CLI 126/126 · check/lint 绿 | ✅ 待审查 | `2653873`
 | 2026-09-12 | 席3·基建轨（轨道C） | C1 场景测试骨架——test/scenarios/ 16 壳（S1–S16 逐条：前置/通过标准/验证层/填充注记，test.todo 待填充）+ fixtures.ts（makeScenarioRoot/seedHostHome/seedHostSkillsDir/seedForeignSkill/seedTwoHosts/cleanup）；S8 fakeAdapter 构造器标注待 P1 types；CLI 132/132 不受壳影响 · check/lint 绿 | ✅ 待审查 | `b31187d`
 | 2026-09-12 | 席3·基建轨（轨道C） | C3 台账一致性脚本 scripts/check-ledger.mjs——tasks↔git log(spec 尾注)↔progress 三方对账四类报告（任务号主键·sha 失效 warning）；顺手修正 LCP/host-matrix 两份台账 9 个 amend 废弃 sha；首跑暴露 host-matrix 0.1-0.4 历史无尾注勾选（真实债，留审查席）；CLI 不涉 · 语法 node 直跑过 | ✅ 待审查 | `59e7834`
-| 2026-09-12 | 夜间通用轨（06:00，代审查席入库） | 审查三席报告统一入库（dod/test/redline 三份 ✅ 全过）· 四项待办处置：R5-a 已修（dda2731 前笔）· scenarios glob 缺口与台账口径两句留 06:30 汇总席定稿 · 0.4 快照夹具留轨道 A | ✅ 报告全过 | (sha见下笔)
+| 2026-09-12 | 夜间通用轨（06:00，代审查席入库） | 审查三席报告统一入库（dod/test/redline 三份 ✅ 全过）· 四项待办处置：R5-a 已修（dda2731 前笔）· scenarios glob 缺口与台账口径两句留 06:30 汇总席定稿 · 0.4 快照夹具留轨道 A | ✅ 报告全过 | `e3ace1f`
 | 2026-09-12 | 席7·汇总修复（06:20-07:25 槽） | 三报告已合并（06:00 轮代入库）· 四待办处置闭环：R5-a 已修（dda2731）· scenarios glob 缺口已修（CLI+根 test 口径 test/**/*.test.ts，todo 16 可见）· §0.7 补 sha 勘误豁免口径 · C1 补审注记定稿；全量门禁 db:up 仍阻塞（Docker 连续 7 轮未起）→ 替代口径 check+lint+CLI 138/138+todo16+test:ui 绿，verify 全链与 e2e 留痕次日补；tasks.md 定稿 | ✅ 定稿 | (sha见git log)
-| 2026-09-13 | 席1·主轨开发（轨道A） | 0.4 快照测试——artifact-snapshot.test.ts 三用例：正样例产物 SKILL.md 字节级快照/私有键零泄漏+origin 在内部形式/旧样例（无首部+verify_target:null）经 scan→loadDetail→verify 全链零破坏；CLI 141/141 · check/lint 绿（verify 全链 Docker 阻塞留痕） | ✅ 待审查 | (sha见下笔)
+| 2026-09-13 | 席1·主轨开发（轨道A） | 0.4 快照测试——artifact-snapshot.test.ts 三用例：正样例产物 SKILL.md 字节级快照/私有键零泄漏+origin 在内部形式/旧样例（无首部+verify_target:null）经 scan→loadDetail→verify 全链零破坏；CLI 141/141 · check/lint 绿（verify 全链 Docker 阻塞留痕） | ✅ 待审查 | `e3ace1f`
 
 ## ★门 G-A 请求（P0 出口 · 2026-09-12 夜发出，等站长真机抽验）
 
@@ -37,4 +37,4 @@
 5. （可选）用 APM 或任意 skill 管理器列目录——应正常识别不报错
 
 **通过标准**：3–5 全过 → P0 出口，轨道 A 进 P1（适配器骨架+APM）。不过 → 驳回注记回 0.3/0.4 修复。
-| 2026-09-13 | 席1·主轨开发（轨道A） | 1.1 capability/types.ts——design §四接口全量落地（PackageSource/CapabilityAdapter 两段·Cap 冻结枚举·DeployResult ladder+skipped[].reason·ReconcileReport 五态·UnsupportedCapability/HostLockConflict 结构化错含自纠建议）；capability-types.test.ts 4 用例，CLI 145/145 · check/lint 绿 | ✅ 待审查 | (sha见下笔)
+| 2026-09-13 | 席1·主轨开发（轨道A） | 1.1 capability/types.ts——design §四接口全量落地（PackageSource/CapabilityAdapter 两段·Cap 冻结枚举·DeployResult ladder+skipped[].reason·ReconcileReport 五态·UnsupportedCapability/HostLockConflict 结构化错含自纠建议）；capability-types.test.ts 4 用例，CLI 145/145 · check/lint 绿 | ✅ 待审查 | `e3ace1f`
