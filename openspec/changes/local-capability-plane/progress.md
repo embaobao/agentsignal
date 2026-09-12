@@ -23,7 +23,7 @@
 | 2026-09-12 | 席3·基建轨（轨道C） | C3 台账一致性脚本 scripts/check-ledger.mjs——tasks↔git log(spec 尾注)↔progress 三方对账四类报告（任务号主键·sha 失效 warning）；顺手修正 LCP/host-matrix 两份台账 9 个 amend 废弃 sha；首跑暴露 host-matrix 0.1-0.4 历史无尾注勾选（真实债，留审查席）；CLI 不涉 · 语法 node 直跑过 | ✅ 待审查 | `59e7834`
 | 2026-09-12 | 夜间通用轨（06:00，代审查席入库） | 审查三席报告统一入库（dod/test/redline 三份 ✅ 全过）· 四项待办处置：R5-a 已修（dda2731 前笔）· scenarios glob 缺口与台账口径两句留 06:30 汇总席定稿 · 0.4 快照夹具留轨道 A | ✅ 报告全过 | `e3ace1f`
 | 2026-09-12 | 席7·汇总修复（06:20-07:25 槽） | 三报告已合并（06:00 轮代入库）· 四待办处置闭环：R5-a 已修（dda2731）· scenarios glob 缺口已修（CLI+根 test 口径 test/**/*.test.ts，todo 16 可见）· §0.7 补 sha 勘误豁免口径 · C1 补审注记定稿；全量门禁 db:up 仍阻塞（Docker 连续 7 轮未起）→ 替代口径 check+lint+CLI 138/138+todo16+test:ui 绿，verify 全链与 e2e 留痕次日补；tasks.md 定稿 | ✅ 定稿 | (sha见git log)
-| 2026-09-13 | 席1·主轨开发（轨道A） | 0.4 快照测试——artifact-snapshot.test.ts 三用例：正样例产物 SKILL.md 字节级快照/私有键零泄漏+origin 在内部形式/旧样例（无首部+verify_target:null）经 scan→loadDetail→verify 全链零破坏；CLI 141/141 · check/lint 绿（verify 全链 Docker 阻塞留痕） | ✅ 待审查 | `e3ace1f`
+| 2026-09-13 | 席1·主轨开发（轨道A） | 0.4 快照测试——artifact-snapshot.test.ts 三用例：正样例产物 SKILL.md 字节级快照/私有键零泄漏+origin 在内部形式/旧样例（无首部+verify_target:null）经 scan→loadDetail→verify 全链零破坏；CLI 141/141 · check/lint 绿（verify 全链 Docker 阻塞留痕） | ✅ 待审查 | `7257f91`
 
 ## ★门 G-A 请求（P0 出口 · 2026-09-12 夜发出，等站长真机抽验）
 
@@ -43,6 +43,7 @@
 ### ⚠️ 新缺口登记（5.3 连带发现，待审查/汇总席排期）
 
 全仓其余 `zod .default(对象字面量)`（SkillDependenciesSchema/content/SyncStateSchema/ConfigSchema.arbitration/ConfigLayerSchema.stack_rules 等）存在同一引用共享风险——当前无消费方原地改（已核 verify/loadDetail 均替换式），但任何未来「parse 后原地改」都会中招。处置建议：清点排查 + 统一改函数工厂（一轮可完成）。
-| 2026-09-13 | 夜间通用轨（02:00 轮） | 5.3 连带缺口当轮闭环——全仓 6 处 zod `.default(对象字面量)` 全部函数工厂化（dependencies/domains/sync 含可变数组属高危·parameters/content/arbitration 统一）+ schema-defaults.test.ts 三引用隔离防回归；CLI 156/156 · check/lint 绿 | ✅ 待审查 | `ce424aa`
-| 2026-09-13 | 席3·基建轨（轨道C） | C2 契约测试套件——scenarios/contract.ts runAdapterContract（probe 结构/能力非空/hosts 非空/deploy ladder+skipped reason 逐条/reconcile 五态硬要求/声明一致性）+ gate/lock 钩子位（1.2/1.4 落地即插）；contract-adapter.test.ts fakeFull 全绿+fakeNoRemove 声明一致性+缺席 reason+reconcile 违约四自证；CLI 160/160 · check/lint 绿 | ✅ 待审查 | `201baeb`
+| 2026-09-13 | 夜间通用轨（02:00 轮） | 5.3 连带缺口当轮闭环——全仓 6 处 zod `.default(对象字面量)` 全部函数工厂化（dependencies/domains/sync 含可变数组属高危·parameters/content/arbitration 统一）+ schema-defaults.test.ts 三引用隔离防回归；CLI 156/156 · check/lint 绿 | ✅ 待审查 | `241ba69`
+| 2026-09-13 | 席3·基建轨（轨道C） | C2 契约测试套件——scenarios/contract.ts runAdapterContract（probe 结构/能力非空/hosts 非空/deploy ladder+skipped reason 逐条/reconcile 五态硬要求/声明一致性）+ gate/lock 钩子位（1.2/1.4 落地即插）；contract-adapter.test.ts fakeFull 全绿+fakeNoRemove 声明一致性+缺席 reason+reconcile 违约四自证；CLI 160/160 · check/lint 绿 | ✅ 待审查 | `21e71d2`
 | 2026-09-13 | 夜间通用轨（04:00 轮） | 1.2 能力门控——capability/caps.ts（FROZEN_CAPS 九能力冻结导出 + assertCap 规则一守卫→UnsupportedCapability）；capability-caps.test.ts 3 用例（未声明拒/已声明放行/全枚举逐一）；C2 gate 钩子消费位就绪；CLI 163/163 · check/lint 绿 | ✅ 待审查 | `10af524`
+| 2026-09-13 | 夜间通用轨（06:00 修复轮） | 审查移交四项清零：🔴 C3 crash 修（warnings 数字计数器误用→changeWarnings 数组，warning 路径首次真实跑通+双死 sha 实证）· 内层数组 default 9 处工厂化（.default([])→()=>[]，比审查报告多抓 1 处）· progress 勘误 3 条（ce424aa→241ba69·201baeb→21e71d2·0.4 行 e3ace1f→7257f91）· Shim 换 1.2 真类 UnsupportedCapability + 5.3 行落点注记（lifecycle.ts）；CLI 163/163 · check/lint 绿 | ✅ 待审查 | (sha见下笔)

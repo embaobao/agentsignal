@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { CapabilityAdapter } from "../../src/capability/types.ts";
+import { type CapabilityAdapter, UnsupportedCapability } from "../../src/capability/types.ts";
 import { runAdapterContract } from "./contract.ts";
 
 function makeFakeFull(): CapabilityAdapter {
@@ -37,14 +37,10 @@ function makeFakeNoRemove(): CapabilityAdapter {
     probe: async () => ({ available: false, reason: "未安装 APM（S6 前半形态）" }),
     capabilities: () => new Set(["skill", "deploy"] as const),
     remove: async () => {
-      throw new UnsupportedCapabilityShim();
+      // 规则一自守卫：未声明 remove 的适配器（APM 形态）调用即抛真类（1.2 已落地）
+      throw new UnsupportedCapability({ adapter: "fake-no-remove", cap: "remove" });
     },
   };
-}
-
-/** APM 形态适配器的 remove 守卫（1.2 assertCap 落地前，适配器自守卫的同形错误） */
-class UnsupportedCapabilityShim extends Error {
-  override name = "UnsupportedCapability";
 }
 
 test("契约套件：fakeFull 全绿（新适配器接入 = 3 行示范）", async () => {

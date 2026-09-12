@@ -118,7 +118,7 @@ for (const change of changes) {
   // 4 台账 sha 失效（warning，不计违规——amend 前的废弃 sha）
   for (const sha of shas) {
     if (!allShaList.has(sha) && !allShaList.has(short(sha))) {
-      warnings.push(`  [4 台账 sha 失效] ${sha} 不在 git log（可修正为 amend 后最终 sha）`);
+      changeWarnings.push(`  [4 台账 sha 失效] ${sha} 不在 git log（可修正为 amend 后最终 sha）`);
     }
   }
 

@@ -72,11 +72,11 @@ export const SkillParametersSchema = z.record(
 export const SkillDependenciesSchema = z
   .object({
     /** 环境变量名（存在性预检，不读值） */
-    env: z.array(z.string()).default([]),
+    env: z.array(z.string()).default(() => []),
     /** 可执行文件（PATH 预检） */
-    bins: z.array(z.string()).default([]),
+    bins: z.array(z.string()).default(() => []),
     /** 包名声明（仅提示，不做安装） */
-    packages: z.array(z.string()).default([]),
+    packages: z.array(z.string()).default(() => []),
   })
   // 函数工厂（引用隔离）：数组字段若共享 default 引用，parse 后原地 push 即全局污染
   .default(() => ({ env: [], bins: [], packages: [] }));
@@ -127,7 +127,7 @@ export const SkillLifecycleSchema = z
     /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
     updates: z
       .array(z.object({ sig_id: z.string(), digest: z.string(), synced_at: z.string() }))
-      .default([]),
+      .default(() => []),
   })
   .default(() => ({
     status: "incubating" as const,
@@ -144,7 +144,7 @@ export const SkillLifecycleSchema = z
  */
 export const SkillVerifyTargetSchema = z.object({
   statement: z.string().min(1),
-  checks: z.array(z.string().min(1)).default([]),
+  checks: z.array(z.string().min(1)).default(() => []),
 });
 
 /** skill.json5 —— Frontmatter 六字段必收 + 扩展 optional 安全默认 */
@@ -162,7 +162,7 @@ export const SkillFrontmatterSchema = z.object({
 
   // === AgentSignal 扩展（optional 安全默认）===
   /** keywords：trigger 缺省时的 fallback 规则源 */
-  keywords: z.array(z.string()).default([]),
+  keywords: z.array(z.string()).default(() => []),
   version: z.string().default("0.1.0"),
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
@@ -222,7 +222,7 @@ export const SubscriptionSchema = z.object({
 
 /** config.json5 sync 段：订阅 + 回流镜像开关 + 容量上限（安全默认，旧 config 零破坏） */
 export const SyncStateSchema = z.object({
-  subscriptions: z.array(SubscriptionSchema).default([]),
+  subscriptions: z.array(SubscriptionSchema).default(() => []),
   /** verify_skill 本地裁决后自动镜像平台 verify（默认 false，手动优先——决议裁决 4） */
   mirror_verify: z.boolean().default(false),
   /** 本地技能库容量上限（超限只告警 + 管理界面列清理候选，不自动删） */
@@ -255,7 +255,7 @@ export const ConfigLayerSchema = z.object({
         ),
       }),
     )
-    .default([]),
+    .default(() => []),
 });
 
 /** 宿主接线声明（wiring 探测/写入的产物，config 是唯一真源） */
@@ -279,7 +279,7 @@ export const ConfigSchema = z.object({
     .default(() => ({ current: "common", available: ["common"] })),
   /** 分层：数组即顺序，即优先级，即加载链 */
   layers: z.array(ConfigLayerSchema).min(1),
-  hosts: z.array(HostBindingSchema).default([]),
+  hosts: z.array(HostBindingSchema).default(() => []),
   arbitration: z
     .object({
       strategy: z.enum(["lru"]).default("lru"),

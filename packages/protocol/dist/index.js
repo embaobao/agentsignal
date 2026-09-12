@@ -209,11 +209,11 @@ var SkillParametersSchema = z3.record(
 );
 var SkillDependenciesSchema = z3.object({
   /** 环境变量名（存在性预检，不读值） */
-  env: z3.array(z3.string()).default([]),
+  env: z3.array(z3.string()).default(() => []),
   /** 可执行文件（PATH 预检） */
-  bins: z3.array(z3.string()).default([]),
+  bins: z3.array(z3.string()).default(() => []),
   /** 包名声明（仅提示，不做安装） */
-  packages: z3.array(z3.string()).default([])
+  packages: z3.array(z3.string()).default(() => [])
 }).default(() => ({ env: [], bins: [], packages: [] }));
 var SkillProvenanceSchema = z3.object({
   /** 源 sig_<ulid>（订阅 kind=solution 落盘时写入） */
@@ -253,7 +253,7 @@ var SkillLifecycleSchema = z3.object({
   /** 订阅同步状态（dynamic-skill-management P3：源信号有更新/失效时由同步器改写） */
   sync_state: z3.enum(skillSyncStates).default("active"),
   /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
-  updates: z3.array(z3.object({ sig_id: z3.string(), digest: z3.string(), synced_at: z3.string() })).default([])
+  updates: z3.array(z3.object({ sig_id: z3.string(), digest: z3.string(), synced_at: z3.string() })).default(() => [])
 }).default(() => ({
   status: "incubating",
   metrics: { use_count: 0, worked: 0, partial: 0, failed: 0, retrieved: 0, injected: 0 },
@@ -262,7 +262,7 @@ var SkillLifecycleSchema = z3.object({
 }));
 var SkillVerifyTargetSchema = z3.object({
   statement: z3.string().min(1),
-  checks: z3.array(z3.string().min(1)).default([])
+  checks: z3.array(z3.string().min(1)).default(() => [])
 });
 var SkillFrontmatterSchema = z3.object({
   // === 必收六字段 ===
@@ -277,7 +277,7 @@ var SkillFrontmatterSchema = z3.object({
   triggers: z3.array(TriggerRuleSchema),
   // === AgentSignal 扩展（optional 安全默认）===
   /** keywords：trigger 缺省时的 fallback 规则源 */
-  keywords: z3.array(z3.string()).default([]),
+  keywords: z3.array(z3.string()).default(() => []),
   version: z3.string().default("0.1.0"),
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
@@ -314,7 +314,7 @@ var SubscriptionSchema = z3.object({
   min_validation: z3.enum(validationLevels).default("none")
 });
 var SyncStateSchema = z3.object({
-  subscriptions: z3.array(SubscriptionSchema).default([]),
+  subscriptions: z3.array(SubscriptionSchema).default(() => []),
   /** verify_skill 本地裁决后自动镜像平台 verify（默认 false，手动优先——决议裁决 4） */
   mirror_verify: z3.boolean().default(false),
   /** 本地技能库容量上限（超限只告警 + 管理界面列清理候选，不自动删） */
@@ -341,7 +341,7 @@ var ConfigLayerSchema = z3.object({
         })
       )
     })
-  ).default([])
+  ).default(() => [])
 });
 var HostBindingSchema = z3.object({
   /** 宿主标识：claude-code | cursor | codex | cline | gemini | hermes（host-matrix-alignment Phase 1 起） */
@@ -359,13 +359,17 @@ var ConfigSchema = z3.object({
   }).default(() => ({ current: "common", available: ["common"] })),
   /** 分层：数组即顺序，即优先级，即加载链 */
   layers: z3.array(ConfigLayerSchema).min(1),
-  hosts: z3.array(HostBindingSchema).default([]),
+  hosts: z3.array(HostBindingSchema).default(() => []),
   arbitration: z3.object({
     strategy: z3.enum(["lru"]).default("lru"),
     fallback: z3.enum(["compress"]).default("compress")
   }).default(() => ({ strategy: "lru", fallback: "compress" })),
   /** 订阅落库 × 回流闭环（dynamic-skill-management；缺省安全默认） */
-  sync: SyncStateSchema.default(() => ({ subscriptions: [], mirror_verify: false, max_skills: 200 }))
+  sync: SyncStateSchema.default(() => ({
+    subscriptions: [],
+    mirror_verify: false,
+    max_skills: 200
+  }))
 });
 
 // src/ulid.ts
