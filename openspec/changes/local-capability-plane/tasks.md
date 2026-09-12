@@ -236,8 +236,8 @@
 
 - [x] **C1** 场景测试骨架：`packages/cli/test/scenarios/` 建 **S1–S16 fixture 库 + 测试壳**（对照 design §8.5 逐条）
   - DoD：16 个壳文件存在且可跳过/待填充；fixture 构造器齐（无 L1 宿主 / 无 APM / 外部漂移 / 双适配器冲突 / 双宿主…）（S8 fakeAdapter 构造器待 P1 types 落地补，壳注记已标）✅ 2026-09-12 汇总席补审：scenarios/ 已纳入 CLI test glob（`test/**/*.test.ts`，todo 16 可见——壳静默缺口闭合）；各壳填充断言时保持 glob 覆盖
-- [ ] **C2** 契约测试骨架（V0 层）：四方法 × 门控 × 锁的通用套件，供 A 轨适配器**直接套用**
-  - DoD：fake 适配器跑通套件；**新适配器接入 = 3 行**
+- [x] **C2** 契约测试骨架（V0 层）：四方法 × 门控 × 锁的通用套件，供 A 轨适配器**直接套用**
+  - DoD：fake 适配器跑通套件；**新适配器接入 = 3 行**（scenarios/contract.ts：probe 结构/能力非空/hosts 非空/deploy ladder+skipped reason/reconcile 硬要求/声明一致性（未声明 remove 必须自守卫抛 UnsupportedCapability）；gate/lock 钩子位留 1.2/1.4 落地即插；contract-adapter.test.ts fakeFull+fakeNoRemove 自证）
 - [x] **C3** 台账一致性脚本 `scripts/check-ledger.mjs`：`tasks.md` ↔ `git log` ↔ `progress.md` 三方对账
   - DoD：能报出「勾了没提交 / 提交没勾 / 无台账条目 / 台账 sha 不存在」四类（按任务号对账为主键；sha 失效为 warning——amend 自指悖论已在脚本头注说明；首跑即暴露 host-matrix 0.1–0.4 历史无尾注勾选，留审查席裁定）
 - [ ] **C4** 性能评估基线 `scripts/bench/`（**架构不限，bun/rust 可**）：检索 / 装配 / 对账三条关键路径
