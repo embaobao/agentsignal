@@ -214,7 +214,7 @@ var SkillDependenciesSchema = z3.object({
   bins: z3.array(z3.string()).default([]),
   /** 包名声明（仅提示，不做安装） */
   packages: z3.array(z3.string()).default([])
-}).default({ env: [], bins: [], packages: [] });
+}).default(() => ({ env: [], bins: [], packages: [] }));
 var SkillProvenanceSchema = z3.object({
   /** 源 sig_<ulid>（订阅 kind=solution 落盘时写入） */
   sig_id: z3.string().optional(),
@@ -242,7 +242,14 @@ var SkillLifecycleSchema = z3.object({
     retrieved: z3.number().int().min(0).default(0),
     /** 被注入模型上下文（loadDetail 成功）+1 */
     injected: z3.number().int().min(0).default(0)
-  }).default(() => ({ use_count: 0, worked: 0, partial: 0, failed: 0, retrieved: 0, injected: 0 })),
+  }).default(() => ({
+    use_count: 0,
+    worked: 0,
+    partial: 0,
+    failed: 0,
+    retrieved: 0,
+    injected: 0
+  })),
   /** 订阅同步状态（dynamic-skill-management P3：源信号有更新/失效时由同步器改写） */
   sync_state: z3.enum(skillSyncStates).default("active"),
   /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
@@ -274,7 +281,7 @@ var SkillFrontmatterSchema = z3.object({
   version: z3.string().default("0.1.0"),
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
-  parameters: SkillParametersSchema.default({}),
+  parameters: SkillParametersSchema.default(() => ({})),
   /** verify_target：verify_skill 的可核验目标（P5 起新形态 {statement, checks[]}；
    *  历史形态 null 与字符串数组照旧可读（零破坏），归一归引擎层 normalizeVerifyTarget） */
   verify_target: z3.union([SkillVerifyTargetSchema, z3.array(z3.string()), z3.null()]).optional(),
@@ -283,7 +290,7 @@ var SkillFrontmatterSchema = z3.object({
     format: z3.string().default("markdown"),
     path: z3.string().default("./SKILL.md"),
     tokens_est: z3.number().int().min(0).optional()
-  }).default({ format: "markdown", path: "./SKILL.md" }),
+  }).default(() => ({ format: "markdown", path: "./SKILL.md" })),
   lifecycle: SkillLifecycleSchema
 });
 var ArtifactFrontmatterSchema = z3.object({
@@ -349,16 +356,16 @@ var ConfigSchema = z3.object({
     /** 当前激活域；空 = 通用 */
     current: z3.string().default("common"),
     available: z3.array(z3.string().min(1)).default(["common"])
-  }).default({ current: "common", available: ["common"] }),
+  }).default(() => ({ current: "common", available: ["common"] })),
   /** 分层：数组即顺序，即优先级，即加载链 */
   layers: z3.array(ConfigLayerSchema).min(1),
   hosts: z3.array(HostBindingSchema).default([]),
   arbitration: z3.object({
     strategy: z3.enum(["lru"]).default("lru"),
     fallback: z3.enum(["compress"]).default("compress")
-  }).default({ strategy: "lru", fallback: "compress" }),
+  }).default(() => ({ strategy: "lru", fallback: "compress" })),
   /** 订阅落库 × 回流闭环（dynamic-skill-management；缺省安全默认） */
-  sync: SyncStateSchema.default({ subscriptions: [], mirror_verify: false, max_skills: 200 })
+  sync: SyncStateSchema.default(() => ({ subscriptions: [], mirror_verify: false, max_skills: 200 }))
 });
 
 // src/ulid.ts

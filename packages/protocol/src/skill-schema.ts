@@ -78,7 +78,8 @@ export const SkillDependenciesSchema = z
     /** 包名声明（仅提示，不做安装） */
     packages: z.array(z.string()).default([]),
   })
-  .default({ env: [], bins: [], packages: [] });
+  // 函数工厂（引用隔离）：数组字段若共享 default 引用，parse 后原地 push 即全局污染
+  .default(() => ({ env: [], bins: [], packages: [] }));
 
 export const SkillProvenanceSchema = z.object({
   /** 源 sig_<ulid>（订阅 kind=solution 落盘时写入） */
@@ -165,7 +166,7 @@ export const SkillFrontmatterSchema = z.object({
   version: z.string().default("0.1.0"),
   dependencies: SkillDependenciesSchema,
   /** mustache 参数声明（四来源链解析） */
-  parameters: SkillParametersSchema.default({}),
+  parameters: SkillParametersSchema.default(() => ({})),
   /** verify_target：verify_skill 的可核验目标（P5 起新形态 {statement, checks[]}；
    *  历史形态 null 与字符串数组照旧可读（零破坏），归一归引擎层 normalizeVerifyTarget） */
   verify_target: z.union([SkillVerifyTargetSchema, z.array(z.string()), z.null()]).optional(),
@@ -176,7 +177,7 @@ export const SkillFrontmatterSchema = z.object({
       path: z.string().default("./SKILL.md"),
       tokens_est: z.number().int().min(0).optional(),
     })
-    .default({ format: "markdown", path: "./SKILL.md" }),
+    .default(() => ({ format: "markdown", path: "./SKILL.md" })),
   lifecycle: SkillLifecycleSchema,
 });
 
@@ -275,7 +276,7 @@ export const ConfigSchema = z.object({
       current: z.string().default("common"),
       available: z.array(z.string().min(1)).default(["common"]),
     })
-    .default({ current: "common", available: ["common"] }),
+    .default(() => ({ current: "common", available: ["common"] })),
   /** 分层：数组即顺序，即优先级，即加载链 */
   layers: z.array(ConfigLayerSchema).min(1),
   hosts: z.array(HostBindingSchema).default([]),
@@ -284,9 +285,13 @@ export const ConfigSchema = z.object({
       strategy: z.enum(["lru"]).default("lru"),
       fallback: z.enum(["compress"]).default("compress"),
     })
-    .default({ strategy: "lru", fallback: "compress" }),
+    .default(() => ({ strategy: "lru" as const, fallback: "compress" as const })),
   /** 订阅落库 × 回流闭环（dynamic-skill-management；缺省安全默认） */
-  sync: SyncStateSchema.default({ subscriptions: [], mirror_verify: false, max_skills: 200 }),
+  sync: SyncStateSchema.default(() => ({
+    subscriptions: [],
+    mirror_verify: false,
+    max_skills: 200,
+  })),
 });
 
 /* ------------------------------- 类型导出 ------------------------------- */

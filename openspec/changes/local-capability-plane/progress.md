@@ -43,3 +43,4 @@
 ### ⚠️ 新缺口登记（5.3 连带发现，待审查/汇总席排期）
 
 全仓其余 `zod .default(对象字面量)`（SkillDependenciesSchema/content/SyncStateSchema/ConfigSchema.arbitration/ConfigLayerSchema.stack_rules 等）存在同一引用共享风险——当前无消费方原地改（已核 verify/loadDetail 均替换式），但任何未来「parse 后原地改」都会中招。处置建议：清点排查 + 统一改函数工厂（一轮可完成）。
+| 2026-09-13 | 夜间通用轨（02:00 轮） | 5.3 连带缺口当轮闭环——全仓 6 处 zod `.default(对象字面量)` 全部函数工厂化（dependencies/domains/sync 含可变数组属高危·parameters/content/arbitration 统一）+ schema-defaults.test.ts 三引用隔离防回归；CLI 156/156 · check/lint 绿 | ✅ 待审查 | `ce424aa`
