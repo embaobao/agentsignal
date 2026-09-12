@@ -130,8 +130,8 @@
 
 > 新目录 `packages/cli/src/capability/`
 
-- [ ] **1.1** `capability/types.ts`：接口照 design §四（`PackageSource`/`CapabilityAdapter`/`Cap`/`DeployResult`…）
-  - DoD：类型编译过；`DeployResult` 含 `ladder` + `skipped[].reason`
+- [x] **1.1** `capability/types.ts`：接口照 design §四（`PackageSource`/`CapabilityAdapter`/`Cap`/`DeployResult`…）
+  - DoD：类型编译过；`DeployResult` 含 `ladder` + `skipped[].reason`（补齐 Availability/PackageRef/Package/Metadata/Item/RemoveResult/ReconcileReport 五态 + UnsupportedCapability/HostLockConflict 结构化错——三规则类型层落点）
 - [ ] **1.2** `capability/caps.ts`：能力枚举**冻结（O10）** + 门控 `assertCap` → `UnsupportedCapability`
   - DoD：fake 适配器未声明能力被拒
 - [ ] **1.3** `capability/ledger.ts`：归属账本（schema v1；**tmp+rename 原子写**；文件级互斥；委托快照 sha256）

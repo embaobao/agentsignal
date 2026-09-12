@@ -37,3 +37,4 @@
 5. （可选）用 APM 或任意 skill 管理器列目录——应正常识别不报错
 
 **通过标准**：3–5 全过 → P0 出口，轨道 A 进 P1（适配器骨架+APM）。不过 → 驳回注记回 0.3/0.4 修复。
+| 2026-09-13 | 席1·主轨开发（轨道A） | 1.1 capability/types.ts——design §四接口全量落地（PackageSource/CapabilityAdapter 两段·Cap 冻结枚举·DeployResult ladder+skipped[].reason·ReconcileReport 五态·UnsupportedCapability/HostLockConflict 结构化错含自纠建议）；capability-types.test.ts 4 用例，CLI 145/145 · check/lint 绿 | ✅ 待审查 | (sha见下笔)
