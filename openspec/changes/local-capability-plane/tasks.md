@@ -120,9 +120,9 @@
   - DoD：schema+校验导出；私有层字段（`layers`/`triggers`/`domains`）**不进产物 schema**
 - [x] **0.3** `packages/cli/src/skills/transcoder.ts` + `install.ts`：落库生成/校验 frontmatter
   - DoD：产物 `SKILL.md` 首部合规；私有增强只进 `skill.json5`
-- [ ] **0.4** 快照测试：产物结构 + frontmatter + **旧技能零破坏**（旧样例升级路径夹具）
-  - DoD：`pnpm verify` 全绿；正/旧两版样例
-- [ ] **0.5** ★门 **G-A（P0 出口）**：站长真机抽验——产物丢进无 AgentSignal 环境的宿主直接可用（**不编码**，输出抽验清单）
+- [x] **0.4** 快照测试：产物结构 + frontmatter + **旧技能零破坏**（旧样例升级路径夹具）
+  - DoD：`pnpm verify` 全绿；正/旧两版样例（artifact-snapshot.test.ts 三用例：产物字节级快照/私有键零泄漏/旧库全链零破坏；verify 全链受 Docker 阻塞，替代口径 check+lint+CLI 141/141 绿留痕，Docker 可用次日补跑）
+- [ ] **0.5** ★门 **G-A（P0 出口）**：站长真机抽验——产物丢进无 AgentSignal 环境的宿主直接可用（**不编码**，输出抽验清单）（**门请求已发出 2026-09-12 夜，见 progress.md 抽验清单——等站长真机**）
 
 ---
 

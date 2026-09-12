@@ -23,3 +23,17 @@
 | 2026-09-12 | 席3·基建轨（轨道C） | C3 台账一致性脚本 scripts/check-ledger.mjs——tasks↔git log(spec 尾注)↔progress 三方对账四类报告（任务号主键·sha 失效 warning）；顺手修正 LCP/host-matrix 两份台账 9 个 amend 废弃 sha；首跑暴露 host-matrix 0.1-0.4 历史无尾注勾选（真实债，留审查席）；CLI 不涉 · 语法 node 直跑过 | ✅ 待审查 | `59e7834`
 | 2026-09-12 | 夜间通用轨（06:00，代审查席入库） | 审查三席报告统一入库（dod/test/redline 三份 ✅ 全过）· 四项待办处置：R5-a 已修（dda2731 前笔）· scenarios glob 缺口与台账口径两句留 06:30 汇总席定稿 · 0.4 快照夹具留轨道 A | ✅ 报告全过 | (sha见下笔)
 | 2026-09-12 | 席7·汇总修复（06:20-07:25 槽） | 三报告已合并（06:00 轮代入库）· 四待办处置闭环：R5-a 已修（dda2731）· scenarios glob 缺口已修（CLI+根 test 口径 test/**/*.test.ts，todo 16 可见）· §0.7 补 sha 勘误豁免口径 · C1 补审注记定稿；全量门禁 db:up 仍阻塞（Docker 连续 7 轮未起）→ 替代口径 check+lint+CLI 138/138+todo16+test:ui 绿，verify 全链与 e2e 留痕次日补；tasks.md 定稿 | ✅ 定稿 | (sha见git log)
+| 2026-09-13 | 席1·主轨开发（轨道A） | 0.4 快照测试——artifact-snapshot.test.ts 三用例：正样例产物 SKILL.md 字节级快照/私有键零泄漏+origin 在内部形式/旧样例（无首部+verify_target:null）经 scan→loadDetail→verify 全链零破坏；CLI 141/141 · check/lint 绿（verify 全链 Docker 阻塞留痕） | ✅ 待审查 | (sha见下笔)
+
+## ★门 G-A 请求（P0 出口 · 2026-09-12 夜发出，等站长真机抽验）
+
+**抽验目标**：产物「零工具可读」——落装到宿主技能目录的 SKILL.md 不依赖 AgentSignal 即可被任何工具/Agent 消费。
+
+**抽验清单（10 分钟）**：
+1. 任意机器跑 `agentsignal use "语义分块" --install`（或经 MCP `load_skill_detail` 后落一条），取 `~/.agentsignal/skills/<id>/SKILL.md`
+2. 把整个 `<id>/` 目录拷进无 AgentSignal 的宿主技能目录（如 `~/.claude/skills/<id>/`）
+3. 核对：SKILL.md 首部只有 `name`/`description` 两行 YAML（`---` 围栏），正文完整可读；无 layers/triggers/domains 等私有键
+4. 让宿主内 Agent 直接读该 SKILL.md 并按正文执行——应无 AgentSignal 依赖即可用
+5. （可选）用 APM 或任意 skill 管理器列目录——应正常识别不报错
+
+**通过标准**：3–5 全过 → P0 出口，轨道 A 进 P1（适配器骨架+APM）。不过 → 驳回注记回 0.3/0.4 修复。
