@@ -50,6 +50,7 @@ export async function verifySkill(
   const parsed = SkillFrontmatterSchema.parse(JSON5.parse(raw));
   const m = parsed.lifecycle.metrics;
   const next = {
+    ...m,
     use_count: m.use_count + 1,
     worked: m.worked + (verdict === "worked" ? 1 : 0),
     partial: m.partial + (verdict === "partial" ? 1 : 0),
