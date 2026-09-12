@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import type { Engine } from "../skills/engine.ts";
+import { bumpSkillMetrics } from "../skills/lifecycle.ts";
 import { recordMetrics } from "../skills/metrics.ts";
 import {
   type MirrorOutcome,
@@ -66,6 +67,12 @@ export function skillTools(): SkillTool[] {
           return acc + (skill ? Math.ceil(skill.bodyBytes / 4) : 0);
         }, 0);
         await recordMetrics({ saved, residual: tokensEst(JSON.stringify(hits)) }, engine.paths);
+        // 三计数埋点（P5 5.3）：检索命中 = retrieved +1（批量一次写回）
+        await bumpSkillMetrics(
+          hits.map((h) => h.id),
+          "retrieved",
+          engine.paths,
+        );
         return JSON.stringify({ hits }, null, 2);
       },
     },

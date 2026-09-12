@@ -145,3 +145,33 @@ export async function capacityReport(paths?: AgentSignalPaths): Promise<Capacity
     }));
   return { count: skills.length, max, over: skills.length > max, candidates };
 }
+
+/* ------------------------------- 三计数分立（P5 5.3） ------------------------------- */
+
+/** 可埋点计数键：retrieved（检索命中）/ injected（注入上下文）；used = use_count（verify 加） */
+export type BumpableMetric = "retrieved" | "injected";
+
+/**
+ * 技能级计数 +1（批量多 id 一次会话只逐个写回，本地库小、原子性优先）。
+ * 检索埋点（search_skills 命中）与注入埋点（loadDetail 成功）调用；
+ * 旧库无该键由 schema default(0) 兜底，零破坏。
+ */
+export async function bumpSkillMetrics(
+  ids: readonly string[],
+  key: BumpableMetric,
+  paths?: AgentSignalPaths,
+): Promise<void> {
+  if (ids.length === 0) return;
+  const p = paths ?? resolvePaths();
+  const { skills } = await scanSkills(p);
+  const wanted = new Set(ids.map((id) => id.toLowerCase()));
+  for (const skill of skills) {
+    if (!wanted.has(skill.id)) continue;
+    const raw = await readFile(skill.metaFile, "utf8");
+    const parsed = SkillFrontmatterSchema.parse(JSON5.parse(raw));
+    parsed.lifecycle.metrics[key] += 1;
+    const tmp = `${skill.metaFile}.tmp-${process.pid}`;
+    await writeFile(tmp, JSON5.stringify(parsed, null, 2), "utf8");
+    await rename(tmp, skill.metaFile);
+  }
+}

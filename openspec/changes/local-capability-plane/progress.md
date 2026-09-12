@@ -38,3 +38,8 @@
 
 **通过标准**：3–5 全过 → P0 出口，轨道 A 进 P1（适配器骨架+APM）。不过 → 驳回注记回 0.3/0.4 修复。
 | 2026-09-13 | 席1·主轨开发（轨道A） | 1.1 capability/types.ts——design §四接口全量落地（PackageSource/CapabilityAdapter 两段·Cap 冻结枚举·DeployResult ladder+skipped[].reason·ReconcileReport 五态·UnsupportedCapability/HostLockConflict 结构化错含自纠建议）；capability-types.test.ts 4 用例，CLI 145/145 · check/lint 绿 | ✅ 待审查 | `e3ace1f`
+| 2026-09-13 | 席2·副轨开发（轨道B） | 5.3 三计数分立——lifecycle.bumpSkillMetrics（批量 retrieved/injected·schema default(0) 旧库零破坏）+ 两埋点（search_skills 命中→retrieved·loadDetail 成功→injected）·used=use_count 零改名；**连带修生产级 bug：zod default(对象字面量) 返回共享可变引用**（无 metrics 技能 parse 原地改即污染全局，红测以 2!==1 当场暴露）→ metrics/lifecycle default 改函数工厂；CLI 153/153 · check/lint 绿 | ✅ 待审查 | (sha见下笔)
+
+### ⚠️ 新缺口登记（5.3 连带发现，待审查/汇总席排期）
+
+全仓其余 `zod .default(对象字面量)`（SkillDependenciesSchema/content/SyncStateSchema/ConfigSchema.arbitration/ConfigLayerSchema.stack_rules 等）存在同一引用共享风险——当前无消费方原地改（已核 verify/loadDetail 均替换式），但任何未来「parse 后原地改」都会中招。处置建议：清点排查 + 统一改函数工厂（一轮可完成）。

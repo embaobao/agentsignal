@@ -107,8 +107,20 @@ export const SkillLifecycleSchema = z
         worked: z.number().int().min(0).default(0),
         partial: z.number().int().min(0).default(0),
         failed: z.number().int().min(0).default(0),
+        /** 三计数分立（P5 5.3 · S2 缺口）：被检索命中 +1（used 即 use_count，呈现层映射） */
+        retrieved: z.number().int().min(0).default(0),
+        /** 被注入模型上下文（loadDetail 成功）+1 */
+        injected: z.number().int().min(0).default(0),
       })
-      .default({ use_count: 0, worked: 0, partial: 0, failed: 0 }),
+      // 函数工厂：对象字面量 default 会跨 parse 共享同一可变引用（原地改计数即全局污染）
+      .default(() => ({
+        use_count: 0,
+        worked: 0,
+        partial: 0,
+        failed: 0,
+        retrieved: 0,
+        injected: 0,
+      })),
     /** 订阅同步状态（dynamic-skill-management P3：源信号有更新/失效时由同步器改写） */
     sync_state: z.enum(skillSyncStates).default("active"),
     /** 锚定到本技能的平台更新记录（更新正文在同目录 UPDATES.md 附加层） */
@@ -116,12 +128,12 @@ export const SkillLifecycleSchema = z
       .array(z.object({ sig_id: z.string(), digest: z.string(), synced_at: z.string() }))
       .default([]),
   })
-  .default({
-    status: "incubating",
-    metrics: { use_count: 0, worked: 0, partial: 0, failed: 0 },
-    sync_state: "active",
+  .default(() => ({
+    status: "incubating" as const,
+    metrics: { use_count: 0, worked: 0, partial: 0, failed: 0, retrieved: 0, injected: 0 },
+    sync_state: "active" as const,
     updates: [],
-  });
+  }));
 
 /* ------------------------------- verify_target（local-capability-plane P5） ------------------------------- */
 

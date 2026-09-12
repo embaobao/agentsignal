@@ -154,8 +154,8 @@
   - DoD：三态判定可关联目标；旧 `skill.json5` 零破坏（null 兼容读）
 - [x] **5.2** `transcoder.ts`：`provenance.origin` 补写入（平台订阅/包导入/手动）
   - DoD：新落库必有 origin；旧记录读 null 不报错
-- [ ] **5.3** `metrics.ts` + 检索/注入埋点：**三计数分立 `retrieved/injected/used`**（现状只 verify +1，S2 缺口）
-  - DoD：三路径各 +1 断言（V1）
+- [x] **5.3** `metrics.ts` + 检索/注入埋点：**三计数分立 `retrieved/injected/used`**（现状只 verify +1，S2 缺口）
+  - DoD：三路径各 +1 断言（V1）（lifecycle.bumpSkillMetrics 批量计数·search_skills 命中 retrieved 埋点·loadDetail 成功 injected 埋点·used=use_count 语义零改名；**连带修生产级 bug：zod `.default(对象字面量)` 跨 parse 共享可变引用**——无 metrics 技能的 parse 结果原地改即全局污染，metrics/lifecycle 两处 default 改函数工厂；⚠️ 新缺口登记：全仓其余 `.default(对象字面量)` 的原地改风险待清点，见 progress）
 - [ ] **5.4** `status` 呈现验证结果（三态+上游+三计数，**不新增命令**）
   - DoD：夹具断言输出字段
 - [ ] **5.5** S2/S3（本地半）场景测试入库

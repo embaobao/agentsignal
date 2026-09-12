@@ -11,6 +11,7 @@ import { access, constants, readFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
 import mustache from "mustache";
+import { bumpSkillMetrics } from "./lifecycle.ts";
 import { type AgentSignalPaths, resolvePaths } from "./paths.ts";
 import { type SkillRecord, scanSkills } from "./store.ts";
 import { stripArtifactFrontmatter } from "./transcoder.ts";
@@ -139,6 +140,8 @@ export async function loadDetail(
   } catch {
     // 无平台更新
   }
+  // 三计数埋点（P5 5.3）：成功注入模型上下文 = injected +1
+  await bumpSkillMetrics([skill.id], "injected", p);
   return {
     ok: true,
     id: skill.id,
