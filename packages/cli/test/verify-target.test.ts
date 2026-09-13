@@ -12,9 +12,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import { SkillFrontmatterSchema } from "../../protocol/src/skill-schema.ts";
+import { installSignal } from "../src/skills/install.ts";
 import { bumpSkillMetrics } from "../src/skills/lifecycle.ts";
 import { loadDetail } from "../src/skills/loader.ts";
 import { resolvePaths } from "../src/skills/paths.ts";
+import { statusCmd, verificationReport } from "../src/skills/status.ts";
 import { scanSkills } from "../src/skills/store.ts";
 import { normalizeVerifyTarget, verifySkill } from "../src/skills/verify.ts";
 
@@ -165,4 +167,58 @@ test("旧记录零破坏：无 retrieved/injected 键的旧库读入 default 0",
   assert.equal(fm.lifecycle.metrics.retrieved, 0);
   assert.equal(fm.lifecycle.metrics.injected, 0);
   assert.equal(fm.lifecycle.metrics.use_count, 3);
+});
+
+/* ---------------- P5 5.4 status 呈现验证结果 ---------------- */
+
+test("verificationReport：三态聚合 + 三计数 + 上游溯源（纯函数字段断言）", async () => {
+  const paths = resolvePaths(root);
+  // 带溯源样例（installSignal 落库必有 provenance 全录，5.2 契约）
+  await installSignal(
+    {
+      id: "sig_01vrprovenance000000000",
+      topic: "rag",
+      kind: "solution",
+      digest: "溯源样例 | scope: common | validation: self-tested",
+      experience: { format: "markdown", body: "## 正文\n" },
+    },
+    { base_url: "https://agentsignal.vip", synced_at: "2026-09-14T00:00:00.000Z" },
+    paths,
+  );
+  await bumpSkillMetrics(["skill_vt_new"], "retrieved", paths);
+  await bumpSkillMetrics(["skill_vt_new"], "injected", paths);
+  await bumpSkillMetrics(["skill_vt_new"], "retrieved", paths);
+  const { skills } = await scanSkills(paths);
+  const r = verificationReport(skills);
+  assert.equal(
+    r.verdict.worked + r.verdict.partial + r.verdict.failed,
+    r.counters.used,
+    "三态合计=使用计数",
+  );
+  assert.ok(r.counters.retrieved >= 3, "retrieved 聚合");
+  assert.ok(r.counters.injected >= 1, "injected 聚合");
+  assert.equal(r.upstream.total, skills.length, "total=全部条目");
+  assert.ok(r.upstream.traced >= 1, "至少一条有上游溯源（provenance.sig_id）");
+  assert.ok(Array.isArray(r.upstream.sites), "sites 为来源站点去重列表");
+});
+
+test("status 呈现：验证体检行含三态/三计数/上游字段（不新增命令）", async () => {
+  const lines: string[] = [];
+  // biome-ignore lint/suspicious/noConsole: 5.4 DoD=断言 status 输出字段，mock console 捕获
+  const orig = console.log;
+  console.log = (...args: unknown[]) => lines.push(args.join(" "));
+  try {
+    await statusCmd();
+  } finally {
+    console.log = orig;
+  }
+  const verify = lines.find((l) => l.includes("验证体检"));
+  assert.ok(verify, "应有验证体检行");
+  assert.ok(
+    verify.includes("worked") &&
+      verify.includes("检索") &&
+      verify.includes("注入") &&
+      verify.includes("使用"),
+    "三态+三计数字段齐",
+  );
 });

@@ -12,7 +12,7 @@ import { capacityReport } from "./lifecycle.ts";
 import { readMetrics } from "./metrics.ts";
 import { readPlatformCredentials } from "./mirror.ts";
 import { resolvePaths } from "./paths.ts";
-import { scanSkills } from "./store.ts";
+import { type SkillRecord, scanSkills } from "./store.ts";
 import { probePending } from "./sync.ts";
 import { detectHosts, hostById } from "./wiring/hosts.ts";
 import { hostStatus } from "./wiring/snippets.ts";
@@ -77,6 +77,34 @@ async function coexistenceCheck(): Promise<string[]> {
   return [...new Set(found)];
 }
 
+export interface VerificationReport {
+  verdict: { worked: number; partial: number; failed: number };
+  counters: { retrieved: number; injected: number; used: number };
+  upstream: { total: number; traced: number; sites: string[] };
+}
+
+/** 验证体检聚合（P5 5.4）：三态 + 三计数（used=use_count 语义） + 上游溯源，纯函数可测 */
+export function verificationReport(skills: SkillRecord[]): VerificationReport {
+  const verdict = { worked: 0, partial: 0, failed: 0 };
+  const counters = { retrieved: 0, injected: 0, used: 0 };
+  let traced = 0;
+  const sites = new Set<string>();
+  for (const s of skills) {
+    verdict.worked += s.lifecycle.metrics.worked;
+    verdict.partial += s.lifecycle.metrics.partial;
+    verdict.failed += s.lifecycle.metrics.failed;
+    counters.retrieved += s.lifecycle.metrics.retrieved;
+    counters.injected += s.lifecycle.metrics.injected;
+    counters.used += s.lifecycle.metrics.use_count;
+    const sig = s.lifecycle.provenance?.sig_id;
+    if (sig) {
+      traced += 1;
+      if (s.lifecycle.provenance?.base_url) sites.add(s.lifecycle.provenance.base_url);
+    }
+  }
+  return { verdict, counters, upstream: { total: skills.length, traced, sites: [...sites] } };
+}
+
 export async function statusCmd(): Promise<void> {
   const paths = resolvePaths();
   console.log(`AgentSignal 本机状态 · ${paths.root}`);
@@ -121,6 +149,12 @@ export async function statusCmd(): Promise<void> {
   console.log(indexLine);
   console.log(
     `本地库：${skills.length} 条条目 · 存储占用 ${fmtBytes(skills.reduce((a, s) => a + s.bodyBytes, 0))}${errors.length ? ` · ${errors.length} 个目录异常` : ""}`,
+  );
+
+  // ②¾ 验证体检（P5 5.4）：三态 + 三计数 + 上游溯源（不新增命令）
+  const vr = verificationReport(skills);
+  console.log(
+    `验证体检：worked ${vr.verdict.worked} · partial ${vr.verdict.partial} · failed ${vr.verdict.failed} ｜ 检索 ${vr.counters.retrieved} · 注入 ${vr.counters.injected} · 使用 ${vr.counters.used} ｜ 上游 ${vr.upstream.traced}/${vr.upstream.total} 条溯源${vr.upstream.sites.length ? `（${[...vr.upstream.sites].join("、")}）` : ""}`,
   );
 
   // ②½ 容量告警（P3.3：超限仅告警，清理在管理界面确认后执行，不自动删）
