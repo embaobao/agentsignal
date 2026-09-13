@@ -138,7 +138,7 @@
   - DoD：并发写测试 + 快照断言（ledger.json5 在 root 单一真源·entries 只追加·进程内 promise 链互斥并发 10 append 零丢写·snapshotOf sha256 与 node crypto 对表·损坏/缺失读入 v1 空账本零阻断；跨进程互斥注记 P2 装载接线升级）
 - [x] **1.4** `capability/lock.ts`：归属锁（一宿主×一能力=一适配器；`HostLockConflict` 含持锁方）
   - DoD：冲突/释放/复得三断言（进程内 Map 语义——CLI 短命令生命周期；冲突含持锁方+unwire 建议·复得后冲突方指向新持锁者·双重释放幂等·lockHolder 只读查询供 status）
-- [ ] **1.5** `capability/broker.ts`：适配器选择（用户声明优先→native 优先）；probe 不可用→换适配器**不报错**
+- [x] **1.5** `capability/broker.ts`：适配器选择（用户声明优先→native 优先）；probe 不可用→换适配器**不报错**（六断言：preferred 直选/preferred 缺席 native 接管 S6/native 加权/逐个换不报错/全不可用 undefined 走降级 D10/空列表）
   - DoD：fake 双适配器选择测试
 - [ ] **1.6** `capability/adapters/apm.ts`：spawn `apm`；**`-g` 用户级**；`capabilities()` **不声明 `remove`**（实测无此命令）
   - DoD：spawn 沙箱测试；APM 缺席 `probe` 返回 `{available:false}`（S6 前半）
