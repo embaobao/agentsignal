@@ -8,6 +8,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
+import { injectHermesHook } from "./hooksYaml.ts";
 import type { HostDef, HostId } from "./hosts.ts";
 import { injectSoulBlock, removeSoulBlock } from "./soul.ts";
 
@@ -140,10 +141,27 @@ async function writeExtra(host: HostDef): Promise<"hook" | "rules" | "none"> {
     await writeJsonAtomic(settingsPath, json);
     return "hook";
   }
-  // Hermes 等无 rules 文件位宿主：rules 一行兜底注入 SOUL.md 标记段（1.3）
+  // Hermes 等无 rules 文件位宿主：rules 一行兜底注入 SOUL.md 标记段（1.3）；
+  // 兜底失败（1.7：占位/权限等）→ 异常落 stderr，降级 none 只发 skill，不 fail 整个 init
   if (host.soulPath) {
-    await injectSoulBlock(host.soulPath, RULES_LINE);
-    return "rules";
+    try {
+      await injectSoulBlock(host.soulPath, RULES_LINE);
+      if (host.hooksYamlPath && host.hookAllowlistPath) {
+        await injectHermesHook(
+          host.hooksYamlPath,
+          host.hookAllowlistPath,
+          "SessionStart",
+          "agentsignal context --event SessionStart",
+        );
+      }
+      return "rules";
+    } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: 1.7 兜底要求异常落 stderr（可见不静默），库层无 logger
+      console.error(
+        `[agentsignal] Hermes rules/hook 兜底失败（跳过只发 skill，不阻塞 init）：${err instanceof Error ? err.message : String(err)}`,
+      );
+      return "none";
+    }
   }
   if (host.rulesPath) {
     await mkdir(path.dirname(host.rulesPath), { recursive: true });

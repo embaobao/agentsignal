@@ -22,7 +22,7 @@
 - [x] 1.4 **hook 双写**：`$hermesHome/config.yaml` 的 `hooks.<event>[]` **且** `$hermesHome/shell-hooks-allowlist.json`（同 `{event,command}` 去重）—— **只写前者 hook 不执行**，单测断言两文件都被写（wiring/hooksYaml.ts 行级最小操作·E-10 只碰自己条目·(event,command) 幂等；接线整合与 event 映射归 1.6/1.7）
 - [x] 1.5 Hermes 不写 MCP（D1/D7）：`mcpPath = null`，wiring 跳过 MCP 同步，不产生垃圾配置文件
 - [x] 1.6 事件映射：TeamAI 的 `SessionStart` / `Stop` 语义 → AgentSignal 既有推通道（`skills/context.ts` L1/L2/L3 三档）（context.ts 增 --event 解析+mapHookEvent 映射：SessionStart/未知→push 全量·Stop→noop 静默早退不硬造收尾；Hermes hook 命令自此可带 --event 接线）
-- [ ] 1.7 兜底：config.yaml 解析失败 → 跳过 hooks 只发 skill，不 fail 整个 init（异常落 stderr）
+- [x] 1.7 兜底：config.yaml 解析失败 → 跳过 hooks 只发 skill，不 fail 整个 init（异常落 stderr）（writeExtra hermes 分支整体守卫：SOUL.md/hooksYaml 任一落盘失败 → stderr 可见告警 + extra=none 降级只发 skill；hook 命令带 --event SessionStart 事件映射；R5-b 空行压缩越界顺手收敛同域）
 - [ ] 1.8 测试：`packages/cli/test/` 扩展 `AGENTSIGNAL_HOME` 夹具 —— Hermes 探测 / 写入（含 SOUL.md 块 + 双写 + 无 MCP 文件）/ 摘除不残留 三断言 + 专项 3 条（见 design.md §五）
 - [ ] 1.9 **真机走查**：`agentsignal init` → Hermes 技能目录出现 SKILL.md → SOUL.md 块生效 → uninstall 零残留（需 Hermes 环境，无则留人工）
 

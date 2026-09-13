@@ -7,11 +7,13 @@
  * 夹具 = 临时目录，不碰真实宿主配置；config.yaml 为行级最小操作（解析失败兜底归 1.7）。
  */
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import { injectHermesHook, removeHermesHook } from "../src/skills/wiring/hooksYaml.ts";
+import { hostById } from "../src/skills/wiring/hosts.ts";
+import { wireMcp } from "../src/skills/wiring/snippets.ts";
 
 let root = "";
 before(async () => {
@@ -120,6 +122,36 @@ test("R5-a：同 event 块内用户自有 command 与我方共存——摘除只
     };
     assert.deepEqual(allow.hooks, [{ event: "SessionStart", command: "user-own-hook" }]);
   } finally {
+    await rm(root2, { recursive: true, force: true });
+  }
+});
+
+test("1.7 兜底：SOUL.md 落盘失败（EISDIR 占位）→ wireMcp 不 fail、extra=none、异常落 stderr", async () => {
+  const root2 = await mkdtemp(path.join(tmpdir(), "as-hermbail-"));
+  process.env.AGENTSIGNAL_HOME = root2;
+  process.env.HERMES_HOME = path.join(root2, ".hermes");
+  try {
+    // 恶意占位：SOUL.md 是目录 → writeFile 必 EISDIR
+    await mkdir(path.join(root2, ".hermes", "SOUL.md"), { recursive: true });
+    const errs: string[] = [];
+    // biome-ignore lint/suspicious/noConsole: 断言 1.7 兜底异常落 stderr
+    const origErr = console.error;
+    console.error = (...a: unknown[]) => errs.push(a.join(" "));
+    try {
+      const hermes = hostById("hermes");
+      const r = await wireMcp(hermes);
+      assert.equal(r.mcp, "absent");
+      assert.equal(r.extra, "none", "兜底失败降级 none，不 fail 整个 init");
+      assert.ok(
+        errs.some((e) => e.includes("Hermes")),
+        "异常落 stderr（可见不静默）",
+      );
+    } finally {
+      console.error = origErr;
+    }
+  } finally {
+    delete process.env.AGENTSIGNAL_HOME;
+    delete process.env.HERMES_HOME;
     await rm(root2, { recursive: true, force: true });
   }
 });
