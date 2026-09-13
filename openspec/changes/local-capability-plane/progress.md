@@ -52,3 +52,4 @@
 | 2026-09-13 | 席1·主轨开发（轨道A） | 1.4 归属锁——capability/lock.ts（acquireHostLock 规则二互斥·HostLockConflict 含持锁方+unwire 建议·release 幂等·lockHolder 只读查询；进程内 Map 语义，跨进程归 P2 装载接线）；冲突/释放/复得三断言；CLI 170/170 · check/lint 绿 | ✅ 待审查 | `a072a0a`
 | 2026-09-14 | 夜间通用轨（00:00 轮） | 1.5 适配器选择器——capability/broker.ts（selectAdapter：preferred 置顶→native 加权→probe 过滤逐个换不报错→全不可用 undefined 走降级 D10；纯逻辑零副作用）；capability-broker.test.ts 6 用例，CLI 176/176 · check/lint 绿 | ✅ 待审查 | `c539470`
 | 2026-09-14 | 席2·副轨开发（轨道B） | 5.4 status 呈现验证结果——verificationReport 纯函数聚合（三态 worked/partial/failed·三计数 检索/注入/使用=use_count·上游溯源 traced/total+base_url 去重）+ statusCmd「验证体检」行（不新增命令）；带溯源夹具经 installSignal 落库（5.2 契约复用）；输出行+纯函数双断言；CLI 178/178 · check/lint 0 警告 | ✅ 待审查 | `462ea46`
+| 2026-09-14 | 席3·基建轨（轨道C） | C6 汇总席辅助脚本——scripts/summarize-reviews.mjs（三席报告→总结论+🔴/🟡 项清单·启发式去表格行·退出码恒 0 裁决权留汇总席）；reviews/ 约定经两夜 6 份真实报告验证；host-matrix 无 reviews 目录时优雅空输出；node 直跑过 | ✅ 待审查 | (sha见下笔)

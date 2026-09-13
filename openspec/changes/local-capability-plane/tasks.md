@@ -244,7 +244,7 @@
   - DoD：基线可重复跑并输出数字；**纳入参考，不入 CI 门禁**
 - [ ] **C5** 手册随行检查：`user-manual` / participant SKILL / `admin-guide` 与 CLI 命令面一致性核对
   - DoD：检查清单产出 + 不一致项登记
-- [ ] **C6** `reviews/` 约定落地 + 汇总席辅助脚本（三份报告 → 汇总清单）
+- [x] **C6** `reviews/` 约定落地 + 汇总席辅助脚本（三份报告 → 汇总清单）（scripts/summarize-reviews.mjs：三席总结论启发式抓取+🔴/🟡 项全列，退出码恒 0 裁决权在汇总席；reviews/ 约定两夜实跑 6 份报告验证）
   - DoD：模板与脚本可用；审查席一次跑通
 
 ---
