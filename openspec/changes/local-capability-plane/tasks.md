@@ -136,8 +136,8 @@
   - DoD：fake 适配器未声明能力被拒（FROZEN_CAPS 九能力导出·全枚举逐一拒绝断言；C2 契约套件 options.gate 消费本函数）
 - [x] **1.3** `capability/ledger.ts`：归属账本（schema v1；**tmp+rename 原子写**；文件级互斥；委托快照 sha256）
   - DoD：并发写测试 + 快照断言（ledger.json5 在 root 单一真源·entries 只追加·进程内 promise 链互斥并发 10 append 零丢写·snapshotOf sha256 与 node crypto 对表·损坏/缺失读入 v1 空账本零阻断；跨进程互斥注记 P2 装载接线升级）
-- [ ] **1.4** `capability/lock.ts`：归属锁（一宿主×一能力=一适配器；`HostLockConflict` 含持锁方）
-  - DoD：冲突/释放/复得三断言
+- [x] **1.4** `capability/lock.ts`：归属锁（一宿主×一能力=一适配器；`HostLockConflict` 含持锁方）
+  - DoD：冲突/释放/复得三断言（进程内 Map 语义——CLI 短命令生命周期；冲突含持锁方+unwire 建议·复得后冲突方指向新持锁者·双重释放幂等·lockHolder 只读查询供 status）
 - [ ] **1.5** `capability/broker.ts`：适配器选择（用户声明优先→native 优先）；probe 不可用→换适配器**不报错**
   - DoD：fake 双适配器选择测试
 - [ ] **1.6** `capability/adapters/apm.ts`：spawn `apm`；**`-g` 用户级**；`capabilities()` **不声明 `remove`**（实测无此命令）
