@@ -97,7 +97,9 @@ function removeYamlHook(text: string, event: string, eventCommand: string): stri
     }
     out.push(l);
   }
-  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+  // R5-b/R6-b（审查整改）：不做任何全文件空行压缩——那会改写用户自有内容的空行（越自己条目边界）。
+  // 摘除残留的空行属视觉瑕疵，保守保留原文。
+  return out.join("\n");
 }
 
 /** 双写注入：config.yaml hooks.<event>[] + allowlist（同 {event,command} 去重） */

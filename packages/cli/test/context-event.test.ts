@@ -12,7 +12,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
-import { mapHookEvent, parseEventArg } from "../src/skills/context.ts";
+import { mapHookEvent, parseEventArg, stripEventArgs } from "../src/skills/context.ts";
 
 let root = "";
 before(async () => {
@@ -53,4 +53,13 @@ test("Stop 事件静默早退：不产出正文且未初始化也不炸（hook �
     process.stdout.write = origWrite;
   }
   assert.deepEqual(written, [], "Stop 早退零输出");
+});
+
+test("stripEventArgs：--event 旗标与值均不进 query（R6-c 回归）", () => {
+  const strip = (args: string[]) => stripEventArgs(args, parseEventArg(args));
+  assert.deepEqual(strip(["--event", "SessionStart"]), []);
+  assert.deepEqual(strip(["--event", "SessionStart", "登录"]), ["登录"]);
+  assert.deepEqual(strip(["--event=Stop", "认证"]), ["认证"]);
+  assert.deepEqual(strip(["登录", "认证"]), ["登录", "认证"]);
+  assert.deepEqual(strip(["--event", "SessionStart", "登录", "--other"]), ["登录"]);
 });

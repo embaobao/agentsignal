@@ -12,7 +12,8 @@ export async function contextCmd(args: string[] = []): Promise<void> {
   const event = parseEventArg(args);
   // 事件映射（host-matrix-alignment 1.6）：推通道只服务开工语义——Stop 静默早退
   if (mapHookEvent(event) === "noop") return;
-  let query = args.filter((a) => !a.startsWith("--")).join(" ");
+  // R6-c（审查席 6 整改）：--event 及其值不进 query（空格形态的值会被当检索词且压掉 HOOK_INPUT 兜底）
+  let query = stripEventArgs(args, event).join(" ");
   query = query || process.env.AGENTSIGNAL_HOOK_INPUT || "";
   try {
     const engine = await createEngine();
@@ -38,6 +39,13 @@ export { tokensEst };
 
 /** hook event → 推通道动作：push（全量推）/ noop（静默早退） */
 export type HookEventAction = "push" | "noop";
+
+/** 剔除 --event 旗标及其值（空格/等号两形态），返回剩余 query 词（R6-c） */
+export function stripEventArgs(args: readonly string[], event: string | undefined): string[] {
+  return args.filter(
+    (a, i) => !a.startsWith("--") && a !== event && (i === 0 || args[i - 1] !== "--event"),
+  );
+}
 
 /** 提取 --event <name> / --event=<name>（其余参数留给 query） */
 export function parseEventArg(args: readonly string[]): string | undefined {

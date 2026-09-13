@@ -3,10 +3,12 @@
  *
  * fakeFull —— 声明 skill/deploy/remove/reconcile 全能力（native 形态）；
  * fakeNoRemove —— 不声明 remove（APM 实测形态，规则一）。
- * 门控/锁钩子位（options.gate/lock）待 1.2/1.4 落地后由 A 轨接入。
+ * 门控/锁钩子已接真实函数（assertCap / acquireHostLock，1.2/1.4 已落地）。
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { assertCap } from "../../src/capability/caps.ts";
+import { acquireHostLock, releaseHostLock } from "../../src/capability/lock.ts";
 import { type CapabilityAdapter, UnsupportedCapability } from "../../src/capability/types.ts";
 import { runAdapterContract } from "./contract.ts";
 
@@ -37,11 +39,30 @@ function makeFakeNoRemove(): CapabilityAdapter {
     probe: async () => ({ available: false, reason: "未安装 APM（S6 前半形态）" }),
     capabilities: () => new Set(["skill", "deploy"] as const),
     remove: async () => {
-      // 规则一自守卫：未声明 remove 的适配器（APM 形态）调用即抛真类（1.2 已落地）
+      // 规则一自守卫：未声明 remove 的适配器（APM 形态）调用即抛 UnsupportedCapability（1.2 真类）
       throw new UnsupportedCapability({ adapter: "fake-no-remove", cap: "remove" });
     },
   };
 }
+
+test("契约套件：gate/lock 钩子接入真实函数（1.2/1.4 消费位闭环）", async () => {
+  await runAdapterContract(makeFakeFull(), {
+    gate: (adapter, cap) => assertCap(adapter, cap),
+    lock: {
+      acquire: (host, cap, adapterId) => acquireHostLock(host, cap, adapterId),
+      release: (host, cap) => releaseHostLock(host, cap),
+      conflict: (host, cap) => {
+        try {
+          acquireHostLock(host, cap, "contract-probe");
+          releaseHostLock(host, cap);
+          return undefined;
+        } catch (err) {
+          return err;
+        }
+      },
+    },
+  });
+});
 
 test("契约套件：fakeFull 全绿（新适配器接入 = 3 行示范）", async () => {
   // 接入示范：import 套件 → 构造适配器 → 一行跑契约

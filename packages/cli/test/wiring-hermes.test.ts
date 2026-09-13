@@ -90,3 +90,14 @@ test("既有 5 宿主回归：claude-code 定义不受 mcpPath 类型放宽影�
   assert.ok(cc.mcpPath?.includes(".claude.json"));
   assert.equal(hostById("codex").toml, true);
 });
+
+test("R6-a 卸载归零：unwire 后 config.yaml 无 agentsignal hooks 残留、allowlist 清空", async () => {
+  // 前序测试已 wire（三件产物在）；unwire 后 hooks 双写必须归零
+  await unwireMcp(hostById("hermes"));
+  const hookYaml = await readFile(path.join(root, ".hermes", "config.yaml"), "utf8");
+  assert.ok(!hookYaml.includes("agentsignal"), "config.yaml 不得残留 agentsignal hooks 条目");
+  const allow = JSON.parse(
+    await readFile(path.join(root, ".hermes", "shell-hooks-allowlist.json"), "utf8"),
+  ) as { hooks: unknown[] };
+  assert.deepEqual(allow.hooks, [], "allowlist 必须清空（残留会持续执行=实害）");
+});

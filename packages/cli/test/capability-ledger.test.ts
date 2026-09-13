@@ -101,3 +101,19 @@ test("空账本读入：schema v1 + 空 entries（零破坏）", async () => {
   assert.equal(empty.schema, "agentsignal.ledger/v1");
   assert.deepEqual(empty.entries, []);
 });
+
+test("损坏账本读入：非法 JSON5 → v1 空账本零阻断（修复/重建由使用方决定）", async () => {
+  const bad = await mkdtemp(path.join(tmpdir(), "as-ledger-bad-"));
+  process.env.AGENTSIGNAL_CONFIG = bad;
+  try {
+    const p = resolvePaths(bad);
+    await mkdir(p.root, { recursive: true });
+    await writeFile(path.join(p.root, "ledger.json5"), "{{{ 非法内容", "utf8");
+    const ledger = await loadLedger(p);
+    assert.equal(ledger.schema, "agentsignal.ledger/v1");
+    assert.deepEqual(ledger.entries, []);
+  } finally {
+    delete process.env.AGENTSIGNAL_CONFIG;
+    await rm(bad, { recursive: true, force: true });
+  }
+});

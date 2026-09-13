@@ -8,7 +8,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import JSON5 from "json5";
-import { injectHermesHook } from "./hooksYaml.ts";
+import { injectHermesHook, removeHermesHook } from "./hooksYaml.ts";
 import type { HostDef, HostId } from "./hosts.ts";
 import { injectSoulBlock, removeSoulBlock } from "./soul.ts";
 
@@ -233,6 +233,16 @@ async function removeExtra(host: HostDef): Promise<"none"> {
   if (host.soulPath) {
     try {
       await removeSoulBlock(host.soulPath);
+      // R6-a（审查席 6 整改）：hooks 双写随卸载归零——否则 config.yaml hooks 条目
+      // 与 allowlist 残留并持续执行（实害）。与 injectHermesHook 的写入参数对称。
+      if (host.hooksYamlPath && host.hookAllowlistPath) {
+        await removeHermesHook(
+          host.hooksYamlPath,
+          host.hookAllowlistPath,
+          "SessionStart",
+          "agentsignal context --event SessionStart",
+        );
+      }
     } catch {
       /* 摘除阶段不因兜底片段失败而中断 */
     }

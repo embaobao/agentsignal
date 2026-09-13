@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { acquireHostLock, releaseHostLock } from "../src/capability/lock.ts";
+import { acquireHostLock, lockHolder, releaseHostLock } from "../src/capability/lock.ts";
 import { HostLockConflict } from "../src/capability/types.ts";
 
 test("冲突：同宿主同能力被持有时，第二个适配器 acquire 抛 HostLockConflict（含持锁方与建议）", () => {
@@ -45,4 +45,12 @@ test("释放 / 复得：release 后同槽位可被另一适配器获得；双重
   );
   releaseHostLock("gemini", "skill");
   releaseHostLock("gemini", "skill"); // 双重释放不抛（幂等）
+});
+
+test("lockHolder：只读查询持锁方与空闲态（status 呈现用）", () => {
+  assert.equal(lockHolder("codex", "skill"), undefined);
+  acquireHostLock("codex", "skill", "native");
+  assert.equal(lockHolder("codex", "skill"), "native");
+  releaseHostLock("codex", "skill");
+  assert.equal(lockHolder("codex", "skill"), undefined);
 });
