@@ -55,7 +55,7 @@
 | 2026-09-14 | 席3·基建轨（轨道C） | C6 汇总席辅助脚本——scripts/summarize-reviews.mjs（三席报告→总结论+🔴/🟡 项清单·启发式去表格行·退出码恒 0 裁决权留汇总席）；reviews/ 约定经两夜 6 份真实报告验证；host-matrix 无 reviews 目录时优雅空输出；node 直跑过 | ✅ 待审查 | `5833b7e`
 | 2026-09-14 | 夜间通用轨（06:00 修复轮） | 审查移交清零：🔴 R6-a 卸载断链（removeExtra 补 removeHermesHook·config.yaml/allowlist 归零断言）· R6-c stripEventArgs 提取（--event 值不进 query）· R6-b 真收敛（去全文件空行压缩 E-10 保守）· C2 Shim→1.2 真类+gate/lock 钩子接真函数·ledger 损坏用例·lockHolder 用例；CLI 187/187 · check/lint 0 警告 | ✅ 待审查 | `4f1f044`
 | 2026-09-14 | 席7·汇总修复（06:20-07:25 槽） | 三报告已入库（06:00 修复轮）· 审查移交全清零（R6-a/c/b + C2 补强 + 补用例）· AGENTS.md 两节定稿（三夜 17/59·host-matrix 15/31）· 全量门禁 db:up 仍阻塞（Docker 连续 22 轮）→ 替代口径 check+lint+CLI 187/187+todo16+test:ui 37/37 绿·verify 全链留痕；tasks.md 定稿 | ✅ 定稿 | (sha见git log)
-| 2026-09-14 | 夜间收官（08:00 末轮） | C3 跨库尾注解析修复（分号分段归属）· 4f1f044 尾注「1.6」系跨库误挂（实为 host-matrix 1.6 事件映射，当时一笔双库提交尾注写法缺陷）——注记豁免，LCP 1.6（契约接入）仍未实施属真实状态；同笔收 ton check-ledger 剩 4 项 = host-matrix 0.1–0.4 历史债（待裁定） | ✅ 台账注记 | (sha见下笔)
+| 2026-09-14 | 夜间收官（08:00 末轮） | C3 跨库尾注解析修复（分号分段归属）· 4f1f044 尾注「1.6」系跨库误挂（实为 host-matrix 1.6 事件映射，当时一笔双库提交尾注写法缺陷）——注记豁免，LCP 1.6（契约接入）仍未实施属真实状态；同笔收 ton check-ledger 剩 4 项 = host-matrix 0.1–0.4 历史债（待裁定） | ✅ 台账注记 | `d3966d7`
 
 ## 两夜收官（09-13 23:00 → 09-14 08:10，28 轮累计）
 
@@ -64,4 +64,4 @@
 - **四 bug 当场闭环**：zod default 引用污染（生产级）· C3 crash · R5-a 卸载整块删除 · R6-a hook 卸载断链（实害级）。
 - **待站长**：G-A 抽验（10 分钟）· OrbStack（解锁 50+ 待 PG）· host-matrix 0.1–0.4 裁定。
 - **下夜起手**：G-A 过 → 轨道 A 1.6 契约落地 → G-B 门请求；席 2 续 P4 互操作预备；席 3 续 C4/C5；host-matrix 1.8 收口。
-| 2026-09-14 | 席1·主轨开发（轨道A） | 1.6 契约落地+降级矩阵首条夹具——contract-degrade.test.ts（矩阵首行三档断言 L1/L2/L3+原因可见·降级 fake 过 C2 契约全绿·S6 native 缺席 broker 接管）；踩坑：biome organizeImports 把混合导入拆行时丢值导入致运行时 ReferenceError（import type 行与值行须并存）；CLI 190/190 · check/lint 绿 | ✅ 待审查 | (sha见下笔)
+| 2026-09-14 | 席1·主轨开发（轨道A） | 1.6 契约落地+降级矩阵首条夹具——contract-degrade.test.ts（矩阵首行三档断言 L1/L2/L3+原因可见·降级 fake 过 C2 契约全绿·S6 native 缺席 broker 接管）；踩坑：biome organizeImports 把混合导入拆行时丢值导入致运行时 ReferenceError（import type 行与值行须并存）；CLI 190/190 · check/lint 绿 | ✅ 待审查 | `d3966d7`
