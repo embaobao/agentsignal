@@ -10,9 +10,11 @@ import { mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
-import { exportApm } from "../src/capability/export.ts";
+import { exportApm, importApm } from "../src/capability/export.ts";
 import { installSignal } from "../src/skills/install.ts";
+import { loadDetail } from "../src/skills/loader.ts";
 import { resolvePaths } from "../src/skills/paths.ts";
+import { scanSkills } from "../src/skills/store.ts";
 import type { TranscodeContext, TranscodeInput } from "../src/skills/transcoder.ts";
 
 let root = "";
@@ -110,4 +112,43 @@ test("空 id 列表：空包结构（apm.yml 空 skills 段）不炸", async () 
   assert.equal(r.length, 1, "仅 apm.yml");
   const y = await readFile(path.join(out4, "apm.yml"), "utf8");
   assert.ok(y.includes("skills: []") || y.includes("skills:[]"));
+});
+
+/* ---------------- P4 4.2 导入器（origin=apm-import） ---------------- */
+
+test("导入：4.1 导出物 → 本地库（scan 可见 · origin=apm-import 溯源）", async () => {
+  const paths = resolvePaths(root);
+  const r = await importApm(outDir, paths);
+  assert.equal(r.imported.length, 2, "两条技能导入");
+  const { skills } = await scanSkills(paths);
+  const a = skills.find((s) => s.id === "sig_01exporta0000000000000");
+  assert.ok(a, "导入后本地库可见");
+  assert.equal(a?.lifecycle.provenance?.origin?.kind, "apm-import", "溯源 origin=apm-import");
+  assert.equal(a?.lifecycle.provenance?.origin?.ref, "agentsignal-export", "ref=yml 包名");
+});
+
+test("S10 往返：标准部分无损——导入后正文与导出产物一致（私有元数据不回转）", async () => {
+  const paths = resolvePaths(root);
+  const md = await readFile(
+    path.join(outDir, ".apm", "skills", "sig_01exporta0000000000000", "SKILL.md"),
+    "utf8",
+  );
+  const detail = await loadDetail("sig_01exporta0000000000000", paths);
+  assert.ok(detail.ok);
+  assert.equal(
+    detail.body,
+    md.replace(/^---\n[\s\S]*?\n---\n\n/, ""),
+    "正文逐字往返（首部剥离后）",
+  );
+  const { skills } = await scanSkills(paths);
+  const a = skills.find((s) => s.id === "sig_01exporta0000000000000");
+  // 私有 triggers 不从产物回转：导入侧只给安全默认（keyword=包名），原始 triggers 已随导出丢弃
+  assert.deepEqual(a?.triggers, [
+    {
+      field: "keyword",
+      operator: "contains_any",
+      values: ["sig_01exporta0000000000000", "agentsignal-export"],
+      weight: 1,
+    },
+  ]);
 });

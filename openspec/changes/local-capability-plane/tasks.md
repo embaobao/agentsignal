@@ -196,7 +196,7 @@
 ## 七、P4 —— 互操作【轨道 B】
 
 - [x] **4.1** 导出器：本地技能 → `apm.yml` + `.apm/skills/<name>/SKILL.md` —— DoD：布局快照一致（capability/export.ts：产物渲染复用 renderArtifactSkillMd·确定性字节级一致·S10 私有键/溯源零泄漏·未知 id 结构化跳过不阻塞·空包结构；4 用例）
-- [ ] **4.2** 导入器：外部 `apm.yml` → 本地技能（origin=apm-import）—— DoD：溯源断言
+- [x] **4.2** 导入器：外部 `apm.yml` → 本地技能（origin=apm-import）—— DoD：溯源断言（export.ts importApm：行级解析自家 4.1 输出契约·产物首部 parseArtifactFrontmatter 校验·origin={kind:"apm-import",ref:yml 包名}·私有层安全默认重建不回转（S10）·坏条目结构化跳过；3 用例含往返无损）
 - [ ] **4.3** 扩展 JSON：私有增强独立文件 —— DoD：S10 断言（往返无损 + **零泄漏**）
 - [ ] **4.4** 往返测试全绿 + 用法进 `user-manual.md`
 

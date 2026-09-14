@@ -9,6 +9,7 @@
  */
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { parseArtifactFrontmatter, SkillFrontmatterSchema } from "@agentssignal/protocol";
 import { type AgentSignalPaths, resolvePaths } from "../skills/paths.ts";
 import { type SkillRecord, scanSkills } from "../skills/store.ts";
 import { renderArtifactSkillMd } from "../skills/transcoder.ts";
@@ -61,4 +62,86 @@ export async function exportApm(
   await rename(ytmp, path.join(outDir, "apm.yml"));
   written.push(path.join(outDir, "apm.yml"));
   return written;
+}
+
+/* ------------------------------- 导入器（P4 · 4.2） ------------------------------- */
+
+/** 解析 4.1 输出形态的 apm.yml（行级最小操作——输入契约即自家导出，非通用 YAML 解析器） */
+function parseApmYml(text: string): { name: string; skills: { name: string; path: string }[] } {
+  const name = /^name: (.+)$/m.exec(text)?.[1] ?? "apm-import";
+  const skills: { name: string; path: string }[] = [];
+  let current: { name: string; path: string } | null = null;
+  for (const line of text.split("\n")) {
+    if (line.startsWith("  - name: ")) {
+      if (current) skills.push(current);
+      current = { name: line.slice("  - name: ".length).trim(), path: "" };
+    } else if (line.startsWith("    path: ") && current) {
+      current.path = line.slice("    path: ".length).trim();
+    }
+  }
+  if (current) skills.push(current);
+  return { name, skills };
+}
+
+export interface ImportResult {
+  imported: string[];
+  skipped: { id: string; reason: string }[];
+}
+
+/**
+ * 导入外部 apm 包目录（4.1 导出物或同构 APM 包）：产物 SKILL.md → 内部形式落库。
+ * 溯源 origin={kind:"apm-import", ref: yml 包名}（4.2 DoD）；私有层字段（导出时已丢）
+ * 以安全默认重建（domains common/layers base/triggers keyword 包名——不从产物回转，S10）。
+ * 幂等：同 id 覆盖写。首部经 parseArtifactFrontmatter 校验（name=目录名）。
+ */
+export async function importApm(inDir: string, paths?: AgentSignalPaths): Promise<ImportResult> {
+  const p = paths ?? resolvePaths();
+  const ymlText = await readFile(path.join(inDir, "apm.yml"), "utf8");
+  const manifest = parseApmYml(ymlText);
+  const imported: string[] = [];
+  const skipped: { id: string; reason: string }[] = [];
+  for (const entry of manifest.skills) {
+    const skillFile = path.join(inDir, entry.path);
+    try {
+      const raw = await readFile(skillFile, "utf8");
+      // 产物首部校验（name=目录名，零工具可读两行 JSON 值形态）+ 正文剥离
+      const nameM = /^name: ("(?:[^"\\]|\\.)*")$/m.exec(raw);
+      const descM = /^description: ("(?:[^"\\]|\\.)*")$/m.exec(raw);
+      if (!nameM || !descM) throw new Error(`产物首部缺失或不合规：${skillFile}`);
+      const fm = parseArtifactFrontmatter(
+        { name: JSON.parse(nameM[1] as string), description: JSON.parse(descM[1] as string) },
+        entry.name,
+      );
+      const body = raw.replace(/^---\n[\s\S]*?\n---\n\n/, "");
+      const dir = path.join(p.skillsDir, entry.name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(
+        path.join(dir, "skill.json5"),
+        JSON.stringify(
+          SkillFrontmatterSchema.parse({
+            id: entry.name,
+            name: fm.name,
+            description: fm.description,
+            domains: ["common"],
+            layers: ["base"],
+            triggers: [
+              { field: "keyword", operator: "contains_any", values: [entry.name, manifest.name] },
+            ],
+            lifecycle: { provenance: { origin: { kind: "apm-import", ref: manifest.name } } },
+          }),
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      await writeFile(path.join(dir, "SKILL.md"), body, "utf8");
+      imported.push(entry.name);
+    } catch (err) {
+      skipped.push({
+        id: entry.name,
+        reason: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return { imported, skipped };
 }
