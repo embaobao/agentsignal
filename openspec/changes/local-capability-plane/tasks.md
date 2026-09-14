@@ -242,8 +242,8 @@
   - DoD：能报出「勾了没提交 / 提交没勾 / 无台账条目 / 台账 sha 不存在」四类（按任务号对账为主键；sha 失效为 warning——amend 自指悖论已在脚本头注说明；首跑即暴露 host-matrix 0.1–0.4 历史无尾注勾选，留审查席裁定）
 - [x] **C4** 性能评估基线 `scripts/bench/`（**架构不限，bun/rust 可**）：检索 / 装配 / 对账三条关键路径
   - DoD：基线可重复跑并输出数字；**纳入参考，不入 CI 门禁**（scripts/bench/bench-cli.mjs 薄入口 → cli 包 bench.ts（strip-types 模块解析）；20/50 条基线可复现：检索均值 0.06ms/装配 9.1ms 量级；对账路径占位待 P2 2.3 落地启用）
-- [ ] **C5** 手册随行检查：`user-manual` / participant SKILL / `admin-guide` 与 CLI 命令面一致性核对
-  - DoD：检查清单产出 + 不一致项登记
+- [x] **C5** 手册随行检查：`user-manual` / participant SKILL / `admin-guide` 与 CLI 命令面一致性核对
+  - DoD：检查清单产出 + 不一致项登记（reviews/c5-manual-consistency.md：15 命令全矩阵核对零 P0 不一致·context 内部命令正确不出手册；Hermes/验证体检/产物首部/三规则 4 项登记为「待 0.6.0 发版随行」非当前不一致）
 - [x] **C6** `reviews/` 约定落地 + 汇总席辅助脚本（三份报告 → 汇总清单）（scripts/summarize-reviews.mjs：三席总结论启发式抓取+🔴/🟡 项全列，退出码恒 0 裁决权在汇总席；reviews/ 约定两夜实跑 6 份报告验证）
   - DoD：模板与脚本可用；审查席一次跑通
 
