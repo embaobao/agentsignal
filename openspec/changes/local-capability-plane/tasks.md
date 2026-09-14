@@ -158,8 +158,8 @@
   - DoD：三路径各 +1 断言（V1）（落点 = lifecycle.ts bumpSkillMetrics（metrics.ts 保持 token 双指标不混）·search_skills 命中 retrieved 埋点·loadDetail 成功 injected 埋点·used=use_count 语义零改名；**连带修生产级 bug：zod `.default(对象字面量)` 跨 parse 共享可变引用**——无 metrics 技能的 parse 结果原地改即全局污染，metrics/lifecycle 两处 default 改函数工厂；✅ 新缺口当轮闭环：全仓 6 处 `.default(对象字面量)` 已全部函数工厂化 + schema-defaults.test.ts 引用隔离防回归（2026-09-13 通用轨）
 - [x] **5.4** `status` 呈现验证结果（三态+上游+三计数，**不新增命令**）
   - DoD：夹具断言输出字段（status.ts verificationReport 纯函数聚合 + 「验证体检」行：worked/partial/failed ｜ 检索/注入/使用 ｜ 上游溯源 n/total+站点去重；输出行断言 + 纯函数字段断言双覆盖）
-- [ ] **5.5** S2/S3（本地半）场景测试入库
-  - DoD：design §8.5 S2、S3-本地半 V1 层可执行且绿
+- [x] **5.5** S2/S3（本地半）场景测试入库
+  - DoD：design §8.5 S2、S3-本地半 V1 层可执行且绿（s02-usage-counters：三路径分别计数互不串扰·s03-verify-loop：三态落库+verify_target 关联+sig_id/origin 溯源；场景壳 todo 16→14）
 
 ---
 
