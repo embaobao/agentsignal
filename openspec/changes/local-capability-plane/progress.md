@@ -65,4 +65,4 @@
 - **待站长**：G-A 抽验（10 分钟）· OrbStack（解锁 50+ 待 PG）· host-matrix 0.1–0.4 裁定。
 - **下夜起手**：G-A 过 → 轨道 A 1.6 契约落地 → G-B 门请求；席 2 续 P4 互操作预备；席 3 续 C4/C5；host-matrix 1.8 收口。
 | 2026-09-14 | 席1·主轨开发（轨道A） | 1.6 契约落地+降级矩阵首条夹具——contract-degrade.test.ts（矩阵首行三档断言 L1/L2/L3+原因可见·降级 fake 过 C2 契约全绿·S6 native 缺席 broker 接管）；踩坑：biome organizeImports 把混合导入拆行时丢值导入致运行时 ReferenceError（import type 行与值行须并存）；CLI 190/190 · check/lint 绿 | ✅ 待审查 | `d3966d7`
-| 2026-09-15 | 席3·基建轨（轨道C） | C4 性能基线——scripts/bench/bench-cli.mjs 薄入口 + cli 包 bench.ts（scan/索引建库/检索 100 次均值中位 P95/装配 loadDetail 单次·临时夹具·对账占位待 P2）；20 条与 50 条两档基线真实跑通；CLI 不涉 · lint 净 | ✅ 待审查 | (sha见下笔)
+| 2026-09-15 | 席3·基建轨（轨道C） | C4 性能基线——scripts/bench/bench-cli.mjs 薄入口 + cli 包 bench.ts（scan/索引建库/检索 100 次均值中位 P95/装配 loadDetail 单次·临时夹具·对账占位待 P2）；20 条与 50 条两档基线真实跑通；CLI 不涉 · lint 净 | ✅ 待审查 | `fdb9113`
