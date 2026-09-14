@@ -6,7 +6,7 @@
  * 夹具 = installSignal 落库（provenance 全录，验证导出不泄漏溯源）。
  */
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -151,4 +151,32 @@ test("S10 往返：标准部分无损——导入后正文与导出产物一致�
       weight: 1,
     },
   ]);
+});
+
+test("4.2 坏条目结构化跳过：产物首部缺失 → skipped 带原因、不阻塞其余", async () => {
+  const badDir = path.join(root, "bad-apm");
+  await mkdir(path.join(badDir, ".apm", "skills", "skill_good"), { recursive: true });
+  await mkdir(path.join(badDir, ".apm", "skills", "skill_bad"), { recursive: true });
+  await writeFile(
+    path.join(badDir, "apm.yml"),
+    "name: bad-pkg\nversion: 0.1.0\nskills:\n  - name: skill_good\n    path: .apm/skills/skill_good/SKILL.md\n  - name: skill_bad\n    path: .apm/skills/skill_bad/SKILL.md\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(badDir, ".apm", "skills", "skill_good", "SKILL.md"),
+    '---\nname: "skill_good"\ndescription: "ok"\n---\n\n正文\n',
+    "utf8",
+  );
+  // skill_bad 的 SKILL.md 缺产物首部（坏条目）
+  await writeFile(
+    path.join(badDir, ".apm", "skills", "skill_bad", "SKILL.md"),
+    "无首部正文\n",
+    "utf8",
+  );
+  const paths = resolvePaths(root);
+  const r = await importApm(badDir, paths);
+  assert.deepEqual(r.imported, ["skill_good"], "好条目照常导入");
+  assert.equal(r.skipped.length, 1);
+  assert.equal(r.skipped[0]?.id, "skill_bad");
+  assert.ok(r.skipped[0]?.reason.includes("首部"), "坏条目带原因（首部缺失）");
 });

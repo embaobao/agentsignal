@@ -82,6 +82,13 @@ export async function runAdapterContract(
   for (const s of deploy.skipped ?? []) {
     assert.ok(s.reason && s.reason.length > 0, "skipped 条目必须带 reason（D10 不静默）");
   }
+  // 多档降级结构断言（审查席 5 建议）：非 L1 落档必有降级说明（不静默）
+  if (deploy.ladder !== "L1") {
+    assert.ok(
+      (deploy.skipped?.length ?? 0) > 0 || (deploy.warnings?.length ?? 0) > 0,
+      `${adapter.id}.deploy 落 ${deploy.ladder} 档却无 skipped/warnings 说明——违反 D10 降级可见`,
+    );
+  }
 
   // ── remove：声明一致性（规则一）——未声明 remove 时调用必须抛 UnsupportedCapability ──
   if (!caps.has("remove")) {

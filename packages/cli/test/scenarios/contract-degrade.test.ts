@@ -1,5 +1,6 @@
 /**
- * P1 1.6 降级矩阵首条夹具（local-capability-plane · node:test 单口径）。
+ * P1 1.7 降级矩阵首条夹具（local-capability-plane · node:test 单口径）。
+ * （审查席勘误 2026-09-15：原头注误标 1.6——1.6 为 capability/adapters/apm.ts 适配器，保持待认领。）
  *
  * 矩阵首行「宿主能力位」（design §1.2）：有 skills 位 → L1 直写；
  * 无 skills 位但有 MCP → L2 + 原因可见；两者皆无 → L3 + 原因可见。

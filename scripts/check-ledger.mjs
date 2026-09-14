@@ -63,7 +63,6 @@ function commitsFor(change) {
       }
     }
     return { sha: sha.slice(0, 10), subject: subject ?? "", specIds };
-    return { sha: sha.slice(0, 10), subject: subject ?? "", specIds };
   });
 }
 
