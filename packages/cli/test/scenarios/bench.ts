@@ -13,13 +13,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { loadDetail } from "../../src/skills/loader.ts";
 import { resolvePaths } from "../../src/skills/paths.ts";
-import {
-  buildIndex,
-  ensureIndex,
-  oramaSearch,
-  saveIndex,
-  scanSkills,
-} from "../../src/skills/store.ts";
+import { ensureIndex, oramaSearch, scanSkills } from "../../src/skills/store.ts";
 
 // biome-ignore lint/suspicious/noConsole: 性能基线脚本的 stdout 输出（非测试断言）
 const out = (line: string): void => console.log(line);
