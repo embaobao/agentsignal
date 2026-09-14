@@ -68,4 +68,4 @@
 | 2026-09-15 | 席3·基建轨（轨道C） | C4 性能基线——scripts/bench/bench-cli.mjs 薄入口 + cli 包 bench.ts（scan/索引建库/检索 100 次均值中位 P95/装配 loadDetail 单次·临时夹具·对账占位待 P2）；20 条与 50 条两档基线真实跑通；CLI 不涉 · lint 净 | ✅ 待审查 | `fdb9113`
 | 2026-09-15 | 席2·副轨开发（轨道B） | 5.5 S2/S3 本地半场景入库——s02（三计数分别计数互不串扰）·s03（三态落库+溯源 sig_id/origin）两壳填充（todo 16→14）；CLI 193/193 · check/lint 绿 | ✅ 待审查 | `a1eef5d`
 | 2026-09-15 | 席3·基建轨（轨道C） | C5 手册随行检查——15 命令×三手册全矩阵核对（零 P0 不一致·context 内部命令正确豁免）·4 项未上线能力登记「待 0.6.0 发版随行」；清单落 reviews/c5-manual-consistency.md；**轨道 C 六件全勾（C1-C6）**；node/grep 核对过 | ✅ 待审查 | `1de027d`
-| 2026-09-15 | 夜间通用轨（03:00 轮） | 4.1 apm.yml 导出器——capability/export.ts（.apm/skills/<id>/SKILL.md 产物渲染复用 renderArtifactSkillMd·apm.yml 标准段确定性输出·S10 私有键/溯源零泄漏双断言·未知 id 跳过不阻塞·空包结构）；capability-export.test.ts 4 用例；CLI 197/197 · check/lint 绿 | ✅ 待审查 | (sha见下笔)
+| 2026-09-15 | 夜间通用轨（03:00 轮） | 4.1 apm.yml 导出器——capability/export.ts（.apm/skills/<id>/SKILL.md 产物渲染复用 renderArtifactSkillMd·apm.yml 标准段确定性输出·S10 私有键/溯源零泄漏双断言·未知 id 跳过不阻塞·空包结构）；capability-export.test.ts 4 用例；CLI 197/197 · check/lint 绿 | ✅ 待审查 | `9934dee`
