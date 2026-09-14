@@ -51,13 +51,18 @@ function commitsFor(change) {
   return out.split("\n").map((line) => {
     const [sha, subject] = line.split("\t");
     const specIds = new Set();
+    // 跨库尾注（分号分隔多 change）：逐段解析，任务号归属各自 change（勿串库）
     const spec = /\(spec:\s*([^)]+)\)/.exec(subject ?? "");
-    if (spec && spec[1].startsWith(change)) {
-      for (const tok of spec[1].split(/[\s,]+/).slice(1)) {
+    if (!spec) return { sha: sha.slice(0, 10), subject: subject ?? "", specIds };
+    for (const seg of spec[1].split(";")) {
+      const segTok = seg.trim().split(/[\s,]+/);
+      if (segTok[0] !== change) continue;
+      for (const tok of segTok.slice(1)) {
         const id = tok.replace(/[:,;]+$/, "");
         if (/^[A-Z]?\d[\d.]*$/.test(id)) specIds.add(id);
       }
     }
+    return { sha: sha.slice(0, 10), subject: subject ?? "", specIds };
     return { sha: sha.slice(0, 10), subject: subject ?? "", specIds };
   });
 }
