@@ -240,8 +240,8 @@
   - DoD：fake 适配器跑通套件；**新适配器接入 = 3 行**（scenarios/contract.ts：probe 结构/能力非空/hosts 非空/deploy ladder+skipped reason/reconcile 硬要求/声明一致性（未声明 remove 必须自守卫抛 UnsupportedCapability）；gate/lock 钩子位留 1.2/1.4 落地即插；contract-adapter.test.ts fakeFull+fakeNoRemove 自证）
 - [x] **C3** 台账一致性脚本 `scripts/check-ledger.mjs`：`tasks.md` ↔ `git log` ↔ `progress.md` 三方对账
   - DoD：能报出「勾了没提交 / 提交没勾 / 无台账条目 / 台账 sha 不存在」四类（按任务号对账为主键；sha 失效为 warning——amend 自指悖论已在脚本头注说明；首跑即暴露 host-matrix 0.1–0.4 历史无尾注勾选，留审查席裁定）
-- [ ] **C4** 性能评估基线 `scripts/bench/`（**架构不限，bun/rust 可**）：检索 / 装配 / 对账三条关键路径
-  - DoD：基线可重复跑并输出数字；**纳入参考，不入 CI 门禁**
+- [x] **C4** 性能评估基线 `scripts/bench/`（**架构不限，bun/rust 可**）：检索 / 装配 / 对账三条关键路径
+  - DoD：基线可重复跑并输出数字；**纳入参考，不入 CI 门禁**（scripts/bench/bench-cli.mjs 薄入口 → cli 包 bench.ts（strip-types 模块解析）；20/50 条基线可复现：检索均值 0.06ms/装配 9.1ms 量级；对账路径占位待 P2 2.3 落地启用）
 - [ ] **C5** 手册随行检查：`user-manual` / participant SKILL / `admin-guide` 与 CLI 命令面一致性核对
   - DoD：检查清单产出 + 不一致项登记
 - [x] **C6** `reviews/` 约定落地 + 汇总席辅助脚本（三份报告 → 汇总清单）（scripts/summarize-reviews.mjs：三席总结论启发式抓取+🔴/🟡 项全列，退出码恒 0 裁决权在汇总席；reviews/ 约定两夜实跑 6 份报告验证）
