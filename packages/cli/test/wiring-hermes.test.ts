@@ -7,11 +7,11 @@
  * 零垃圾断言：wireMcp/unwireMcp 对 hermes 不产生任何文件（1.5 DoD）。
  */
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
-import { hostById, hostDefs } from "../src/skills/wiring/hosts.ts";
+import { detectHosts, hostById, hostDefs } from "../src/skills/wiring/hosts.ts";
 import { hostStatus, unwireMcp, wireMcp } from "../src/skills/wiring/snippets.ts";
 
 let root = "";
@@ -100,4 +100,11 @@ test("R6-a 卸载归零：unwire 后 config.yaml 无 agentsignal hooks 残留、
     await readFile(path.join(root, ".hermes", "shell-hooks-allowlist.json"), "utf8"),
   ) as { hooks: unknown[] };
   assert.deepEqual(allow.hooks, [], "allowlist 必须清空（残留会持续执行=实害）");
+});
+
+test("探测命中：HERMES_HOME 目录存在 → detectHosts 报 hermes（1.8 design §五 断言 1）", async () => {
+  await mkdir(path.join(root, ".hermes"), { recursive: true });
+  const detected = detectHosts().find((h) => h.id === "hermes");
+  assert.ok(detected?.detected, "特征目录存在即命中");
+  assert.equal(detected?.mcpPath, null, "Hermes 无 MCP（D1/D7）");
 });
