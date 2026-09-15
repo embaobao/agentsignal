@@ -6,3 +6,5 @@
 | 2026-09-16 01:22 | (随归档提交) | 2.4 | done | Verdict Store 状态机 + verdicts.json 持久化 6 用例；非法转移抛错不落盘 |
 
 | 2026-09-16 02:16 | (随归档提交) | 2.5 | done | 双签 approvals.json + operationSha 指纹；apply 配额 202 pending 流程；SINGLE=y 豁免；跨修他会话 TS 挡门禁 |
+
+| 2026-09-16 03:07 | (随归档提交) | 2.6 | done | Tombstone 墓碑化/两步还原/跳步 409；verdict 状态机接线 admin 端点 |

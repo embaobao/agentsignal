@@ -116,6 +116,7 @@ export interface IStore {
     id: string,
     patch: { name?: string; description?: string },
   ): Promise<AgentRow | undefined>;
+  adminSetSignalDeleted(id: string, deleted: boolean): Promise<boolean>;
   ensureTopic(slug: string): Promise<TopicRow>;
   listTopics(opts?: { includeArchived?: boolean }): Promise<TopicRow[]>;
   topicBySlug(slug: string): Promise<TopicRow | undefined>;
@@ -315,6 +316,16 @@ export class PgStore implements IStore {
       );
     }
     return { ...agent, created_at: iso(agent.created_at) as string, github_id: agent.github_id };
+  }
+
+  async adminSetSignalDeleted(id: string, deleted: boolean): Promise<boolean> {
+    const r = await this.db.query<{ id: string }>(
+      `update signals set deleted_at = case when $2 then now() else null end
+        where id = $1 and deleted_at is distinct from (case when $2 then now() else null end)
+        returning id`,
+      [id, deleted],
+    );
+    return r.rows.length > 0;
   }
 
   async updateAgentIdentity(

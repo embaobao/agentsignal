@@ -300,3 +300,38 @@ test("双签：默认配额 2 → 首次 apply 202 pending；第二管理员登�
   assert.equal((r2.json() as { changed: boolean }).changed, true);
   await ctx2.cleanup();
 });
+
+/* ── 2.6 Tombstone：两步还原（frozen 中转）+ 跳步禁止 ─────────────────────── */
+
+test("Tombstone：墓碑化隐藏 → unfreeze（仍隐藏）→ keep 恢复可见；跳步 409（2.6）", async () => {
+  const auditDir = await mkdtemp(path.join(tmpdir(), "as-tomb-"));
+  const ctx2 = makeApp({ AS_AUDIT_STATE_DIR: auditDir });
+  const { app } = await ctx2.ready();
+  const seed = await seedSignal(app);
+
+  // 墓碑化：默认列表立即隐藏 + verdict=tombstoned
+  const tb = await post(app, `/admin/signals/${seed.sig}/tombstone`, {}, basic());
+  assert.equal(tb.statusCode, 200);
+  const hidden = await app.inject({ method: "GET", url: `/signals/${seed.sig}` });
+  assert.equal(hidden.statusCode, 404, "墓碑后默认列表/详情不可见");
+  const { VerdictStore } = await import("@agentssignal/audit");
+  const stateNow = () =>
+    new VerdictStore(path.join(auditDir, "verdicts.json")).get(seed.sig)?.state;
+  assert.equal(stateNow(), "tombstoned");
+
+  // 跳步：tombstoned 直接 keep → 409（非法转移）
+  const skip = await post(app, `/admin/signals/${seed.sig}/keep`, {}, basic());
+  assert.equal(skip.statusCode, 409);
+
+  // 两步：unfreeze（frozen，仍隐藏）→ keep（恢复可见）
+  const unfreeze = await post(app, `/admin/signals/${seed.sig}/unfreeze`, {}, basic());
+  assert.equal(unfreeze.statusCode, 200);
+  assert.equal(stateNow(), "frozen");
+
+  const keep = await post(app, `/admin/signals/${seed.sig}/keep`, {}, basic());
+  assert.equal(keep.statusCode, 200);
+  const visible = await app.inject({ method: "GET", url: `/signals/${seed.sig}` });
+  assert.equal(visible.statusCode, 200, "keep 后恢复可见");
+  assert.equal(stateNow(), "kept");
+  await ctx2.cleanup();
+});

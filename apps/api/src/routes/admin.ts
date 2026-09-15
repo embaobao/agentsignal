@@ -14,6 +14,7 @@ import {
   resolveTarget,
   snapshotBefore,
   unifiedDiff,
+  VerdictStore,
   verifyChain,
 } from "@agentssignal/audit";
 import { AppError, apiError } from "@agentssignal/protocol";
@@ -50,6 +51,9 @@ function errorReply(
   err: unknown,
 ) {
   const appErr = err as { statusCode?: number; code?: string; message?: string };
+  if ((appErr as { name?: string }).name === "VerdictError") {
+    return reply.code(409).send(apiError("conflict", appErr.message ?? "illegal transition"));
+  }
   if ((appErr as { code?: string }).code === "not_found" || appErr.statusCode === 404) {
     return reply.code(404).send(apiError("not_found", appErr.message ?? "not found"));
   }
@@ -332,6 +336,7 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
 
   const auditStateDir = env.AS_AUDIT_STATE_DIR ?? path.join(process.cwd(), "data", "audit");
   const approvals = new ApprovalsStore(path.join(auditStateDir, "approvals.json"));
+  const verdicts = new VerdictStore(path.join(auditStateDir, "verdicts.json"));
   // 双签配额：单管理员环境豁免为 1（AS_ADMIN_SINGLE=y），否则 ≥2 名不同管理员
   const quorumMin = env.AS_ADMIN_SINGLE === "y" ? 1 : 2;
 
@@ -408,6 +413,43 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
         after: { name: restored.name, description: restored.description },
       });
       return { id, changed: true, to_rev: target.rev, name: restored.name };
+    } catch (err) {
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/signals/:id/tombstone", async (req, reply) => {
+    try {
+      const admin = await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      const current = await store.findSignal(id, true);
+      if (!current) return reply.code(404).send(apiError("not_found", `signal gone: ${id}`));
+      await store.adminSetSignalDeleted(id, true);
+      verdicts.transition(id, "tombstoned", { actor: admin.actor, at: new Date().toISOString() });
+      return { id, tombstoned: true };
+    } catch (err) {
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/signals/:id/unfreeze", async (req, reply) => {
+    try {
+      const admin = await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      verdicts.transition(id, "frozen", { actor: admin.actor, at: new Date().toISOString() });
+      return { id, state: "frozen" };
+    } catch (err) {
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/signals/:id/keep", async (req, reply) => {
+    try {
+      const admin = await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      verdicts.transition(id, "kept", { actor: admin.actor, at: new Date().toISOString() });
+      await store.adminSetSignalDeleted(id, false);
+      return { id, state: "kept" };
     } catch (err) {
       return errorReply(reply, err);
     }
