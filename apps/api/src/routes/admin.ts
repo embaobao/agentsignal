@@ -322,7 +322,6 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
         ...(diff_lines > 1024 ? { warning: "diff 过大（>1024 行），请确认后再 apply" } : {}),
       };
     } catch (err) {
-      console.error("RESTORE-DRY-ERR:", err);
       return errorReply(reply, err);
     }
   });
@@ -336,10 +335,6 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
       if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
       const current = await store.agentByIdOrNumber(id);
       if (!current) return reply.code(404).send(apiError("not_found", `agent gone: ${id}`));
-      console.error(
-        "AGENT-DRY-DBG:",
-        JSON.stringify({ target: target.data, current: { name: current.name } }),
-      );
       const currentView = { name: current.name, description: current.description };
       const targetView = {
         name: target.data.name as string,

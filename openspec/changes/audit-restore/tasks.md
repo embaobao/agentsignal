@@ -27,7 +27,7 @@
 - [x] 2.1 Restore Signal：`POST /admin/restore/signal/:id/apply` + `/dry-run` 两步端点分离（支持 to_event_id/to_rev；dry-run 返回 target/current/diff/diff_lines；apply 走 verifyChain 门 → 快照当前 → updateSignal 还原 → 追加 restore 事件）— 2026-09-11 完成（IStore.findSignal 接口扩展 includeDeleted 可选参；连带接线：putSignal 后全行快照 rev1、updateSignal 前快照+补 update 事件——修订史来源）
 - [x] 2.2 Restore Agent（轻量）：还原 name/description（现行 schema 无 display_name/ext_sso 字段，落到现实字段；不回 token——agent_tokens 零触碰断言）（design §5 铁律 ⑥）— 2026-09-11 完成（agent 全行快照接线（registerAgent 后 rev1）· IStore.updateAgentIdentity 新方法 · /admin/restore/agent/:id/dry-run + /apply 端点（dry-run/还原/幂等同 signal 口径））
 - [x] 2.3 Dry-run：返回 unified diff（手写 LCS 零依赖，packages/audit/restore.ts）；diff_lines > 1024 给 warning 字段 — 2026-09-10 完成（>1024 大 diff 用例留待 2.10 测试批次补；audit-restore.test.ts 5 用例绿：dry-run diff/apply 还原+事件/幂等/链坏 409/to_event_id）
-- [ ] 2.4 Verdict Store：verdicts.json；Signal 状态机转移表 publish→keep/amend/freeze → tombstone；非法转移抛错（不静默）
+- [x] 2.4 Verdict Store：verdicts.json；Signal 状态机转移表 publish→keep/amend/freeze → tombstone；非法转移抛错（不静默）— 2026-09-11 完成（packages/audit/src/verdict.ts：五态固定转移表 + VerdictError + VerdictStore 文件存储（tmp+rename 原子写）+ history 追加；非法转移抛错不落盘；tombstoned→published 直接恢复禁止（两步第一步先到 frozen）；verdict-store.test.ts 6 用例）
 - [ ] 2.5 双签：approvals.json 登记 admin 执行人 sha；1B-2 MVP 要求 ≥2 admin approval 才 apply；单 admin env 豁免（`AS_ADMIN_SINGLE=y`）
 - [ ] 2.6 Tombstone：列表默认不显示（除非 `?include=tombstone`）；还原 tombstone 先到 frozen → keep（两步）
 - [ ] 2.7 CLI 四命令：`agentsignal-audit verify/restore/verdict/approve`；restore 默认 dry-run，`--apply` 还要求 STDIN 输入 `YES, I ACCEPT RESPONSIBILITY`

@@ -76,8 +76,14 @@ export async function resolveTarget(
 function lcsTable(a: string[], b: string[]): number[][] {
   const t: number[][] = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
   for (let i = a.length - 1; i >= 0; i--) {
+    const row = t[i];
+    const next = t[i + 1];
+    if (!row || !next) continue;
     for (let j = b.length - 1; j >= 0; j--) {
-      t[i]![j] = a[i] === b[j] ? t[i + 1]![j + 1]! + 1 : Math.max(t[i + 1]![j]!, t[i]![j + 1]!);
+      const left = next[j + 1] ?? 0;
+      const down = next[j] ?? 0;
+      const right = row[j + 1] ?? 0;
+      row[j] = a[i] === b[j] ? left + 1 : Math.max(down, right);
     }
   }
   return t;
@@ -102,11 +108,12 @@ export function unifiedDiff(
   let i = 0;
   let j = 0;
   while (i < a.length || j < b.length) {
+    const row = t[i];
     if (i < a.length && j < b.length && a[i] === b[j]) {
       out.push(`  ${a[i]}`);
       i++;
       j++;
-    } else if (j < b.length && (i >= a.length || t[i]![j + 1]! >= t[i + 1]![j]!)) {
+    } else if (j < b.length && (i >= a.length || (row?.[j + 1] ?? 0) >= (t[i + 1]?.[j] ?? 0))) {
       out.push(`+${b[j]}`);
       add++;
       j++;

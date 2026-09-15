@@ -240,12 +240,10 @@ test("Restore Agent：dry-run + apply 还原 name/description；token 表零触�
   );
 
   const dry = await post(app, `/admin/restore/agent/${agentId}/dry-run`, { to_rev: 1 }, basic());
-  console.log("DRY-STATUS:", dry.statusCode, "BODY:", dry.body.slice(0, 200));
   assert.equal(dry.statusCode, 200);
   assert.equal((dry.json() as { target: { description: string } }).target.description, "原始描述");
 
   const r = await post(app, `/admin/restore/agent/${agentId}/apply`, { to_rev: 1 }, basic());
-  console.log("APPLY-STATUS:", r.statusCode, "BODY:", r.body.slice(0, 200));
   assert.equal(r.statusCode, 200);
   assert.equal((r.json() as { changed: boolean }).changed, true);
 
