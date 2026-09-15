@@ -19,7 +19,7 @@ export interface SqlDb {
 }
 
 export type EntityType = "signal" | "agent" | "token" | "topic" | "agent_token";
-export type AuditAction = "create" | "update";
+export type AuditAction = "create" | "update" | "restore";
 
 export interface AuditEventInput {
   actor: string; // agt_<ulid> | admin:<user> | system

@@ -5,7 +5,7 @@
  * 策展写路径 PATCH /admin/signals/:id/curate 闭环运营缺口（recommended/stats_tag），
  * 审计事件在路由层落账（actor=admin:<user>；用户写路径的审计在 withAudit 包装层）。
  */
-import { appendEvent, verifyChain } from "@agentssignal/audit";
+import { appendEvent, resolveTarget, unifiedDiff, verifyChain } from "@agentssignal/audit";
 import { AppError, apiError } from "@agentssignal/protocol";
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
@@ -278,4 +278,101 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
       return row;
     },
   );
+
+  /* ── audit-restore 1B-2：Restore Signal 两步端点（dry-run → apply）────────
+   * 修订史 = snapshots 全行快照（audit-wrap 接线）；还原 = 覆盖可变字段（digest/experience）
+   * + 追加 restore 事件。设计 MUST #1：链坏禁止一切还原。双签在 2.5（本段 admin Basic 即权）。 */
+  const restoreSelector = z.object({
+    to_rev: z.number().int().min(1).optional(),
+    to_event_id: z.string().min(1).optional(),
+  });
+  app.post("/admin/restore/signal/:id/dry-run", async (req, reply) => {
+    try {
+      await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      const sel = restoreSelector.parse(req.body);
+      const target = await resolveTarget(db, "signal", id, sel);
+      if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
+      const current = await store.findSignal(id, true);
+      if (!current) return reply.code(404).send(apiError("not_found", `signal gone: ${id}`));
+      const currentView = { digest: current.digest, experience: current.experience };
+      const targetView = {
+        digest: target.data.digest as string,
+        experience: target.data.experience,
+      };
+      const { diff, diff_lines } = unifiedDiff(
+        JSON.stringify(currentView, null, 2),
+        JSON.stringify(targetView, null, 2),
+      );
+      return {
+        id,
+        to_rev: target.rev,
+        to_event_id: target.id,
+        created_at: target.created_at,
+        target: targetView,
+        current: currentView,
+        diff,
+        diff_lines,
+        ...(diff_lines > 1024 ? { warning: "diff 过大（>1024 行），请确认后再 apply" } : {}),
+      };
+    } catch (err) {
+      console.error("RESTORE-DRY-ERR:", err);
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/restore/signal/:id/apply", async (req, reply) => {
+    try {
+      const admin = await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      const sel = restoreSelector.parse(req.body);
+      // MUST #1：链坏禁止一切还原
+      const chain = await verifyChain(db);
+      if (!chain.ok) {
+        return reply
+          .code(409)
+          .send(apiError("conflict", `账本链已损坏（broken_at ${chain.broken_at}），禁止还原`));
+      }
+      const target = await resolveTarget(db, "signal", id, sel);
+      if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
+      const current = await store.findSignal(id, true);
+      if (!current) return reply.code(404).send(apiError("not_found", `signal gone: ${id}`));
+      const targetDigest = target.data.digest as string | undefined;
+      const targetExp = target.data.experience as
+        | { format: "markdown"; body: string }
+        | null
+        | undefined;
+      const unchanged =
+        current.digest === targetDigest &&
+        JSON.stringify(current.experience) === JSON.stringify(targetExp ?? null);
+      if (unchanged) {
+        return { id, changed: false, to_rev: target.rev };
+      }
+      // 还原前先快照当前态（修订史继续追加，不删旧 rev）
+      const { snapshotBefore } = await import("@agentssignal/audit");
+      await snapshotBefore(db, "signal", id, current);
+      const restored = await store.updateSignal(id, current.sender_agent_id, {
+        ...(targetDigest !== undefined ? { digest: targetDigest } : {}),
+        ...(targetExp ? { experience: targetExp } : {}),
+      });
+      if (!restored) return reply.code(404).send(apiError("not_found", `signal gone: ${id}`));
+      await appendEvent(db, {
+        actor: admin.actor,
+        entityType: "signal",
+        entityId: id,
+        action: "restore",
+        before: { digest: current.digest, experience: current.experience },
+        after: { digest: restored.digest, experience: restored.experience },
+      });
+      return {
+        id,
+        changed: true,
+        to_rev: target.rev,
+        digest: restored.digest,
+        verify: await verifyChain(db),
+      };
+    } catch (err) {
+      return errorReply(reply, err);
+    }
+  });
 }

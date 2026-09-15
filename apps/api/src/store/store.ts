@@ -123,7 +123,7 @@ export interface IStore {
   setTopicArchived(id: string, archived: boolean): Promise<TopicRow | undefined>;
   putSignal(input: PutSignalInput): Promise<SignalRow>;
   listSignals(opts: ListOptions): Promise<SignalRow[]>;
-  findSignal(id: string): Promise<SignalRow | undefined>;
+  findSignal(id: string, includeDeleted?: boolean): Promise<SignalRow | undefined>;
   findSignalsByAgent(agentId: string): Promise<SignalRow[]>;
   updateSignal(
     id: string,
