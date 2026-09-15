@@ -61,7 +61,7 @@ const median = timings[Math.floor(timings.length / 2)] ?? 0;
 
 // ── 2 装配 ──
 const s2 = performance.now();
-await loadDetail("skill_bench_0007", paths);
+await loadDetail(`skill_bench_${String(Math.min(7, COUNT - 1)).padStart(4, "0")}`, paths);
 const assemble = performance.now() - s2;
 
 out(`# bench · ${COUNT} 技能 · node ${process.version}`);

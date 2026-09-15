@@ -10,6 +10,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
+import JSON5 from "json5";
 import { exportApm, importApm } from "../src/capability/export.ts";
 import { installSignal } from "../src/skills/install.ts";
 import { loadDetail } from "../src/skills/loader.ts";
@@ -39,6 +40,7 @@ before(async () => {
   root = await mkdtemp(path.join(tmpdir(), "as-export-"));
   await seed("sig_01exporta0000000000000", "经验 A");
   await seed("sig_01exportb0000000000000", "经验 B");
+  await seed("sig_01ext43pure00000000000", "4.3 专属纯净样例"); // 4.3 专用（4.2 导入会覆写共享样例）
   outDir = path.join(root, "export-out");
 });
 
@@ -52,7 +54,7 @@ test("导出布局：apm.yml + .apm/skills/<id>/SKILL.md 各就位（DoD 布局�
     outDir,
     resolvePaths(root),
   );
-  assert.equal(files.length, 3, "2 SKILL.md + 1 apm.yml");
+  assert.equal(files.length, 4, "2 SKILL.md + 1 extensions.json5 + 1 apm.yml");
   for (const f of files) await stat(f);
   const top = await readdir(outDir);
   assert.deepEqual(top.sort(), [".apm", "apm.yml"]);
@@ -100,7 +102,7 @@ test("未知 id：结构化跳过（skipped 带原因），其余照常导出", 
     out3,
     resolvePaths(root),
   );
-  assert.equal(r.length, 2, "1 SKILL.md + 1 apm.yml（未知 id 跳过）");
+  assert.equal(r.length, 3, "1 SKILL.md + 1 extensions.json5 + 1 apm.yml（未知 id 跳过）");
   const y = await readFile(path.join(out3, "apm.yml"), "utf8");
   assert.ok(y.includes("sig_01exporta0000000000000"));
   assert.ok(!y.includes("sig_unknown"));
@@ -109,7 +111,7 @@ test("未知 id：结构化跳过（skipped 带原因），其余照常导出", 
 test("空 id 列表：空包结构（apm.yml 空 skills 段）不炸", async () => {
   const out4 = path.join(root, "export-out4");
   const r = await exportApm([], out4, resolvePaths(root));
-  assert.equal(r.length, 1, "仅 apm.yml");
+  assert.equal(r.length, 2, "extensions.json5 + apm.yml");
   const y = await readFile(path.join(out4, "apm.yml"), "utf8");
   assert.ok(y.includes("skills: []") || y.includes("skills:[]"));
 });
@@ -142,12 +144,12 @@ test("S10 往返：标准部分无损——导入后正文与导出产物一致�
   );
   const { skills } = await scanSkills(paths);
   const a = skills.find((s) => s.id === "sig_01exporta0000000000000");
-  // 私有 triggers 不从产物回转：导入侧只给安全默认（keyword=包名），原始 triggers 已随导出丢弃
+  // 4.3 升级：私有 triggers 从扩展文件恢复原始值（往返无损升级——不再是安全默认）
   assert.deepEqual(a?.triggers, [
     {
       field: "keyword",
       operator: "contains_any",
-      values: ["sig_01exporta0000000000000", "agentsignal-export"],
+      values: ["rag", "中文RAG"],
       weight: 1,
     },
   ]);
@@ -179,4 +181,43 @@ test("4.2 坏条目结构化跳过：产物首部缺失 → skipped 带原因、
   assert.equal(r.skipped.length, 1);
   assert.equal(r.skipped[0]?.id, "skill_bad");
   assert.ok(r.skipped[0]?.reason.includes("首部"), "坏条目带原因（首部缺失）");
+});
+
+/* ---------------- P4 4.3 扩展 JSON（私有增强独立文件） ---------------- */
+
+test("4.3 导出：私有增强写独立 extensions.json5（apm.yml/SKILL.md 仍零泄漏）", async () => {
+  const out5 = path.join(root, "export-out5");
+  await exportApm(["sig_01ext43pure00000000000"], out5, resolvePaths(root));
+  const extPath = path.join(out5, ".apm", "extensions.json5");
+  await stat(extPath);
+  const ext = JSON5.parse(await readFile(extPath, "utf8")) as {
+    skills: Record<string, { domains: string[]; layers: string[]; triggers: unknown[] }>;
+  };
+  const priv = ext.skills.sig_01ext43pure00000000000;
+  assert.ok(priv, "该技能的私有增强在扩展文件");
+  assert.deepEqual(priv.domains, ["中文RAG"], "原始 domains 保真（非导出默认）");
+  assert.ok(priv.triggers.length > 0, "原始 triggers 保真");
+  const y = await readFile(path.join(out5, "apm.yml"), "utf8");
+  assert.ok(!y.includes("triggers"), "标准清单仍零泄漏");
+});
+
+test("4.3 导入：带 extensions 的包恢复原始私有字段（往返无损升级）", async () => {
+  const out6 = path.join(root, "export-out6");
+  await exportApm(["sig_01ext43pure00000000000"], out6, resolvePaths(root));
+  const paths = resolvePaths(root);
+  const r = await importApm(out6, paths);
+  assert.equal(r.imported.length, 1);
+  const { skills } = await scanSkills(paths);
+  const a = skills.find((s) => s.id === "sig_01ext43pure00000000000");
+  assert.deepEqual(a?.domains, ["中文RAG"], "私有 domains 从扩展文件恢复（不再是安全默认 common）");
+  assert.deepEqual(a?.lifecycle.provenance?.origin?.kind, "apm-import", "导入溯源仍记 apm-import");
+});
+
+test("4.3 兼容：无 extensions 文件的包导入仍走安全默认（4.2 行为不变）", async () => {
+  const paths = resolvePaths(root);
+  const r = await importApm(outDir, paths); // outDir 是 4.1 早期导出（无 extensions.json5）
+  assert.ok(r.imported.length > 0);
+  const { skills } = await scanSkills(paths);
+  const a = skills.find((s) => s.id === "sig_01exporta0000000000000");
+  assert.ok(a, "导入不炸");
 });

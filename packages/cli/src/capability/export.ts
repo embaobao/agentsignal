@@ -9,6 +9,7 @@
  */
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import JSON5 from "json5";
 import { parseArtifactFrontmatter, SkillFrontmatterSchema } from "@agentssignal/protocol";
 import { type AgentSignalPaths, resolvePaths } from "../skills/paths.ts";
 import { type SkillRecord, scanSkills } from "../skills/store.ts";
@@ -30,6 +31,8 @@ export async function exportApm(
   }
 
   const written: string[] = [];
+  // 扩展文件（P4 4.3）：私有增强独立文件，不污染标准清单——S10「往返无损」的私有侧载体
+  const extensions: Record<string, Record<string, unknown>> = {};
   // .apm/skills/<id>/SKILL.md（产物零工具可读）
   for (const s of picked) {
     const raw = await readFile(s.bodyFile, "utf8");
@@ -44,6 +47,13 @@ export async function exportApm(
     await writeFile(tmp, renderArtifactSkillMd(s.id, s.description, body), "utf8");
     await rename(tmp, path.join(dir, "SKILL.md"));
     written.push(path.join(dir, "SKILL.md"));
+    extensions[s.id] = {
+      domains: s.domains,
+      layers: s.layers,
+      triggers: s.triggers,
+      keywords: s.keywords,
+      verify_target: s.verify_target,
+    };
   }
 
   // apm.yml（标准段：name/version/skills——零私有键；确定性输出）
@@ -56,6 +66,11 @@ export async function exportApm(
     lines.push(`  - name: ${s.id}`);
     lines.push(`    path: .apm/skills/${s.id}/SKILL.md`);
   }
+  await mkdir(path.join(outDir, ".apm"), { recursive: true });
+  const extTmp = path.join(outDir, ".apm", `extensions.json5.tmp-${process.pid}`);
+  await writeFile(extTmp, JSON5.stringify({ skills: extensions }, null, 2), "utf8");
+  await rename(extTmp, path.join(outDir, ".apm", "extensions.json5"));
+  written.push(path.join(outDir, ".apm", "extensions.json5"));
   await mkdir(outDir, { recursive: true });
   const ytmp = path.join(outDir, `apm.yml.tmp-${process.pid}`);
   await writeFile(ytmp, `${lines.join("\n")}\n`, "utf8");
@@ -98,6 +113,16 @@ export async function importApm(inDir: string, paths?: AgentSignalPaths): Promis
   const p = paths ?? resolvePaths();
   const ymlText = await readFile(path.join(inDir, "apm.yml"), "utf8");
   const manifest = parseApmYml(ymlText);
+  // 扩展文件（4.3）：存在则恢复原始私有字段；不存在走安全默认（4.2 兼容）
+  let extSkills: Record<string, Record<string, unknown>> = {};
+  try {
+    const ext = JSON5.parse(
+      await readFile(path.join(inDir, ".apm", "extensions.json5"), "utf8"),
+    ) as { skills?: Record<string, Record<string, unknown>> };
+    extSkills = ext.skills ?? {};
+  } catch {
+    // 无扩展文件——安全默认
+  }
   const imported: string[] = [];
   const skipped: { id: string; reason: string }[] = [];
   for (const entry of manifest.skills) {
@@ -115,6 +140,7 @@ export async function importApm(inDir: string, paths?: AgentSignalPaths): Promis
       const body = raw.replace(/^---\n[\s\S]*?\n---\n\n/, "");
       const dir = path.join(p.skillsDir, entry.name);
       await mkdir(dir, { recursive: true });
+      const ext = extSkills[entry.name] ?? {};
       await writeFile(
         path.join(dir, "skill.json5"),
         JSON.stringify(
@@ -122,11 +148,15 @@ export async function importApm(inDir: string, paths?: AgentSignalPaths): Promis
             id: entry.name,
             name: fm.name,
             description: fm.description,
-            domains: ["common"],
-            layers: ["base"],
-            triggers: [
-              { field: "keyword", operator: "contains_any", values: [entry.name, manifest.name] },
-            ],
+            domains: (ext.domains as string[] | undefined) ?? ["common"],
+            layers: (ext.layers as string[] | undefined) ?? ["base"],
+            triggers:
+              (ext.triggers as
+                | { field: "keyword"; operator: "contains_any"; values: string[] }[]
+                | undefined) ??
+              [{ field: "keyword", operator: "contains_any", values: [entry.name, manifest.name] }],
+            keywords: (ext.keywords as string[] | undefined) ?? [manifest.name],
+            verify_target: (ext.verify_target as string[] | undefined) ?? [],
             lifecycle: { provenance: { origin: { kind: "apm-import", ref: manifest.name } } },
           }),
           null,
