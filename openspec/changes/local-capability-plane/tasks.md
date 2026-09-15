@@ -204,8 +204,8 @@
 
 ## 八、P7 —— 模型接入 + 面板扩展【轨道 B】
 
-- [ ] **7.1** 供应商注册表：`capability/providers.json`（厂商·base_url·建议模型·文档链接）+ schema + 加载
-  - DoD：加载校验测试；**新增厂商 = 只改数据文件**
+- [x] **7.1** 供应商注册表：`capability/providers.json`（厂商·base_url·建议模型·文档链接）+ schema + 加载
+  - DoD：加载校验测试；**新增厂商 = 只改数据文件**（capability/providers.ts：ProviderSchema 校验·内置国产端点打底 GLM/DeepSeek/Moonshot·用户区 providers.json5 同 id 覆盖/新 id 追加·非法条目 fail-soft 收集；4 用例；token 永不进注册表注记）
 - [ ] **7.2** 包模型 `providers` 段（provider ref + model 映射 + **token 引用**）
   - DoD：token 不进产物断言（并入 S10 零泄漏）
 - [ ] **7.3** env 写入器：**接管确认 + 快照回滚 + 归属锁**；降级（宿主不支持→仅记录）
