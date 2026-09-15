@@ -101,6 +101,6 @@ test("非法条目：缺 base_url 跳过并收集 errors（fail-soft 不炸）",
   );
   const r = await loadProviders(resolvePaths(root));
   assert.equal(r.errors.length, 1);
-  assert.ok(r.errors[0].includes("broken"));
+  assert.ok(r.errors[0]?.includes("broken"));
   assert.ok(!r.providers.some((p) => p.id === "broken"), "坏条目不进结果");
 });

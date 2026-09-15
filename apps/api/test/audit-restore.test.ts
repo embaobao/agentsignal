@@ -8,6 +8,9 @@
  * 隔离：createTestDb 注入式测试库（PGlite），零外部依赖。
  */
 import assert from "node:assert/strict";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, test } from "node:test";
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
@@ -23,7 +26,7 @@ import type { Db } from "../src/db/client.ts";
 
 const BCRYPT = bcrypt.hashSync("admin-pass", 10);
 
-function makeApp() {
+function makeApp(extraEnv: Record<string, string> = {}) {
   const state: {
     app?: FastifyInstance;
     db?: Db;
@@ -43,6 +46,8 @@ function makeApp() {
           SELF_REGISTER_ENABLED: "1",
           AS_ADMIN_USER: "admin",
           AS_ADMIN_PASS_BCRYPT: BCRYPT,
+          AS_AUDIT_STATE_DIR: "/tmp/dsme-audit",
+          ...extraEnv,
         },
       });
       state.db = t.db;
@@ -125,7 +130,7 @@ async function patchDigest(
 
 describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
   test("dry-run：unified diff 指向 rev1 内容（2.1/2.3）", async () => {
-    const ctx = makeApp();
+    const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
     const { app } = await ctx.ready();
     const seed = await seedSignal(app);
     await patchDigest(app, seed.auth, seed.sig, DIGEST_V2);
@@ -146,7 +151,7 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
   });
 
   test("apply：还原 digest/experience + restore 事件落账 + 链可验证（2.1）", async () => {
-    const ctx = makeApp();
+    const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
     const { app, db } = await ctx.ready();
     const seed = await seedSignal(app);
     await patchDigest(app, seed.auth, seed.sig, DIGEST_V2);
@@ -168,7 +173,7 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
   });
 
   test("幂等：同一 to_rev 二次 apply 无变化、无新事件", async () => {
-    const ctx = makeApp();
+    const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
     const { app, db } = await ctx.ready();
     const seed = await seedSignal(app);
     await patchDigest(app, seed.auth, seed.sig, DIGEST_V2); // 先变更，恢复才有意义
@@ -185,7 +190,7 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
   });
 
   test("链坏禁止还原（设计 MUST #1）", async () => {
-    const ctx = makeApp();
+    const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
     const { app, db } = await ctx.ready();
     const seed = await seedSignal(app);
     await db.query(
@@ -200,7 +205,7 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
   });
 
   test("to_event_id 变体：指定 create 事件 → 同 rev1 目标", async () => {
-    const ctx = makeApp();
+    const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
     const { app, db } = await ctx.ready();
     const seed = await seedSignal(app);
     await patchDigest(app, seed.auth, seed.sig, DIGEST_V2);
@@ -223,7 +228,7 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
 /* ── 2.2 Restore Agent（轻量：name/description；不回 token）───────────────── */
 
 test("Restore Agent：dry-run + apply 还原 name/description；token 表零触碰（2.2）", async () => {
-  const ctx = makeApp();
+  const ctx = makeApp({ AS_ADMIN_SINGLE: "y" });
   const { app, db } = await ctx.ready();
   const reg = await post(app, "/agents/register", {
     name: "agent-original",
@@ -259,4 +264,39 @@ test("Restore Agent：dry-run + apply 还原 name/description；token 表零触�
   );
   assert.equal(tokAfter.rows[0]?.n, tokBefore.rows[0]?.n, "token 表零触碰（铁律 ⑥）");
   await ctx.cleanup();
+});
+
+/* ── 2.5 双签：配额逻辑（无豁免 → 202 pending；第二管理员登记后放行）──────── */
+
+test("双签：默认配额 2 → 首次 apply 202 pending；第二管理员登记后放行（2.5）", async () => {
+  const auditDir = await mkdtemp(path.join(tmpdir(), "as-dual-"));
+  const ctx2 = makeApp({ AS_AUDIT_STATE_DIR: auditDir });
+  const { app } = await ctx2.ready();
+  const seed = await seedSignal(app);
+  await patchDigest(app, seed.auth, seed.sig, DIGEST_V2);
+
+  // 首次 apply（默认配额 2）：登记 1 票 → 202 pending，不执行还原
+  const r1 = await post(app, `/admin/restore/signal/${seed.sig}/apply`, { to_rev: 1 }, basic());
+  assert.equal(r1.statusCode, 202);
+  assert.equal(
+    (r1.json() as { pending: boolean; required: number; distinct: number }).pending,
+    true,
+  );
+  assert.equal((r1.json() as { distinct: number }).distinct, 1);
+
+  // digest 未变（pending 不执行）
+  const detail = await get(app, `/signals/${seed.sig}?include=experience`);
+  assert.equal(detail.json().digest, DIGEST_V2, "pending 期间不得还原");
+
+  // 第二管理员登记（模拟另一 admin 在 approvals.json 落票）
+  const opSha = (r1.json() as { op_sha: string }).op_sha;
+  const { ApprovalsStore } = await import("@agentssignal/audit");
+  const approvals = new ApprovalsStore(path.join(auditDir, "approvals.json"));
+  approvals.register(opSha, "admin:second", new Date().toISOString());
+
+  // 再次 apply → 配额满足 → 执行
+  const r2 = await post(app, `/admin/restore/signal/${seed.sig}/apply`, { to_rev: 1 }, basic());
+  assert.equal(r2.statusCode, 200);
+  assert.equal((r2.json() as { changed: boolean }).changed, true);
+  await ctx2.cleanup();
 });

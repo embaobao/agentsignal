@@ -5,8 +5,12 @@
  * 策展写路径 PATCH /admin/signals/:id/curate 闭环运营缺口（recommended/stats_tag），
  * 审计事件在路由层落账（actor=admin:<user>；用户写路径的审计在 withAudit 包装层）。
  */
+
+import path from "node:path";
 import {
+  ApprovalsStore,
   appendEvent,
+  operationSha,
   resolveTarget,
   snapshotBefore,
   unifiedDiff,
@@ -326,6 +330,11 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
     }
   });
 
+  const auditStateDir = env.AS_AUDIT_STATE_DIR ?? path.join(process.cwd(), "data", "audit");
+  const approvals = new ApprovalsStore(path.join(auditStateDir, "approvals.json"));
+  // 双签配额：单管理员环境豁免为 1（AS_ADMIN_SINGLE=y），否则 ≥2 名不同管理员
+  const quorumMin = env.AS_ADMIN_SINGLE === "y" ? 1 : 2;
+
   app.post("/admin/restore/agent/:id/dry-run", async (req, reply) => {
     try {
       await requireAdmin(req, env);
@@ -373,6 +382,13 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
       if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
       const current = await store.agentByIdOrNumber(id);
       if (!current) return reply.code(404).send(apiError("not_found", `agent gone: ${id}`));
+      const opSha = operationSha("agent", id, sel.to_rev ?? "", sel.to_event_id ?? "");
+      const { distinct } = approvals.register(opSha, admin.actor, new Date().toISOString());
+      if (distinct < quorumMin) {
+        return reply
+          .code(202)
+          .send({ pending: true, required: quorumMin, distinct, op_sha: opSha });
+      }
       const targetName = target.data.name as string | undefined;
       const targetDesc = target.data.description as string | undefined;
       const unchanged = current.name === targetName && current.description === (targetDesc ?? "");
@@ -413,6 +429,13 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
       if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
       const current = await store.findSignal(id, true);
       if (!current) return reply.code(404).send(apiError("not_found", `signal gone: ${id}`));
+      const opSha = operationSha("signal", id, sel.to_rev ?? "", sel.to_event_id ?? "");
+      const { distinct } = approvals.register(opSha, admin.actor, new Date().toISOString());
+      if (distinct < quorumMin) {
+        return reply
+          .code(202)
+          .send({ pending: true, required: quorumMin, distinct, op_sha: opSha });
+      }
       const targetDigest = target.data.digest as string | undefined;
       const targetExp = target.data.experience as
         | { format: "markdown"; body: string }

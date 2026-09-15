@@ -52,6 +52,8 @@ const EnvSchema = z.object({
       .optional(),
   ),
   AS_ADMIN_SINGLE: z.enum(["y", "n"]).default("n"),
+  // audit-restore 1B-2：双签 approvals.json / verdicts.json 落盘目录（缺省 <cwd>/data/audit）
+  AS_AUDIT_STATE_DIR: z.string().optional(),
 
   // 生命周期
   TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(90),
