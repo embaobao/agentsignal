@@ -84,3 +84,31 @@ test("契约套件：reconcile 缺失即违约（规则三硬要求）", async (
   delete noReconcile.reconcile; // 故意违约：模拟未实现 reconcile 的适配器
   await assert.rejects(() => runAdapterContract(noReconcile as CapabilityAdapter));
 });
+
+test("契约套件：deploy 遍历全部声明宿主（盲区加固——降级 fake 三宿主逐档过闸）", async () => {
+  // fake-degrading 声明三宿主（L1/L2/L3 各档）——遍历加固后三档全部在套件内被断言
+  await runAdapterContract(makeFakeFull());
+  const degrading: CapabilityAdapter = {
+    id: "fake-degrading-traversal",
+    probe: async () => ({ available: true }),
+    capabilities: () => new Set(["skill", "deploy"] as const),
+    hosts: () => ["claude-code", "cursor", "gemini"],
+    deploy: async (_items, host) => {
+      const ladder = host === "claude-code" ? "L1" : host === "cursor" ? "L2" : "L3";
+      return {
+        host,
+        ladder,
+        written: ladder === "L1" ? ["skills/x"] : [],
+        skipped:
+          ladder === "L1"
+            ? undefined
+            : [{ target: host, reason: `${ladder} 降级说明（宿主能力位不足）` }],
+      };
+    },
+    remove: async () => {
+      throw new UnsupportedCapability({ adapter: "fake-degrading-traversal", cap: "remove" });
+    },
+    reconcile: async () => ({ entries: [], at: new Date().toISOString() }),
+  };
+  await runAdapterContract(degrading);
+});

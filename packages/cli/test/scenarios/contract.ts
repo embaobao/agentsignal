@@ -70,25 +70,32 @@ export async function runAdapterContract(
   assert.ok(caps.size > 0, `${adapter.id} 必须至少声明一个能力（空声明 = 不可用，应省略适配器）`);
 
   // ── hosts：非空（空宿主集的适配器不可用）──
+  const hosts = adapter.hosts();
+  assert.ok(hosts.length > 0, `${adapter.id}.hosts() 不能为空`);
 
-  // ── deploy：ladder 落档 + skipped 逐条带 reason ──
-  const host = adapter.hosts()[0];
-  assert.ok(host !== undefined, `${adapter.id}.hosts() 不能为空`);
-  const deploy = await adapter.deploy(items as PackageItem[], host);
-  assert.ok(
-    ["L1", "L2", "L3"].includes(deploy.ladder),
-    `${adapter.id}.deploy().ladder 必须是 L1/L2/L3，实得 ${String(deploy.ladder)}`,
-  );
-  for (const s of deploy.skipped ?? []) {
-    assert.ok(s.reason && s.reason.length > 0, "skipped 条目必须带 reason（D10 不静默）");
-  }
-  // 多档降级结构断言（审查席 5 建议）：非 L1 落档必有降级说明（不静默）
-  if (deploy.ladder !== "L1") {
+  // ── deploy：遍历全部宿主（审查席 5 盲区加固）——每宿主 ladder 合法 + 降级可见 ──
+  for (const host of hosts) {
+    const deploy = await adapter.deploy(items as PackageItem[], host);
     assert.ok(
-      (deploy.skipped?.length ?? 0) > 0 || (deploy.warnings?.length ?? 0) > 0,
-      `${adapter.id}.deploy 落 ${deploy.ladder} 档却无 skipped/warnings 说明——违反 D10 降级可见`,
+      ["L1", "L2", "L3"].includes(deploy.ladder),
+      `${adapter.id}.deploy(${host}).ladder 必须是 L1/L2/L3，实得 ${String(deploy.ladder)}`,
     );
+    for (const s of deploy.skipped ?? []) {
+      assert.ok(
+        s.reason && s.reason.length > 0,
+        `deploy(${host}) skipped 条目必须带 reason（D10 不静默）`,
+      );
+    }
+    // 多档降级结构断言（审查席 5 建议）：非 L1 落档必有降级说明（不静默）
+    if (deploy.ladder !== "L1") {
+      assert.ok(
+        (deploy.skipped?.length ?? 0) > 0 || (deploy.warnings?.length ?? 0) > 0,
+        `${adapter.id}.deploy(${host}) 落 ${deploy.ladder} 档却无 skipped/warnings 说明——违反 D10 降级可见`,
+      );
+    }
   }
+  const host = hosts[0];
+  assert.ok(host !== undefined, `${adapter.id}.hosts()[0] 缺失`);
 
   // ── remove：声明一致性（规则一）——未声明 remove 时调用必须抛 UnsupportedCapability ──
   if (!caps.has("remove")) {
