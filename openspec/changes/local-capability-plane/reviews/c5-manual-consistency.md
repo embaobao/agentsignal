@@ -20,6 +20,7 @@
 2. status「验证体检」行（5.4：三态+三计数+上游溯源）→ user-manual status 段
 3. 产物 SKILL.md frontmatter 首部（P0.3，零工具可读）→ user-manual use --install 段
 4. 本地能力面 broker/ledger/lock（P1 三规则）→ admin-guide 新章（随 G-B 门命名定稿）
+5. P4 互操作导出/导入用法（apm.yml 往返 + extensions.json5 私有增强随行）→ user-manual 新节（4.4 DoD 条目，随 0.6.0 入册——2026-09-16 席 2 登记）
 
 ## 依据
 
