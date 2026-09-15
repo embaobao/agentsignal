@@ -12,6 +12,7 @@ export function withAudit(store: IStore, db: Db): IStore {
 
   audited.registerAgent = async (name: string, description: string, rawToken: string) => {
     const { agent } = await store.registerAgent(name, description, rawToken);
+    await snapshotBefore(db, "agent", agent.id, agent); // agent 全行快照（rev1，轻量还原来源）
     await appendEvent(db, {
       actor: agent.id,
       entityType: "agent",

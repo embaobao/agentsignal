@@ -5,7 +5,13 @@
  * 策展写路径 PATCH /admin/signals/:id/curate 闭环运营缺口（recommended/stats_tag），
  * 审计事件在路由层落账（actor=admin:<user>；用户写路径的审计在 withAudit 包装层）。
  */
-import { appendEvent, resolveTarget, unifiedDiff, verifyChain } from "@agentssignal/audit";
+import {
+  appendEvent,
+  resolveTarget,
+  snapshotBefore,
+  unifiedDiff,
+  verifyChain,
+} from "@agentssignal/audit";
 import { AppError, apiError } from "@agentssignal/protocol";
 import bcrypt from "bcryptjs";
 import type { FastifyInstance } from "fastify";
@@ -317,6 +323,81 @@ export function registerAdminRoutes(app: FastifyInstance, store: IStore, db: Db,
       };
     } catch (err) {
       console.error("RESTORE-DRY-ERR:", err);
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/restore/agent/:id/dry-run", async (req, reply) => {
+    try {
+      await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      const sel = restoreSelector.parse(req.body);
+      const target = await resolveTarget(db, "agent", id, sel);
+      if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
+      const current = await store.agentByIdOrNumber(id);
+      if (!current) return reply.code(404).send(apiError("not_found", `agent gone: ${id}`));
+      console.error(
+        "AGENT-DRY-DBG:",
+        JSON.stringify({ target: target.data, current: { name: current.name } }),
+      );
+      const currentView = { name: current.name, description: current.description };
+      const targetView = {
+        name: target.data.name as string,
+        description: target.data.description as string,
+      };
+      const { diff, diff_lines } = unifiedDiff(
+        JSON.stringify(currentView, null, 2),
+        JSON.stringify(targetView, null, 2),
+      );
+      return {
+        id,
+        to_rev: target.rev,
+        target: targetView,
+        current: currentView,
+        diff,
+        diff_lines,
+        ...(diff_lines > 1024 ? { warning: "diff 过大（>1024 行）" } : {}),
+      };
+    } catch (err) {
+      return errorReply(reply, err);
+    }
+  });
+
+  app.post("/admin/restore/agent/:id/apply", async (req, reply) => {
+    try {
+      const admin = await requireAdmin(req, env);
+      const { id } = req.params as { id: string };
+      const sel = restoreSelector.parse(req.body);
+      const chain = await verifyChain(db);
+      if (!chain.ok) {
+        return reply
+          .code(409)
+          .send(apiError("conflict", `账本链已损坏（broken_at ${chain.broken_at}），禁止还原`));
+      }
+      const target = await resolveTarget(db, "agent", id, sel);
+      if (!target) return reply.code(404).send(apiError("not_found", `no revision for ${id}`));
+      const current = await store.agentByIdOrNumber(id);
+      if (!current) return reply.code(404).send(apiError("not_found", `agent gone: ${id}`));
+      const targetName = target.data.name as string | undefined;
+      const targetDesc = target.data.description as string | undefined;
+      const unchanged = current.name === targetName && current.description === (targetDesc ?? "");
+      if (unchanged) return { id, changed: false, to_rev: target.rev };
+      await snapshotBefore(db, "agent", id, current);
+      const restored = await store.updateAgentIdentity(id, {
+        name: targetName,
+        description: targetDesc,
+      });
+      if (!restored) return reply.code(404).send(apiError("not_found", `agent gone: ${id}`));
+      await appendEvent(db, {
+        actor: admin.actor,
+        entityType: "agent",
+        entityId: id,
+        action: "restore",
+        before: { name: current.name, description: current.description },
+        after: { name: restored.name, description: restored.description },
+      });
+      return { id, changed: true, to_rev: target.rev, name: restored.name };
+    } catch (err) {
       return errorReply(reply, err);
     }
   });

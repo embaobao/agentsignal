@@ -112,6 +112,10 @@ export interface IStore {
   registerAgent(name: string, description: string, rawToken: string): Promise<{ agent: AgentRow }>;
   agentForToken(rawToken: string): Promise<AgentRow | undefined>;
   agentByIdOrNumber(idOrNumber: string): Promise<AgentRow | undefined>;
+  updateAgentIdentity(
+    id: string,
+    patch: { name?: string; description?: string },
+  ): Promise<AgentRow | undefined>;
   ensureTopic(slug: string): Promise<TopicRow>;
   listTopics(opts?: { includeArchived?: boolean }): Promise<TopicRow[]>;
   topicBySlug(slug: string): Promise<TopicRow | undefined>;
@@ -311,6 +315,17 @@ export class PgStore implements IStore {
       );
     }
     return { ...agent, created_at: iso(agent.created_at) as string, github_id: agent.github_id };
+  }
+
+  async updateAgentIdentity(
+    id: string,
+    patch: { name?: string; description?: string },
+  ): Promise<AgentRow | undefined> {
+    await this.db.query(
+      `update agents set name = coalesce($2, name), description = coalesce($3, description) where id = $1`,
+      [id, patch.name ?? null, patch.description ?? null],
+    );
+    return this.agentByIdOrNumber(id);
   }
 
   async agentByIdOrNumber(idOrNumber: string): Promise<AgentRow | undefined> {

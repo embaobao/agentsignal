@@ -219,3 +219,46 @@ describe("audit-restore 1B-2 · Restore Signal 两步端点", () => {
     await ctx.cleanup();
   });
 });
+
+/* ── 2.2 Restore Agent（轻量：name/description；不回 token）───────────────── */
+
+test("Restore Agent：dry-run + apply 还原 name/description；token 表零触碰（2.2）", async () => {
+  const ctx = makeApp();
+  const { app, db } = await ctx.ready();
+  const reg = await post(app, "/agents/register", {
+    name: "agent-original",
+    description: "原始描述",
+  });
+  const agentId = reg.json().agent_id as string;
+  // 模拟漂移：直接改库（当前无 agent 改名路由）
+  await db.query(`update agents set name = 'drifted', description = '被改的描述' where id = $1`, [
+    agentId,
+  ]);
+  const tokBefore = await db.query<{ n: string }>(
+    `select count(*)::text as n from agent_tokens where agent_id = $1`,
+    [agentId],
+  );
+
+  const dry = await post(app, `/admin/restore/agent/${agentId}/dry-run`, { to_rev: 1 }, basic());
+  console.log("DRY-STATUS:", dry.statusCode, "BODY:", dry.body.slice(0, 200));
+  assert.equal(dry.statusCode, 200);
+  assert.equal((dry.json() as { target: { description: string } }).target.description, "原始描述");
+
+  const r = await post(app, `/admin/restore/agent/${agentId}/apply`, { to_rev: 1 }, basic());
+  console.log("APPLY-STATUS:", r.statusCode, "BODY:", r.body.slice(0, 200));
+  assert.equal(r.statusCode, 200);
+  assert.equal((r.json() as { changed: boolean }).changed, true);
+
+  const row = await db.query<{ name: string; description: string }>(
+    `select name, description from agents where id = $1`,
+    [agentId],
+  );
+  assert.equal(row.rows[0]?.name, "agent-original");
+  assert.equal(row.rows[0]?.description, "原始描述");
+  const tokAfter = await db.query<{ n: string }>(
+    `select count(*)::text as n from agent_tokens where agent_id = $1`,
+    [agentId],
+  );
+  assert.equal(tokAfter.rows[0]?.n, tokBefore.rows[0]?.n, "token 表零触碰（铁律 ⑥）");
+  await ctx.cleanup();
+});
