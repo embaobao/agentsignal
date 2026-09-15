@@ -9,8 +9,8 @@
  */
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
-import JSON5 from "json5";
 import { parseArtifactFrontmatter, SkillFrontmatterSchema } from "@agentssignal/protocol";
+import JSON5 from "json5";
 import { type AgentSignalPaths, resolvePaths } from "../skills/paths.ts";
 import { type SkillRecord, scanSkills } from "../skills/store.ts";
 import { renderArtifactSkillMd } from "../skills/transcoder.ts";
@@ -150,11 +150,11 @@ export async function importApm(inDir: string, paths?: AgentSignalPaths): Promis
             description: fm.description,
             domains: (ext.domains as string[] | undefined) ?? ["common"],
             layers: (ext.layers as string[] | undefined) ?? ["base"],
-            triggers:
-              (ext.triggers as
-                | { field: "keyword"; operator: "contains_any"; values: string[] }[]
-                | undefined) ??
-              [{ field: "keyword", operator: "contains_any", values: [entry.name, manifest.name] }],
+            triggers: (ext.triggers as
+              | { field: "keyword"; operator: "contains_any"; values: string[] }[]
+              | undefined) ?? [
+              { field: "keyword", operator: "contains_any", values: [entry.name, manifest.name] },
+            ],
             keywords: (ext.keywords as string[] | undefined) ?? [manifest.name],
             verify_target: (ext.verify_target as string[] | undefined) ?? [],
             lifecycle: { provenance: { origin: { kind: "apm-import", ref: manifest.name } } },
