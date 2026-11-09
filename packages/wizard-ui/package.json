@@ -8,16 +8,16 @@
     "build": "node build.mjs"
   },
   "devDependencies": {
-    "@base-ui/react": "^1.7.0",
-    "@tailwindcss/cli": "^4.0.0",
+    "@base-ui/react": "^1.9.0",
+    "@tailwindcss/cli": "^4.3.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@xyflow/react": "^12.0.0",
-    "esbuild": "^0.24.0",
+    "@xyflow/react": "^12.12.1",
+    "esbuild": "^0.28.2",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.3.5",
     "typescript": "^5.7.0"
   }
 }
